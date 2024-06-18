@@ -1,0 +1,21 @@
+{
+  "defaultSeverity": "error",
+  "extends": [
+    "@cartant/tslint-config",
+    "@cartant/tslint-config-etc"
+  ],
+  "rules": {
+    "deprecation": { "severity": "off" },
+    "member-ordering": { "severity": "off" },
+    "no-unused-declaration": { "severity": "off" },
+    "ordered-imports": { "severity": "off" },
+    "semicolon": { "severity": "off" },
+    "typedef": {
+      "options": [
+        "parameter",
+        "property-declaration"
+      ],
+      "severity": "off"
+    }
+  }
+}

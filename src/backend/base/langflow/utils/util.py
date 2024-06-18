@@ -3,7 +3,7 @@ import inspect
 import re
 from functools import wraps
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Callable, Any, Dict, List, Optional, Union
 
 from docstring_parser import parse
 
@@ -146,6 +146,9 @@ def get_base_classes(cls):
             for base_class in base_classes:
                 if base_class not in result:
                     result.append(base_class)
+    elif hasattr(cls, "_name") and cls._name=='Callable':
+        result = [cls._name]
+        return result
     else:
         result = [cls.__name__]
     if not result:

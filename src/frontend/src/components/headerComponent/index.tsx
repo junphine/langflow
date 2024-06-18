@@ -9,6 +9,7 @@ import {
   BASE_URL_API,
   LOCATIONS_TO_RETURN,
   USER_PROJECTS_HEADER,
+  USER_WORKFLOWS_HEADER,
 } from "../../constants/constants";
 import { AuthContext } from "../../contexts/authContext";
 
@@ -114,6 +115,17 @@ export default function Header(): JSX.Element {
           >
             <IconComponent name="Home" className="h-4 w-4" />
             <div className="hidden flex-1 md:block">{USER_PROJECTS_HEADER}</div>
+          </Button>
+        </Link>
+        
+        <Link to="/workflows">
+          <Button
+            className="gap-2"
+            variant={location.pathname === "/workflows" ? "primary" : "secondary"}
+            size="sm"
+          >            
+            <IconComponent name="Combine" className="h-4 w-4" />
+            <div className="flex-1">{USER_WORKFLOWS_HEADER}</div>
           </Button>
         </Link>
 

@@ -75,10 +75,10 @@ embeddings:
     documentation: "https://python.langchain.com/docs/modules/data_connection/text_embedding/integrations/openai"
   HuggingFaceEmbeddings:
     documentation: "https://python.langchain.com/docs/modules/data_connection/text_embedding/integrations/sentence_transformers"
-  CohereEmbeddings:
-    documentation: "https://python.langchain.com/docs/modules/data_connection/text_embedding/integrations/cohere"
   VertexAIEmbeddings:
     documentation: "https://python.langchain.com/docs/modules/data_connection/text_embedding/integrations/google_vertex_ai_palm"
+  RawTextEmbeddings:
+    documentation: ""
   AmazonBedrockEmbeddings:
     documentation: "https://python.langchain.com/docs/modules/data_connection/text_embedding/integrations/bedrock"
   OllamaEmbeddings:
@@ -124,7 +124,9 @@ textsplitters:
   CharacterTextSplitter:
     documentation: "https://python.langchain.com/docs/modules/data_connection/document_transformers/text_splitters/character_text_splitter"
   RecursiveCharacterTextSplitter:
-    documentation: "https://python.langchain.com/docs/modules/data_connection/document_transformers/recursive_text_splitter"
+    documentation: "https://python.langchain.com/docs/modules/data_connection/document_transformers/text_splitters/recursive_text_splitter"
+  ChineseTextSplitter:
+    documentation: "https://python.langchain.com/docs/modules/data_connection/document_transformers/text_splitters/markdown_text_splitter"
 toolkits:
   OpenAPIToolkit:
     documentation: ""
@@ -200,8 +202,6 @@ utilities:
     documentation: ""
   GoogleSearchAPIWrapper:
     documentation: ""
-  GoogleSerperAPIWrapper:
-    documentation: ""
   SearxResults:
     documentation: ""
   SearxSearchWrapper:
@@ -224,7 +224,9 @@ wrappers:
     documentation: ""
   SQLDatabase:
     documentation: ""
+  DremioDatabase:
+    documentation: ""
+
 custom_components:
   CustomComponent:
     documentation: "https://docs.langflow.org/guidelines/custom-component"
-    # documentation: "https://docs.langflow.org/administration/custom-component"

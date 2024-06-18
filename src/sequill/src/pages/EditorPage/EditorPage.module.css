@@ -1,0 +1,13 @@
+.EditorPage {
+    display: "flex";
+}
+
+.EditorPage .react-flow__handle {    
+    min-width: 10px;
+    min-height: 10px;
+    width: 10px;
+    height: 10px;
+    background: #239dac69;
+    border: 1px solid #0d9d0c;
+    border-radius: 100%;
+}

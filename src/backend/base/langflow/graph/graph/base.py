@@ -1372,5 +1372,3 @@ class Graph:
             predecessor_map[edge.target_id].append(edge.source_id)
             successor_map[edge.source_id].append(edge.target_id)
         return predecessor_map, successor_map
-        return predecessor_map, successor_map
-        return predecessor_map, successor_map

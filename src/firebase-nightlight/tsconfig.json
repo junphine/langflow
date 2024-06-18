@@ -1,0 +1,26 @@
+{
+  "compilerOptions": {
+    "declaration": false,
+    "importHelpers": true,    
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "noEmitHelpers": true,
+    "noImplicitAny": true,
+    "outDir": "build",
+    "removeComments": true,
+    "skipLibCheck": true,
+    "sourceMap": false,
+    "strict": false,
+    "strictFunctionTypes": false,  
+    "target": "es6",
+    "lib": ["es6", "es7", "dom"],
+    "typeRoots": ["node_modules/@types"]
+  },
+  "exclude": [],
+  "include": [
+    "source/**/*.ts"
+  ],
+  "paths": {
+    "tslib" : ["node_modules/tslib/tslib.d.ts"]
+  }
+}

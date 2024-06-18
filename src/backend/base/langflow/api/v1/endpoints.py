@@ -48,8 +48,16 @@ def get_all(
 
     logger.debug("Building langchain types dict")
     try:
+        configed_type_dict = {}
         all_types_dict = get_all_types_dict(settings_service.settings.components_path)
-        return all_types_dict
+        for key,category in all_types_dict.items():
+            components = {}
+            for component in category.values():
+                componet_name = component['name']
+                if settings_service.has_component(componet_name):
+                    components[componet_name]=component
+            configed_type_dict[key] = components
+        return configed_type_dict
     except Exception as exc:
         logger.exception(exc)
         raise HTTPException(status_code=500, detail=str(exc)) from exc

@@ -39,6 +39,13 @@ def initialize_mongodb(class_object: Type[MongoDBAtlasVectorSearch], params: dic
     if not index_name:
         raise ValueError("index_name must be provided in the params")
 
+    embedding_key = params.get("embedding_key", None)
+    if not embedding_key:
+        embedding_key = index_name
+        params["embedding_key"] = embedding_key
+
+    text_key = params.get("text_key", None)
+
     collection = client[db_name][collection_name]
     if not docs_in_params(params):
         # __init__ requires collection, embedding and index_name
@@ -47,7 +54,10 @@ def initialize_mongodb(class_object: Type[MongoDBAtlasVectorSearch], params: dic
             "index_name": index_name,
             "embedding": params.get("embedding"),
         }
-
+        if embedding_key:
+            init_args["embedding_key"] = embedding_key
+        if text_key:
+            init_args["text_key"] = text_key
         return class_object(**init_args)
 
     if "texts" in params:

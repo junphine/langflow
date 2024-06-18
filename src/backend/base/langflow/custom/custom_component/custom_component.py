@@ -468,4 +468,3 @@ class CustomComponent(Component):
             Any: The result of the build process.
         """
         raise NotImplementedError
-        raise NotImplementedError

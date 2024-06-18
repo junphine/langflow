@@ -34,6 +34,7 @@ const ShortcutsPage = lazy(
 const SignUp = lazy(() => import("./pages/SignUpPage"));
 const StorePage = lazy(() => import("./pages/StorePage"));
 const ViewPage = lazy(() => import("./pages/ViewPage"));
+import WorkflowPage from "./pages/WorkflowPage";
 
 const Router = () => {
   return (
@@ -62,6 +63,14 @@ const Router = () => {
             path="components/*"
             element={
               <MyCollectionComponent key="components" type="component" />
+            }
+          />
+          <Route
+            path="/workflows"
+            element={
+              <ProtectedRoute>
+                <WorkflowPage />
+              </ProtectedRoute>
             }
           />
           <Route

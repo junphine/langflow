@@ -538,6 +538,8 @@ export const NOUNS: string[] = [
  */
 export const USER_PROJECTS_HEADER = "My Collection";
 
+export const USER_WORKFLOWS_HEADER = "My Workflows";
+
 export const DEFAULT_FOLDER = "My Projects";
 
 /**
@@ -668,7 +670,7 @@ export const CHAT_SECOND_INITIAL_TEXT = "to inspect the chaining process.";
 
 export const ZERO_NOTIFICATIONS = "No new notifications";
 
-export const SUCCESS_BUILD = "Built sucessfully ✨";
+export const SUCCESS_BUILD = "Built sucessfully!";
 
 export const ALERT_SAVE_WITH_API =
   "Caution: Unchecking this box only removes API keys from fields specifically designated for API keys.";
