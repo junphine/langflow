@@ -33,7 +33,8 @@ async def instantiate_class(
     if base_type == "custom_components":
         return await instantiate_custom_component(params, user_id, vertex, fallback_to_env_vars=fallback_to_env_vars)
     else:
-        raise ValueError(f"Base type {base_type} not found.")
+        return await instantiate_custom_component(params, user_id, vertex, fallback_to_env_vars=fallback_to_env_vars)
+        #raise ValueError(f"Base type {base_type} not found.")
 
 
 def convert_params_to_sets(params):

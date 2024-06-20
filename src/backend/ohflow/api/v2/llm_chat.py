@@ -12,7 +12,7 @@ from fastapi import (
 )
 from fastapi.responses import StreamingResponse
 from langflow.api.utils import build_input_keys_response, Dictate
-from langflow import load_flow_from_json
+from langflow.load import load_flow_from_json
 
 from loguru import logger
 from langflow.services.deps import get_cache_service, get_chat_service, get_session
@@ -25,7 +25,7 @@ from langflow.services.auth.utils import (
     get_current_user_for_websocket,
     get_user_by_id
 )
-from langflow.services.cache.service import BaseCacheService
+
 from langflow.services.cache.utils import update_build_status
 from langflow.services.chat.service import ChatService
 

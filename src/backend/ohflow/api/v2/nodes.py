@@ -4,7 +4,7 @@ from uuid import UUID
 
 from langflow.api.utils import remove_api_keys
 
-from langflow.database.models.node import (
+from ohflow.database.models.node import (
     Node,
     NodeCreate,
     NodeRead,

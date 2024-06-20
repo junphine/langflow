@@ -77,7 +77,6 @@ embeddings:
     documentation: "https://python.langchain.com/docs/modules/data_connection/text_embedding/integrations/sentence_transformers"
   VertexAIEmbeddings:
     documentation: "https://python.langchain.com/docs/modules/data_connection/text_embedding/integrations/google_vertex_ai_palm"
-    enable: false
   RawTextEmbeddings:
     documentation: ""
   AmazonBedrockEmbeddings:
@@ -96,7 +95,6 @@ memories:
   #   documentation: "https://python.langchain.com/docs/modules/memory/integrations/entity_memory_with_sqlite"
   PostgresChatMessageHistory:
     documentation: "https://python.langchain.com/docs/modules/memory/integrations/postgres_chat_message_history"
-    enable: false
   ConversationBufferMemory:
     documentation: "https://python.langchain.com/docs/modules/memory/how_to/buffer"
   ConversationSummaryMemory:
@@ -107,9 +105,9 @@ memories:
     documentation: "https://python.langchain.com/docs/modules/memory/how_to/buffer_window"
   VectorStoreRetrieverMemory:
     documentation: "https://python.langchain.com/docs/modules/memory/how_to/vectorstore_retriever_memory"
-  MongoDBMessageReader:
+  MongoDBChatMessageHistory:
     documentation: "https://python.langchain.com/docs/modules/memory/integrations/mongodb_chat_message_history"
-  MongoDBMessageWriter:
+  MotorheadMemory:
     documentation: "https://python.langchain.com/docs/integrations/memory/motorhead_memory"
 prompts:
   ChatMessagePromptTemplate:
@@ -173,13 +171,10 @@ tools:
     documentation: ""
   GoogleSearchRun:
     documentation: ""
-    enable: false
   GoogleSearchResults:
     documentation: ""
-    enable: false
   GoogleSerperRun:
     documentation: ""
-    enable: false
   JsonListKeysTool:
     documentation: ""
   JsonGetValueTool:
@@ -235,14 +230,3 @@ wrappers:
 custom_components:
   CustomComponent:
     documentation: "https://docs.langflow.org/guidelines/custom-component"
-
-model_specs:
-  DeepseekChatEndpointSpecs:
-    openai_api_key: "sk-558a1f1b9957484eb52de0ddc2f9524a"
-
-
-models:
-  BaiduQianfanChatModel:
-    qianfan_ak: "ghravljfesy0bSBsSzFsh0vr"
-    qianfan_sk: "0GGiysLIliu4p7WOYdm35C2hBB5jKLE2"
-

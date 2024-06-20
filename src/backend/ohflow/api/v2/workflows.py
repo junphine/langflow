@@ -3,8 +3,8 @@ from typing import List
 from uuid import UUID
 
 from langflow.api.utils import remove_api_keys, is_number
-from langflow.api.v1.schemas import WorkFlowListCreate, WorkFlowListRead
-from langflow.database.models.workflow import (
+from ohflow.api.v2.schemas import WorkFlowListCreate, WorkFlowListRead
+from ohflow.database.models.workflow import (
     WorkFlow,
     WorkFlowCreate,
     WorkFlowRead,

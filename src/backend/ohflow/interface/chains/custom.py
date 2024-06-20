@@ -4,7 +4,7 @@ from langchain import PromptTemplate
 from langchain.chains import ConversationChain
 from langchain.memory.buffer import ConversationBufferMemory
 from langchain.schema import BaseMemory
-from langflow.interface.base import CustomChain
+
 from pydantic.v1 import Field, root_validator
 from langchain.chains.question_answering import load_qa_chain
 from langflow.interface.utils import extract_input_variables_from_prompt
@@ -117,7 +117,7 @@ class TimeTravelGuideChain(BaseCustomConversationChain):
     AI:"""  # noqa: E501
 
 
-class CombineDocsChain(CustomChain):
+class CombineDocsChain(BaseCustomConversationChain):
     """Implementation of load_qa_chain function"""
 
     @staticmethod
@@ -135,7 +135,7 @@ class CombineDocsChain(CustomChain):
         return super().run(*args, **kwargs)
 
 
-class CombineChineseDocsChain(CustomChain):
+class CombineChineseDocsChain(BaseCustomConversationChain):
     """Implementation of load_qa_chain function"""
 
     @staticmethod
@@ -143,7 +143,7 @@ class CombineChineseDocsChain(CustomChain):
         return "load_chinese_qa_chain"
 
     @classmethod
-    def initialize(cls, llm: BaseLanguageModel, chain_type: str):
+    def initialize(cls, llm: BaseLanguageModel, chain_type: str,**kwargs):
         prompt_template = """基于以下已知信息，请简洁并专业地回答用户的问题。
 如果无法从中得到答案，请说 "根据已知信息无法回答该问题" 或 "没有提供足够的相关信息"。不允许在答案中添加编造成分。另外，答案请使用中文。
 已知内容:
@@ -179,7 +179,7 @@ class CombineChineseDocsChain(CustomChain):
             return {**inputs, **outputs}
 
 
-CUSTOM_CHAINS: Dict[str, Type[Union[ConversationChain, CustomChain]]] = {
+CUSTOM_CHAINS: Dict[str, Type[Union[ConversationChain, BaseCustomConversationChain]]] = {
     "CombineDocsChain": CombineDocsChain,
     "SeriesCharacterChain": SeriesCharacterChain,
     "MidJourneyPromptChain": MidJourneyPromptChain,

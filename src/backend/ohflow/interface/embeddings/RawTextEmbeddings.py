@@ -5,6 +5,9 @@ from pydantic import BaseModel
 
 class RawTextEmbeddings(Embeddings, BaseModel):
     size: int = 768
+    model: str = "moe-base"
+    mongodb_url: str = "mongodb://localhost:27017"
+    collection: str = "text_embedding"
 
     @staticmethod
     def function_name():

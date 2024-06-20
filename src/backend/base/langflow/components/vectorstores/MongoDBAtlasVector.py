@@ -51,9 +51,9 @@ class MongoDBAtlasComponent(CustomComponent):
                 documents=documents,
                 embedding=embedding,
                 collection=collection,
-                db_name=db_name,
+                #db_name=db_name,
                 index_name=index_name,
-                mongodb_atlas_cluster_uri=mongodb_atlas_cluster_uri,
+                #mongodb_atlas_cluster_uri=mongodb_atlas_cluster_uri,
             )
         else:
             vector_store = MongoDBAtlasVectorSearch(

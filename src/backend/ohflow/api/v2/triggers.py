@@ -2,10 +2,10 @@ import datetime
 from typing import List
 from uuid import UUID, uuid4
 
-from langflow.database.models.job import JobRead, JobCreate, Job
+from ohflow.database.models.job import JobRead, JobCreate, Job
 from langflow.api.utils import remove_api_keys
 
-from langflow.database.models.trigger import (
+from ohflow.database.models.trigger import (
     Trigger,
     TriggerCreate,
     TriggerRead,

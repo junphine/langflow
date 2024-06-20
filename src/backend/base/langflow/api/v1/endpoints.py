@@ -35,7 +35,7 @@ from loguru import logger
 from sqlmodel import Session, select
 
 if TYPE_CHECKING:
-    from langflow.services.settings.manager import SettingsService
+    from langflow.services.settings.service import SettingsService
 
 router = APIRouter(tags=["Base"])
 
@@ -52,10 +52,13 @@ def get_all(
         all_types_dict = get_all_types_dict(settings_service.settings.components_path)
         for key,category in all_types_dict.items():
             components = {}
-            for component in category.values():
-                componet_name = component['name']
-                if settings_service.has_component(componet_name):
-                    components[componet_name]=component
+            for componet_name,component in category.items():
+                if not settings_service.has_category(key) or settings_service.component_is_enable(componet_name):
+                    components[componet_name] = component
+                    comp_setting = settings_service.component_settings(componet_name)
+                    for field,value in comp_setting.items():
+                        if value!='' and field in component['template']:
+                            component['template'][field]['value'] = value
             configed_type_dict[key] = components
         return configed_type_dict
     except Exception as exc:

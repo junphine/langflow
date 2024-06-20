@@ -228,9 +228,9 @@ class RedisCache(CacheService):
             " Please report any issues to our GitHub repository."
         )
         if url:
-            self._client = redis.StrictRedis.from_url(url)
+            self._client = redis.StrictRedis.from_url(url, decode_responses=False)
         else:
-            self._client = redis.StrictRedis(host=host, port=port, db=db)
+            self._client = redis.StrictRedis(host=host, port=port, db=db, decode_responses=False)
         self.expiration_time = expiration_time
 
     # check connection
@@ -246,7 +246,7 @@ class RedisCache(CacheService):
         except redis.exceptions.ConnectionError:
             return False
 
-    def get(self, key):
+    def get(self, key, lock: Optional[threading.Lock] = None):
         """
         Retrieve an item from the cache.
 
@@ -259,7 +259,7 @@ class RedisCache(CacheService):
         value = self._client.get(key)
         return pickle.loads(value) if value else None
 
-    def set(self, key, value):
+    def set(self, key, value, lock: Optional[threading.Lock] = None):
         """
         Add an item to the cache.
 
@@ -275,7 +275,7 @@ class RedisCache(CacheService):
         except TypeError as exc:
             raise TypeError("RedisCache only accepts values that can be pickled. ") from exc
 
-    def upsert(self, key, value):
+    def upsert(self, key, value, lock: Optional[threading.Lock] = None):
         """
         Inserts or updates a value in the cache.
         If the existing value and the new value are both dictionaries, they are merged.
@@ -291,7 +291,7 @@ class RedisCache(CacheService):
 
         self.set(key, value)
 
-    def delete(self, key):
+    def delete(self, key, lock: Optional[threading.Lock] = None):
         """
         Remove an item from the cache.
 
@@ -300,7 +300,7 @@ class RedisCache(CacheService):
         """
         self._client.delete(key)
 
-    def clear(self):
+    def clear(self,lock: Optional[threading.Lock] = None):
         """
         Clear all items from the cache.
         """
