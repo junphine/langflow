@@ -146,6 +146,9 @@ def get_base_classes(cls):
             for base_class in base_classes:
                 if base_class not in result:
                     result.append(base_class)
+    elif hasattr(cls, "_name") and cls._name=='Callable':
+        result = [cls._name]
+        return result
     else:
         result = [cls.__name__]
     if not result:

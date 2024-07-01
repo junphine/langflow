@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import "reactflow/dist/style.css";
 import "./App.css";
 import AlertDisplayArea from "./alerts/displayArea";
@@ -48,6 +48,19 @@ export default function App() {
   const isLoadingFolders = useFolderStore((state) => state.isLoadingFolders);
 
   const [isLoadingHealth, setIsLoadingHealth] = useState(false);
+  const location = useLocation();
+
+  const routerJump = path =>  navigate(path)
+  // add@byron
+  useEffect(() => {
+    window.$wujie?.bus.$on("react-router-change", routerJump);
+  }, [])
+
+  // react-sub
+  useEffect(() => {
+    window.$wujie?.bus.$emit('sub-route-change', "langflow", location.pathname)
+  }, [location])
+
 
   useEffect(() => {
     if (!dark) {

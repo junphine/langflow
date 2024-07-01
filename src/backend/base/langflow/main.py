@@ -175,7 +175,11 @@ def setup_static_files(app: FastAPI, static_files_dir: Path):
 
     @app.exception_handler(404)
     async def custom_404_handler(request, __):
-        path = static_files_dir / "index.html"
+        path = request.url.path
+        if path.startswith('/langflow/'):
+            path = static_files_dir / "langflow/index.html"
+        else:
+            path = static_files_dir / "index.html"
 
         if not path.exists():
             raise RuntimeError(f"File at path {path} does not exist.")

@@ -550,6 +550,8 @@ export const NOUNS: string[] = [
  */
 export const USER_PROJECTS_HEADER = "My Collection";
 
+export const USER_WORKFLOWS_HEADER = "My Workflows";
+
 export const DEFAULT_FOLDER = "My Projects";
 
 /**
