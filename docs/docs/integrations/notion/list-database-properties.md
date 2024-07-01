@@ -5,6 +5,10 @@ import ZoomableImage from "/src/theme/ZoomableImage.js";
 
 # Database Properties
 
+<Admonition type="warning" title="warning">
+This page may contain outdated information. It will be updated as soon as possible.
+</Admonition>
+
 The `NotionDatabaseProperties` component retrieves properties of a Notion database. It provides a convenient way to integrate Notion database information into your Langflow workflows.
 
 [Notion Reference](https://developers.notion.com/reference/post-database-query)
@@ -33,7 +37,7 @@ import requests
 from typing import Dict
 
 from langflow import CustomComponent
-from langflow.schema import Record
+from langflow.schema import Data
 
 
 class NotionDatabaseProperties(CustomComponent):
@@ -61,7 +65,7 @@ class NotionDatabaseProperties(CustomComponent):
         self,
         database_id: str,
         notion_secret: str,
-    ) -> Record:
+    ) -> Data:
         url = f"https://api.notion.com/v1/databases/{database_id}"
         headers = {
             "Authorization": f"Bearer {notion_secret}",
@@ -74,7 +78,7 @@ class NotionDatabaseProperties(CustomComponent):
         data = response.json()
         properties = data.get("properties", {})
 
-        record = Record(text=str(response.json()), data=properties)
+        record = Data(text=str(response.json()), data=properties)
         self.status = f"Retrieved {len(properties)} properties from the Notion database.\n {record.text}"
         return record
 ```

@@ -1,7 +1,7 @@
 from typing import Dict, Optional, Type, Union, List
 
 from langchain import PromptTemplate
-from langchain.chains import ConversationChain
+from langchain.chains.conversation.base import ConversationChain
 from langchain.memory.buffer import ConversationBufferMemory
 from langchain.schema import BaseMemory
 

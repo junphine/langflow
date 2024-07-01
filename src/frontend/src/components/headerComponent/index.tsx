@@ -9,7 +9,6 @@ import {
   BASE_URL_API,
   LOCATIONS_TO_RETURN,
   USER_PROJECTS_HEADER,
-  USER_WORKFLOWS_HEADER,
 } from "../../constants/constants";
 import { AuthContext } from "../../contexts/authContext";
 
@@ -19,7 +18,7 @@ import useFlowStore from "../../stores/flowStore";
 import useFlowsManagerStore from "../../stores/flowsManagerStore";
 import { useLocationStore } from "../../stores/locationStore";
 import { useStoreStore } from "../../stores/storeStore";
-import IconComponent from "../genericIconComponent";
+import IconComponent, { ForwardedIconComponent } from "../genericIconComponent";
 import { Button } from "../ui/button";
 import {
   DropdownMenu,
@@ -50,6 +49,12 @@ export default function Header(): JSX.Element {
 
   const routeHistory = useLocationStore((state) => state.routeHistory);
 
+  const profileImageUrl =
+    `${BACKEND_URL.slice(
+      0,
+      BACKEND_URL.length - 1,
+    )}${BASE_URL_API}files/profile_pictures/${userData?.profile_image}` ??
+    profileCircle;
   async function checkForChanges(): Promise<void> {
     if (nodes.length === 0) {
       await removeFlow(id!);
@@ -60,7 +65,7 @@ export default function Header(): JSX.Element {
     const lastFlowVisitedIndex = routeHistory
       .reverse()
       .findIndex(
-        (path) => path.includes("/flow/") && path !== location.pathname
+        (path) => path.includes("/flow/") && path !== location.pathname,
       );
 
     const lastFlowVisited = routeHistory[lastFlowVisitedIndex];
@@ -86,8 +91,7 @@ export default function Header(): JSX.Element {
         </Link>
         {showArrowReturnIcon && (
           <Button
-            variant="none"
-            size="none"
+            unstyled
             onClick={() => {
               checkForChanges();
               redirectToLastLocation();
@@ -115,17 +119,6 @@ export default function Header(): JSX.Element {
           >
             <IconComponent name="Home" className="h-4 w-4" />
             <div className="hidden flex-1 md:block">{USER_PROJECTS_HEADER}</div>
-          </Button>
-        </Link>
-        
-        <Link to="/workflows">
-          <Button
-            className="gap-2"
-            variant={location.pathname === "/workflows" ? "primary" : "secondary"}
-            size="sm"
-          >            
-            <IconComponent name="Combine" className="h-4 w-4" />
-            <div className="flex-1">{USER_WORKFLOWS_HEADER}</div>
           </Button>
         </Link>
 
@@ -204,8 +197,7 @@ export default function Header(): JSX.Element {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  variant="none"
-                  size="none"
+                  unstyled
                   data-testid="user-profile-settings"
                   className="shrink-0"
                 >
@@ -213,7 +205,7 @@ export default function Header(): JSX.Element {
                     src={
                       `${BACKEND_URL.slice(
                         0,
-                        BACKEND_URL.length - 1
+                        BACKEND_URL.length - 1,
                       )}${BASE_URL_API}files/profile_pictures/${
                         userData?.profile_image ?? "Space/046-rocket.svg"
                       }` ?? profileCircle
@@ -222,7 +214,7 @@ export default function Header(): JSX.Element {
                   />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent>
+              <DropdownMenuContent className="mr-1 mt-1 min-w-40">
                 {!autoLogin && (
                   <>
                     <DropdownMenuLabel>
@@ -231,7 +223,7 @@ export default function Header(): JSX.Element {
                           src={
                             `${BACKEND_URL.slice(
                               0,
-                              BACKEND_URL.length - 1
+                              BACKEND_URL.length - 1,
                             )}${BASE_URL_API}files/profile_pictures/${
                               userData?.profile_image ?? "Space/046-rocket.svg"
                             }` ?? profileCircle
@@ -247,30 +239,62 @@ export default function Header(): JSX.Element {
                 )}
                 <DropdownMenuLabel>General</DropdownMenuLabel>
                 <DropdownMenuItem
-                  className="cursor-pointer"
+                  className="cursor-pointer gap-2"
                   onClick={() => navigate("/settings")}
                 >
+                  <ForwardedIconComponent name="Settings" className="w-4" />
                   Settings
                 </DropdownMenuItem>
                 {!autoLogin && (
                   <>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
                     {isAdmin && (
                       <DropdownMenuItem
-                        className="cursor-pointer"
+                        className="cursor-pointer gap-2"
                         onClick={() => navigate("/admin")}
                       >
+                        <ForwardedIconComponent name="Shield" className="w-4" />
                         Admin Page
                       </DropdownMenuItem>
                     )}
+                  </>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuLabel>Help</DropdownMenuLabel>
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2"
+                  onClick={() =>
+                    window.open("https://docs.langflow.org/", "_blank")
+                  }
+                >
+                  <ForwardedIconComponent name="FileText" className="w-4" />
+                  Docs
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="cursor-pointer gap-2"
+                  onClick={() =>
+                    window.open(
+                      "https://github.com/langflow-ai/langflow/discussions",
+                      "_blank",
+                    )
+                  }
+                >
+                  <ForwardedIconComponent
+                    name="MessagesSquare"
+                    className="w-4"
+                  />
+                  Discussions
+                </DropdownMenuItem>
+                {!autoLogin && (
+                  <>
+                    <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      className="cursor-pointer"
+                      className="cursor-pointer gap-2"
                       onClick={() => {
                         logout();
                       }}
                     >
-                      Sign Out
+                      <ForwardedIconComponent name="LogOut" className="w-4" />
+                      Log Out
                     </DropdownMenuItem>
                   </>
                 )}

@@ -5,6 +5,10 @@ import ZoomableImage from "/src/theme/ZoomableImage.js";
 
 # Notion Search
 
+<Admonition type="warning" title="warning">
+This page may contain outdated information. It will be updated as soon as possible.
+</Admonition>
+
 The `NotionSearch` component is designed to search all pages and databases that have been shared with an integration in Notion. It provides a convenient way to integrate Notion search capabilities into your Langflow workflows.
 
 [Notion Reference](https://developers.notion.com/reference/search)
@@ -36,7 +40,7 @@ To use the `NotionSearch` component in a Langflow flow, follow these steps:
 import requests
 from typing import Dict, Any, List
 from langflow.custom import CustomComponent
-from langflow.schema import Record
+from langflow.schema import Data
 
 class NotionSearch(CustomComponent):
     display_name = "Search Notion"
@@ -88,7 +92,7 @@ class NotionSearch(CustomComponent):
         query: str = "",
         filter_value: str = "page",
         sort_direction: str = "descending",
-    ) -> List[Record]:
+    ) -> List[Data]:
         try:
             url = "https://api.notion.com/v1/search"
             headers = {
@@ -113,7 +117,7 @@ class NotionSearch(CustomComponent):
             response.raise_for_status()
 
             results = response.json()
-            records = []
+            data = []
             combined_text = f"Results found: {len(results['results'])}\n\n"
             for result in results['results']:
                 result_data = {
@@ -135,14 +139,14 @@ class NotionSearch(CustomComponent):
 
                 text += f"type: {result['object']}\nlast_edited_time: {result['last_edited_time']}\n\n"
                 combined_text += text
-                records.append(Record(text=text, data=result_data))
+                data.append(Data(text=text, data=result_data))
 
             self.status = combined_text
-            return records
+            return data
 
         except Exception as e:
             self.status = f"An error occurred: {str(e)}"
-            return [Record(text=self.status, data=[])]
+            return [Data(text=self.status, data=[])]
 ```
 
 ## Example Usage

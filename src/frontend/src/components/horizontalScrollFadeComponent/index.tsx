@@ -3,6 +3,9 @@ import { useEffect, useRef, useState } from "react";
 export default function HorizontalScrollFadeComponent({
   children,
   isFolder = true,
+}: {
+  children: JSX.Element | JSX.Element[];
+  isFolder?: boolean;
 }) {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const fadeContainerRef = useRef<HTMLDivElement>(null);
@@ -32,11 +35,11 @@ export default function HorizontalScrollFadeComponent({
 
       fadeContainerRef.current.classList.toggle(
         "fade-left",
-        isScrollable && !atStart
+        isScrollable && !atStart,
       );
       fadeContainerRef.current.classList.toggle(
         "fade-right",
-        isScrollable && !atEnd
+        isScrollable && !atEnd,
       );
     };
 

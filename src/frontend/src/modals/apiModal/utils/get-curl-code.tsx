@@ -8,14 +8,14 @@ export function getCurlRunCode(
   flowId: string,
   isAuth: boolean,
   tweaksBuildedObject,
-  endpointName?: string
+  endpointName?: string | null,
 ): string {
   const tweaksObject = tweaksBuildedObject[0];
   // show the endpoint name in the curl command if it exists
   return `curl -X POST \\
     "${window.location.protocol}//${window.location.host}/api/v1/run/${
-    endpointName || flowId
-  }?stream=false" \\
+      endpointName || flowId
+    }?stream=false" \\
     -H 'Content-Type: application/json'\\${
       !isAuth ? `\n  -H 'x-api-key: <your api key>'\\` : ""
     }
@@ -35,7 +35,11 @@ export function getCurlRunCode(
  * @param {string} options.endpointName - The name of the webhook endpoint.
  * @returns {string} The cURL command.
  */
-export function getCurlWebhookCode(flowId, isAuth, endpointName?: string) {
+export function getCurlWebhookCode(
+  flowId,
+  isAuth,
+  endpointName?: string | null,
+) {
   return `curl -X POST \\
   "${window.location.protocol}//${window.location.host}/api/v1/webhook/${
     endpointName || flowId

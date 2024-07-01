@@ -1,36 +1,45 @@
-import { CellEditRequestEvent, SelectionChangedEvent } from "ag-grid-community";
+import {
+  CellEditRequestEvent,
+  NewValueParams,
+  SelectionChangedEvent,
+} from "ag-grid-community";
+import cloneDeep from "lodash/cloneDeep";
 import { useState } from "react";
 import TableComponent from "../../../../components/tableComponent";
 import useRemoveMessages from "../../../../pages/SettingsPage/pages/messagesPage/hooks/use-remove-messages";
 import useUpdateMessage from "../../../../pages/SettingsPage/pages/messagesPage/hooks/use-updateMessage";
 import useAlertStore from "../../../../stores/alertStore";
 import { useMessagesStore } from "../../../../stores/messagesStore";
+import { messagesSorter } from "../../../../utils/utils";
 
 export default function SessionView({ rows }: { rows: Array<any> }) {
   const columns = useMessagesStore((state) => state.columns);
   const setErrorData = useAlertStore((state) => state.setErrorData);
   const setSuccessData = useAlertStore((state) => state.setSuccessData);
 
-  const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
   const { handleRemoveMessages } = useRemoveMessages(
     setSelectedRows,
     setSuccessData,
     setErrorData,
-    selectedRows
+    selectedRows,
   );
 
   const { handleUpdate } = useUpdateMessage(setSuccessData, setErrorData);
 
-  function handleUpdateMessage(event: CellEditRequestEvent<any, string>) {
+  function handleUpdateMessage(event: NewValueParams<any, string>) {
     const newValue = event.newValue;
     const field = event.column.getColId();
-    const row = event.data;
+    const row = cloneDeep(event.data);
     const data = {
       ...row,
       [field]: newValue,
     };
-    handleUpdate(data);
+    handleUpdate(data).catch((error) => {
+      event.data[field] = event.oldValue;
+      event.api.refreshCells();
+    });
   }
 
   return (
@@ -38,18 +47,17 @@ export default function SessionView({ rows }: { rows: Array<any> }) {
       key={"sessionView"}
       onDelete={handleRemoveMessages}
       readOnlyEdit
-      onCellEditRequest={(event) => {
-        handleUpdateMessage(event);
-      }}
-      editable={["Sender Name", "Message"]}
+      editable={[
+        { field: "text", onUpdate: handleUpdateMessage, editableCell: false },
+      ]}
       overlayNoRowsTemplate="No data available"
       onSelectionChanged={(event: SelectionChangedEvent) => {
-        setSelectedRows(event.api.getSelectedRows().map((row) => row.index));
+        setSelectedRows(event.api.getSelectedRows().map((row) => row.id));
       }}
       rowSelection="multiple"
       suppressRowClickSelection={true}
       pagination={true}
-      columnDefs={columns}
+      columnDefs={columns.sort(messagesSorter)}
       rowData={rows}
     />
   );

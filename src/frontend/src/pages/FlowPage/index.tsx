@@ -10,7 +10,7 @@ import ExtraSidebar from "./components/extraSidebarComponent";
 
 export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
   const setCurrentFlowId = useFlowsManagerStore(
-    (state) => state.setCurrentFlowId
+    (state) => state.setCurrentFlowId,
   );
   const version = useDarkStore((state) => state.version);
   const setOnFlowPage = useFlowStore((state) => state.setOnFlowPage);
@@ -52,9 +52,14 @@ export default function FlowPage({ view }: { view?: boolean }): JSX.Element {
             </main>
           </div>
         )}
-              
-        <div className={version ? "mt-2" : "mt-1"}></div>
-       
+        <a
+          target={"_blank"}
+          href="https://medium.com/logspace/langflow-datastax-better-together-1b7462cebc4d"
+          className="langflow-page-icon"
+        >
+          {version && <div className="mt-1">Langflow 🤝 DataStax</div>}
+          <div className={version ? "mt-2" : "mt-1"}>⛓️ v{version}</div>
+        </a>
       </div>
     </>
   );

@@ -72,8 +72,8 @@ export default function TableNodeCellRender({
                 ...id,
                 proxy: templateData.proxy,
               }
-            : id
-        )
+            : id,
+        ),
     ) ?? false;
   function getCellType() {
     switch (templateData.type) {
@@ -131,7 +131,9 @@ export default function TableNodeCellRender({
           <DictComponent
             disabled={disabled}
             editNode={true}
-            value={templateValue.toString() === "{}" ? {} : templateValue}
+            value={
+              (templateValue || "").toString() === "{}" ? {} : templateValue
+            }
             onChange={(newValue) => {
               handleOnNewValue(newValue, templateData.key);
             }}
@@ -144,14 +146,14 @@ export default function TableNodeCellRender({
           <div
             className={classNames(
               "max-h-48 w-full overflow-auto custom-scroll",
-              templateValue?.length > 1 ? "my-3" : ""
+              templateValue?.length > 1 ? "my-3" : "",
             )}
           >
             <KeypairListComponent
               disabled={disabled}
               editNode={true}
               value={
-                templateValue?.length === 0 || !templateValue
+                Object.keys(templateValue)?.length === 0 || !templateValue
                   ? [{ "": "" }]
                   : convertObjToArray(templateValue, templateData.type)
               }

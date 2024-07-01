@@ -9,10 +9,13 @@ import useFlowsManagerStore from "../../../stores/flowsManagerStore";
 import { useFolderStore } from "../../../stores/foldersStore";
 import { addVersionToDuplicates } from "../../../utils/reactflowUtils";
 
-const useFileDrop = (folderId, folderChangeCallback) => {
+const useFileDrop = (
+  folderId: string,
+  folderChangeCallback: (folderId: string) => void,
+) => {
   const setFolderDragging = useFolderStore((state) => state.setFolderDragging);
   const setFolderIdDragging = useFolderStore(
-    (state) => state.setFolderIdDragging
+    (state) => state.setFolderIdDragging,
   );
 
   const setErrorData = useAlertStore((state) => state.setErrorData);
@@ -45,7 +48,7 @@ const useFileDrop = (folderId, folderChangeCallback) => {
       | React.DragEvent<HTMLDivElement>
       | React.DragEvent<HTMLButtonElement>
       | React.DragEvent<HTMLAnchorElement>,
-    folderId: string
+    folderId: string,
   ) => {
     e.preventDefault();
 
@@ -60,7 +63,7 @@ const useFileDrop = (folderId, folderChangeCallback) => {
       | React.DragEvent<HTMLDivElement>
       | React.DragEvent<HTMLButtonElement>
       | React.DragEvent<HTMLAnchorElement>,
-    folderId: string
+    folderId: string,
   ) => {
     if (e.dataTransfer.types.some((types) => types === "Files")) {
       setFolderDragging(true);
@@ -73,7 +76,7 @@ const useFileDrop = (folderId, folderChangeCallback) => {
     e:
       | React.DragEvent<HTMLDivElement>
       | React.DragEvent<HTMLButtonElement>
-      | React.DragEvent<HTMLAnchorElement>
+      | React.DragEvent<HTMLAnchorElement>,
   ) => {
     e.preventDefault();
     if (e.target === e.currentTarget) {
@@ -87,7 +90,7 @@ const useFileDrop = (folderId, folderChangeCallback) => {
       | React.DragEvent<HTMLDivElement>
       | React.DragEvent<HTMLButtonElement>
       | React.DragEvent<HTMLAnchorElement>,
-    folderId: string
+    folderId: string,
   ) => {
     if (e?.dataTransfer?.getData("flow")) {
       const data = JSON.parse(e?.dataTransfer?.getData("flow"));

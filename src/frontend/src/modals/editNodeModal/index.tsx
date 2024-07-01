@@ -16,16 +16,14 @@ const EditNodeModal = forwardRef(
       nodeLength,
       open,
       setOpen,
-      //      setOpenWDoubleClick,
       data,
     }: {
       nodeLength: number;
       open: boolean;
       setOpen: (open: boolean) => void;
-      //      setOpenWDoubleClick: (open: boolean) => void;
       data: NodeDataType;
     },
-    ref
+    ref,
   ) => {
     const myData = useRef(cloneDeep(data));
 
@@ -53,7 +51,7 @@ const EditNodeModal = forwardRef(
       handleOnNewValue,
       handleOnChangeDb,
       changeAdvanced,
-      open
+      open,
     );
 
     const [gridApi, setGridApi] = useState<GridApi | null>(null);
@@ -64,12 +62,6 @@ const EditNodeModal = forwardRef(
         gridApi.refreshCells();
       }
     }, [gridApi, open]);
-
-    //    useEffect(() => {
-    //      return () => {
-    //        setOpenWDoubleClick(false);
-    //      };
-    //    }, []);
 
     return (
       <BaseModal key={data.id} open={open} setOpen={setOpen}>
@@ -119,7 +111,7 @@ const EditNodeModal = forwardRef(
         />
       </BaseModal>
     );
-  }
+  },
 );
 
 export default EditNodeModal;

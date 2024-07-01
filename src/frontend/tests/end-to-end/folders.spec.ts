@@ -22,6 +22,10 @@ test("CRUD folders", async ({ page }) => {
   }
   await page.getByRole("heading", { name: "Basic Prompting" }).click();
 
+  await page.waitForSelector('[data-testid="icon-ChevronLeft"]', {
+    timeout: 100000,
+  });
+
   await page.getByTestId("icon-ChevronLeft").first().click();
 
   await page.getByText("My Collection").nth(2).isVisible();
@@ -35,9 +39,18 @@ test("CRUD folders", async ({ page }) => {
   await page.getByText("New Folder").last().isVisible();
   await page.waitForTimeout(1000);
   await page.getByText("New Folder").last().dblclick();
-  await page.getByTestId("input-folder").fill("new folder test name");
-  await page.keyboard.press("Enter");
-  await page.getByText("new folder test name").last().isVisible();
+
+  const element = await page.getByTestId("input-folder");
+  await element.fill("new folder test name");
+
+  await page.getByText("My Projects").last().click({
+    force: true,
+  });
+
+  await page.getByText("new folder test name").last().waitFor({
+    state: "visible",
+    timeout: 30000,
+  });
 
   await page
     .getByText("new folder test name")
@@ -49,7 +62,7 @@ test("CRUD folders", async ({ page }) => {
 
   await page.getByText("Delete").last().click();
   await page.waitForTimeout(1000);
-  await page.getByText("Folder deleted succefully").isVisible();
+  await page.getByText("Folder deleted successfully").isVisible();
 });
 
 test("add folder by drag and drop", async ({ page }) => {
@@ -57,8 +70,8 @@ test("add folder by drag and drop", async ({ page }) => {
   await page.waitForTimeout(2000);
 
   const jsonContent = readFileSync(
-    "src/frontend/tests/end-to-end/assets/collection.json",
-    "utf-8"
+    "tests/end-to-end/assets/collection.json",
+    "utf-8",
   );
 
   // Create the DataTransfer and File
@@ -78,7 +91,7 @@ test("add folder by drag and drop", async ({ page }) => {
     "drop",
     {
       dataTransfer,
-    }
+    },
   );
 
   await page.getByText("Getting Started").first().isVisible();
