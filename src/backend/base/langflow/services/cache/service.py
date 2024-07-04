@@ -314,15 +314,15 @@ class RedisCache(CacheService, Generic[LockType]):
         """Check if the key is in the cache."""
         return False if key is None else self._client.exists(str(key))
 
-    async def __getitem__(self, key):
+    def __getitem__(self, key):
         """Retrieve an item from the cache using the square bracket notation."""
         return self.get(key)
 
-    async def __setitem__(self, key, value):
+    def __setitem__(self, key, value):
         """Add an item to the cache using the square bracket notation."""
         self.set(key, value)
 
-    async def __delitem__(self, key):
+    def __delitem__(self, key):
         """Remove an item from the cache using the square bracket notation."""
         self.delete(key)
 

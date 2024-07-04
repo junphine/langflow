@@ -131,8 +131,9 @@ def update_params_with_load_from_db_fields(
 
             except Exception as exc:
                 logger.error(f"Failed to get value for {field} from custom component. Setting it to None. Error: {exc}")
-
-                params[field] = None
+                # modify@byron
+                if str(params[field]).isupper():
+                    params[field] = None
 
     return params
 

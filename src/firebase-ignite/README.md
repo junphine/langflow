@@ -1,15 +1,8 @@
-# firebase-nightlight
-
-[![GitHub License](https://img.shields.io/badge/license-GPL%20v3-blue.svg)](https://github.com/cartant/firebase-nightlight/blob/master/LICENSE)
-[![NPM version](https://img.shields.io/npm/v/firebase-nightlight.svg)](https://www.npmjs.com/package/firebase-nightlight)
-[![Build status](https://img.shields.io/travis/cartant/firebase-nightlight.svg)](http://travis-ci.org/cartant/firebase-nightlight)
-[![dependency status](https://img.shields.io/david/cartant/firebase-nightlight.svg)](https://david-dm.org/cartant/firebase-nightlight)
-[![devDependency Status](https://img.shields.io/david/dev/cartant/firebase-nightlight.svg)](https://david-dm.org/cartant/firebase-nightlight#info=devDependencies)
-[![peerDependency Status](https://img.shields.io/david/peer/cartant/firebase-nightlight.svg)](https://david-dm.org/cartant/firebase-nightlight#info=peerDependencies)
+# firebase-ignite
 
 ### What is it?
 
-`firebase-nightlight` is an in-memory, JavaScript mock for the Firebase Web API.
+`firebase-ignite` is an ignite base in-memory, JavaScript mock for the Firebase Web API.
 
 ### Why might you need it?
 
@@ -49,7 +42,7 @@ Each `Mock` instance implements mocked versions of the properties and methods th
 ```ts
 import * as firebase from "firebase/app";
 import { expect } from "chai";
-import { Mock } from "firebase-nightlight";
+import { Mock } from "firebase-ignite";
 
 describe("something", () => {
 
@@ -115,13 +108,13 @@ describe("something", () => {
 Install the package using NPM:
 
 ```
-npm install firebase-nightlight --save-dev
+npm install firebase-ignite --save-dev
 ```
 
 And import the `Mock` class for use with TypeScript or ES2015:
 
 ```js
-import { Mock } from "firebase-nightlight";
+import { Mock } from "firebase-ignite";
 const mock = new Mock();
 console.log(mock);
 ```
@@ -129,17 +122,17 @@ console.log(mock);
 Or `require` the module for use with Node or a CommonJS bundler:
 
 ```js
-const firebaseNightlight = require("firebase-nightlight");
-const mock = new firebaseNightlight.Mock();
+const firebaseNightlight = require("firebase-ignite");
+const mock = new firebaseIgnite.Mock();
 console.log(mock);
 ```
 
 Or include the UMD bundle for use as a `script`:
 
 ```html
-<script src="https://unpkg.com/firebase-nightlight"></script>
+<script src="https://unpkg.com/firebase-ignite"></script>
 <script>
-var mock = new firebaseNightlight.Mock();
+var mock = new firebaseIgnite.Mock();
 console.log(mock);
 </script>
 ```

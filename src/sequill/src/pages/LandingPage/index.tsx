@@ -30,7 +30,7 @@ const LandingPage: React.FC = () => {
               }}
               >
               <Button icon={faAccessibleIcon} onClick={async () => await auth.signInWithEmailAndPassword("admin@test.com","123456")} >
-                Sign in with Email account
+                Sign in with Local Email account
               </Button>
             </Link>
             <br/>

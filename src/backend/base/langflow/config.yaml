@@ -236,13 +236,10 @@ custom_components:
   CustomComponent:
     documentation: "https://docs.langflow.org/guidelines/custom-component"
 
-model_specs:
-  DeepseekChatEndpointSpecs:
-    openai_api_key: "sk-558a1f1b9957484eb52de0ddc2f9524a"
-
-
 models:
   BaiduQianfanChatModel:
     qianfan_ak: "ghravljfesy0bSBsSzFsh0vr"
     qianfan_sk: "0GGiysLIliu4p7WOYdm35C2hBB5jKLE2"
+  DeepseekChatEndpoint:
+    openai_api_key: "sk-558a1f1b9957484eb52de0ddc2f9524a"
 

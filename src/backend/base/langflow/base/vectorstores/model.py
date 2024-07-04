@@ -14,6 +14,11 @@ class LCVectorStoreComponent(Component):
     trace_type = "retriever"
     outputs = [
         Output(
+            display_name="Vector Store",
+            name="base_vector_store",
+            method="build_vector_store",
+        ),
+        Output(
             display_name="Retriever",
             name="base_retriever",
             method="build_base_retriever",

@@ -22,7 +22,7 @@
     "dompurify": "^2.3.6",
     "escape-html": "^1.0.3",
     "file-saver": "^2.0.5",
-    "firebase": "file:../firebase-nightlight/dist",
+    "firebase": "file:../firebase-ignite/dist",
     "image-extensions": "^1.1.0",
     "is-hotkey": "^0.2.0",
     "is-url": "^1.2.4",
@@ -44,7 +44,7 @@
     "slate": "^0.100.0",
     "slate-history": "^0.100.0",
     "slate-react": "^0.100.0",
-    "reactflow": "^11.9.2",
+    "reactflow": "^11.11.3",
     "uuid": "^9.0.0",
     "web-vitals": "^2.1.4"
   },
@@ -78,7 +78,7 @@
     "react-scripts": "5.0.1",
     "autoprefixer":"^10.0.2",
     "prettier": "^2.8.8",
-    "typescript": "^5.2.2",
+    "typescript": "^5.4.5",
     "postcss": "^8.4.12",
     "prettier-plugin-css-order": "^1.2.0"
   }

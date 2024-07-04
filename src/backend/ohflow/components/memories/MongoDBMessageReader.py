@@ -3,7 +3,7 @@ from typing import Optional, cast
 from langchain_community.chat_message_histories import MongoDBChatMessageHistory
 
 from langflow.base.memory.memory import BaseMemoryComponent
-from langflow.schema.record import Record
+from langflow.schema import Data
 
 
 class MongoDBMessageReaderComponent(BaseMemoryComponent):
@@ -40,7 +40,7 @@ class MongoDBMessageReaderComponent(BaseMemoryComponent):
             },
         }
 
-    def get_messages(self, **kwargs) -> list[Record]:
+    def get_messages(self, **kwargs) -> list[Data]:
         """
         Retrieves messages from the AstraDBChatMessageHistory memory.
 
@@ -57,7 +57,7 @@ class MongoDBMessageReaderComponent(BaseMemoryComponent):
 
         # Get messages from the memory
         messages = memory.messages
-        results = [Record.from_lc_message(message) for message in messages]
+        results = [Data.from_lc_message(message) for message in messages]
 
         return list(results)
 
@@ -68,7 +68,7 @@ class MongoDBMessageReaderComponent(BaseMemoryComponent):
         token: str,
         api_endpoint: str,
         namespace: Optional[str] = None,
-    ) -> list[Record]:
+    ) -> list[Data]:
 
         memory = MongoDBChatMessageHistory(
             session_id=session_id,

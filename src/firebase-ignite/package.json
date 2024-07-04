@@ -1,7 +1,7 @@
 {
-  "author": "Nicholas Jamieson <nicholas@cartant.com>",
+  "author": "junphine <junphine@126.com>",
   "bugs": {
-    "url": "https://github.com/cartant/firebase-nightlight/issues"
+    "url": "https://github.com/junphine/firebase-ignite/issues"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.231.0",
@@ -10,7 +10,7 @@
     "lodash": "^4.17.4",
     "process": "^0.11.10"
   },
-  "description": "An in-memory, JavaScript mock for the Firebase Web API",
+  "description": "An ignite base in-memory, JavaScript mock for the Firebase Web API",
   "devDependencies": {
     "@cartant/tslint-config": "^2.0.0",
     "@types/chai": "^4.0.0",
@@ -37,40 +37,40 @@
     "uuid": "^9.0.0",
     "yargs": "^14.0.0"
   },
-  "homepage": "https://github.com/cartant/firebase-nightlight",
+  "homepage": "https://github.com/junphine/firebase-ignite",
   "keywords": [
     "firebase",
     "mock",
     "stub",
     "test"
   ],
-  "license": "GPL-3.0",
+  "license": "Apache 2.0",
   "main": "./dist/index.js",
-  "name": "firebase-nightlight",
+  "name": "firebase-ignite",
   "private": false,
   "publishConfig": {
     "tag": "latest"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/cartant/firebase-nightlight.git"
+    "url": "https://github.com/junphine/firebase-ignite.git"
   },
   "scripts": {
     "dist": "yarn run dist:build && yarn run dist:uglify && node scripts/banner.js",
-    "dist:build": "yarn run dist:clean && yarn run dist:copy && tsc -p tsconfig-dist.json && browserify dist/index.js -s firebaseNightlight -o bundles/firebase-nightlight.umd.js",
+    "dist:build": "yarn run dist:clean && yarn run dist:copy && tsc -p tsconfig-dist.json && browserify dist/index.js -s firebaseIgnite  -o bundles/firebase-ignite.umd.js",
     "dist:copy": "cpy source/lodash.* dist/ && cpy source/firebase-interfaces.* dist/",
-    "dist:clean": "rimraf dist && rimraf bundles/firebase-nightlight.* && mkdirp bundles",
-    "dist:uglify": "uglifyjs -c -m -o bundles/firebase-nightlight.min.umd.js bundles/firebase-nightlight.umd.js",
+    "dist:clean": "rimraf dist && rimraf bundles/firebase-ignite.* && mkdirp bundles",
+    "dist:uglify": "uglifyjs -c -m -o bundles/firebase-ignite.min.umd.js bundles/firebase-ignite.umd.js",
     "lint": "tslint --project tsconfig.json source/**/*.ts",
     "prepublishOnly": "yarn run test && yarn run dist",
     "test": "yarn run lint && yarn run test:build && yarn run test:mocha && yarn run test:karma",
-    "test:build": "yarn run test:clean && yarn run test:copy && tsc -p tsconfig.json && browserify build/index-spec.js -s firebaseNightlightTest -o bundles/firebase-nightlight-test.umd.js",
+    "test:build": "yarn run test:clean && yarn run test:copy && tsc -p tsconfig.json && browserify build/index-spec.js -s firebaseIgniteTest -o bundles/firebase-ignite-test.umd.js",
     "test:copy": "cpy source/lodash.* build/",
-    "test:clean": "rimraf build && rimraf bundles/firebase-nightlight-test.* && mkdirp bundles",
+    "test:clean": "rimraf build && rimraf bundles/firebase-ignite-test.* && mkdirp bundles",
     "test:karma": "karma start --single-run",
     "test:mocha": "mocha build/index-spec.js --reporter spec"
   },
   "types": "./dist/index.d.ts",
-  "unpkg": "./bundles/firebase-nightlight.min.umd.js",
+  "unpkg": "./bundles/firebase-ignite.min.umd.js",
   "version": "3.1.2"
 }

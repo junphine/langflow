@@ -425,8 +425,7 @@ export class MockAuth implements firebase.auth.Auth {
             }).catch(e=>{
                 return error_("auth/invalid-credential", "Invalid credential.");
             });
-        }
-        
+        }       
 
         
     }
@@ -453,10 +452,10 @@ export class MockAuth implements firebase.auth.Auth {
         const uid = this.currentUser_?.uid;
         const authURL = this.options_['authURL'];
         return fetch(authURL+'api/v1/logout',{
-            method:'GET',mode: "no-cors",credentials:"include",
+            method:'GET',mode: "cors", credentials:"include",
             headers: this.apiHeader,
         })
-        .then(response => response.json())
+        .then(response => response)
         .finally(() => {
             this.currentUser_ = null;
             this.accessToken_ = null;
@@ -467,10 +466,9 @@ export class MockAuth implements firebase.auth.Auth {
     }
 
     updateUser(uid: string, properties: firebase.auth.UpdateRequest): Promise<firebase.auth.UserRecord> {
-
         const authURL = this.options_['authURL'];
         return fetch(authURL+'api/v1/admin/user/'+uid,{
-            method:'PUT',mode: "cors",credentials:"include",
+            method:'PUT',mode: "cors", credentials:"include",
             headers: this.apiHeader,
             body: JSON.stringify(properties)
         })        
@@ -491,10 +489,8 @@ export class MockAuth implements firebase.auth.Auth {
         currentUser: firebase.User,
         properties: firebase.auth.UpdateRequest   
     ): Promise<firebase.User> {
-
         const authURL = this.options_['authURL'];
         return currentUser.getToken().then((token) => {
-
             return fetch(authURL+'api/v1/profile/save',{
                 method:'POST',mode: "cors",credentials:"include",
                 headers: {'Content-Type': 'application/json', 'Authorization': 'Token ' + token},

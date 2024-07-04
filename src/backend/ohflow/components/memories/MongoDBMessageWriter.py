@@ -4,7 +4,7 @@ from langchain_community.chat_message_histories import MongoDBChatMessageHistory
 from langchain_core.messages import BaseMessage
 
 from langflow.base.memory.memory import BaseMemoryComponent
-from langflow.schema.record import Record
+from langflow.schema.data import Data
 
 
 class MongoDBMessageWriterComponent(BaseMemoryComponent):
@@ -91,13 +91,13 @@ class MongoDBMessageWriterComponent(BaseMemoryComponent):
 
     def build(
         self,
-        input_value: Record,
+        input_value: Data,
         session_id: str,
         collection_name: str,
         token: str,
         api_endpoint: str,
         namespace: Optional[str] = None,
-    ) -> Record:
+    ) -> Data:
 
         memory = MongoDBChatMessageHistory(
             session_id=session_id,

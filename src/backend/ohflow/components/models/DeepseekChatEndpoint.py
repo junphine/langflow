@@ -6,7 +6,6 @@ from pydantic.v1 import SecretStr
 
 from langflow.base.constants import STREAM_INFO_TEXT
 from langflow.base.models.model import LCModelComponent
-from langflow.base.models.openai_constants import MODEL_NAMES
 from langflow.field_typing import LanguageModel
 from langflow.inputs import (
     BoolInput,
@@ -20,10 +19,16 @@ from langflow.inputs import (
 )
 
 
-class OpenAIModelComponent(LCModelComponent):
-    display_name = "OpenAI"
-    description = "Generates text using OpenAI LLMs."
+class DeepseekChatEndpointComponent(LCModelComponent):
+    display_name: str = "Deepseek"
+    description: str = "Generate text using Deepseek LLMs."
+    documentation: str = "https://chat.deepseek.com/"
     icon = "OpenAI"
+
+    DEEPSEEK_MODELS = [
+        "deepseek-chat",
+        "deepseek-coder",
+    ]
 
     inputs = [
         MessageInput(name="input_value", display_name="Input"),
@@ -48,7 +53,7 @@ class OpenAIModelComponent(LCModelComponent):
             info="The schema for the Output of the model. You must pass the word JSON in the prompt. If left blank, JSON mode will be disabled.",
         ),
         DropdownInput(
-            name="model_name", display_name="Model Name", advanced=False, options=MODEL_NAMES, value=MODEL_NAMES[0]
+            name="model_name", display_name="Model Name", advanced=False, options=DEEPSEEK_MODELS, value=DEEPSEEK_MODELS[0]
         ),
         StrInput(
             name="openai_api_base",
@@ -61,9 +66,9 @@ class OpenAIModelComponent(LCModelComponent):
             display_name="OpenAI API Key",
             info="The OpenAI API Key to use for the OpenAI model.",
             advanced=False,
-            value="OPENAI_API_KEY",
+            value="DEEPSEEK_API_KEY",
         ),
-        FloatInput(name="temperature", display_name="Temperature", value=0.1),
+        FloatInput(name="temperature", display_name="Temperature", value=0.6),
         BoolInput(name="stream", display_name="Stream", info=STREAM_INFO_TEXT, advanced=True),
         StrInput(
             name="system_message",
@@ -80,8 +85,8 @@ class OpenAIModelComponent(LCModelComponent):
         ),
     ]
 
-    def build_model(self) -> LanguageModel:  # type: ignore[type-var]
-        # self.output_schea is a list of dictionarie s
+    def build_model(self) -> LanguageModel:
+        # self.output_schea is a list of dictionaries
         # let's convert it to a dictionary
         output_schema_dict: dict[str, str] = reduce(operator.ior, self.output_schema or {}, {})
         openai_api_key = self.openai_api_key
@@ -89,7 +94,7 @@ class OpenAIModelComponent(LCModelComponent):
         model_name: str = self.model_name
         max_tokens = self.max_tokens
         model_kwargs = self.model_kwargs or {}
-        openai_api_base = self.openai_api_base or "https://api.openai.com/v1"
+        openai_api_base = self.openai_api_base or "https://api.deepseek.com"
         json_mode = bool(output_schema_dict) or self.json_mode
         seed = self.seed
         model_kwargs["seed"] = seed
@@ -112,7 +117,7 @@ class OpenAIModelComponent(LCModelComponent):
             else:
                 output = output.bind(response_format={"type": "json_object"})  # type: ignore
 
-        return output  # type: ignore
+        return output
 
     def _get_exception_message(self, e: Exception):
         """
