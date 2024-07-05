@@ -5,6 +5,6 @@ try:
     # Check if the version is a pre-release version
     is_pre_release = any(label in __version__ for label in ["a", "b", "rc", "dev", "post"])
 except metadata.PackageNotFoundError:
-    __version__ = "0.70"
+    __version__ = "1.0.0b"
     is_pre_release = False
 del metadata

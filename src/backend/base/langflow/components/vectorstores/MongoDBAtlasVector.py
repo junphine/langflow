@@ -12,6 +12,7 @@ class MongoVectorStoreComponent(LCVectorStoreComponent):
     display_name = "MongoDB Atlas"
     description = "MongoDB Atlas Vector Store with search capabilities"
     documentation = "https://python.langchain.com/docs/modules/data_connection/vectorstores/integrations/mongodb_atlas"
+    name = "MongoDBAtlasVector"
     icon = "MongoDB"
 
     inputs = [
@@ -57,16 +58,10 @@ class MongoVectorStoreComponent(LCVectorStoreComponent):
             else:
                 documents.append(_input)
 
-            if documents:
-                vector_store = MongoDBAtlasVectorSearch.from_documents(
-                    documents=documents, embedding=self.embedding, collection=collection, index_name=self.index_name
-                )
-            else:
-                vector_store = MongoDBAtlasVectorSearch(
-                    embedding=self.embedding,
-                    collection=collection,
-                    index_name=self.index_name,
-                )
+        if documents:
+            vector_store = MongoDBAtlasVectorSearch.from_documents(
+                documents=documents, embedding=self.embedding, collection=collection, index_name=self.index_name
+            )
         else:
             vector_store = MongoDBAtlasVectorSearch(
                 embedding=self.embedding,

@@ -10,11 +10,12 @@ from langflow.field_typing import LanguageModel
 class VectorStoreAgentComponent(CustomComponent):
     display_name = "VectorStoreAgent"
     description = "Construct an agent from a Vector Store."
+    name = "VectorStoreAgent"
 
     def build_config(self):
         return {
             "llm": {"display_name": "LLM"},
-            "vector_store_toolkit": {"display_name": "Vector Store Info"},
+            "vector_store_toolkit": {"display_name": "Vector Store Toolkit"},
         }
 
     def build(
