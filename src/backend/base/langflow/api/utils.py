@@ -9,13 +9,13 @@ from sqlmodel import Session
 
 from langflow.graph.graph.base import Graph
 from langflow.services.chat.service import ChatService
+from langflow.services.database.models.flow import Flow
 from langflow.services.store.schema import StoreComponentCreate
 from langflow.services.store.utils import get_lf_version_from_pypi
-from langflow.services.database.models.flow.model import Flow
 
 if TYPE_CHECKING:
     from langflow.graph.vertex.base import Vertex
-
+    from langflow.services.database.models.flow.model import Flow
 
 
 API_WORDS = ["api", "key", "token"]

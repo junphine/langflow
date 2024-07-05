@@ -48,7 +48,6 @@ export function checkChatInput(nodes: Node[]) {
 }
 
 export function cleanEdges(nodes: NodeType[], edges: Edge[]) {
-  console.log("cleanEdges", nodes, edges);
   let newEdges = cloneDeep(edges);
   edges.forEach((edge) => {
     // check if the source and target node still exists
@@ -93,8 +92,6 @@ export function cleanEdges(nodes: NodeType[], edges: Edge[]) {
           output_types: outputTypes,
           dataType: sourceNode.data.type,
         };
-        console.log("id", id);
-        console.log("parsedSourceHandle", parsedSourceHandle);
         if (scapedJSONStringfy(id) !== sourceHandle) {
           newEdges = newEdges.filter((e) => e.id !== edge.id);
         }
@@ -387,7 +384,6 @@ export function updateEdgesHandleIds({
   edges,
   nodes,
 }: updateEdgesHandleIdsType): Edge[] {
-  console.log("updateEdgesHandleIds");
   let newEdges = cloneDeep(edges);
   newEdges.forEach((edge) => {
     const sourceNodeId = edge.source;
@@ -766,9 +762,7 @@ export function reconnectEdges(groupNode: NodeType, excludedEdges: Edge[]) {
     }
     if (nodes.some((node) => node.id === edge.target)) {
       const targetNode = nodes.find((node) => node.id === edge.target)!;
-      console.log("targetNode", targetNode);
       const targetHandle: targetHandleType = scapeJSONParse(edge.targetHandle!);
-      console.log("targetHandle", targetHandle);
       const proxy = { id: targetNode.id, field: targetHandle.fieldName };
       let newTargetHandle: targetHandleType = cloneDeep(targetHandle);
       newTargetHandle.id = groupNode.id;
@@ -863,9 +857,7 @@ export function validateSelection(
         isOutputNode(node.data as NodeDataType),
     )
   ) {
-    errorsArray.push(
-      "Please select only nodes that are not input or output nodes",
-    );
+    errorsArray.push("Select non-input/output nodes only");
   }
   //check if there are two or more nodes with free outputs
   if (
@@ -873,7 +865,7 @@ export function validateSelection(
       (n) => !clonedSelection.edges.some((e) => e.source === n.id),
     ).length > 1
   ) {
-    errorsArray.push("Please select only one node with free outputs");
+    errorsArray.push("Select only one node with free outputs");
   }
 
   // check if there is any node that does not have any connection
@@ -884,7 +876,7 @@ export function validateSelection(
         !clonedSelection.edges.some((edge) => edge.source === node.id),
     )
   ) {
-    errorsArray.push("Please select only nodes that are connected");
+    errorsArray.push("Select only connected nodes");
   }
   return errorsArray;
 }
@@ -1039,8 +1031,6 @@ function generateNodeOutputs(flow: FlowType) {
       const nodeOutputs = node.data.node.outputs;
       nodeOutputs.forEach((output) => {
         //filter outputs that are not connected
-        console.log(output);
-        console.log(edges);
         if (
           !edges.some(
             (edge) =>
@@ -1487,11 +1477,30 @@ export function isOutputType(type: string): boolean {
   return OUTPUT_TYPES.has(type);
 }
 
-export function updateGroupRecursion(groupNode: NodeType, edges: Edge[]) {
+export function updateGroupRecursion(
+  groupNode: NodeType,
+  edges: Edge[],
+  unavailableFields:
+    | {
+        [name: string]: string;
+      }
+    | undefined,
+  globalVariablesEntries: string[] | undefined,
+) {
+  updateGlobalVariables(
+    groupNode.data.node,
+    unavailableFields,
+    globalVariablesEntries,
+  );
   if (groupNode.data.node?.flow) {
     groupNode.data.node.flow.data!.nodes.forEach((node) => {
       if (node.data.node?.flow) {
-        updateGroupRecursion(node, node.data.node.flow.data!.edges);
+        updateGroupRecursion(
+          node,
+          node.data.node.flow.data!.edges,
+          unavailableFields,
+          globalVariablesEntries,
+        );
       }
     });
     let newFlow = groupNode.data.node!.flow;
@@ -1500,6 +1509,41 @@ export function updateGroupRecursion(groupNode: NodeType, edges: Edge[]) {
     updateProxyIdsOnOutputs(groupNode.data.node.outputs, idsMap);
     let flowEdges = edges;
     updateEdgesIds(flowEdges, idsMap);
+  }
+}
+
+export function updateGlobalVariables(
+  node: APIClassType | undefined,
+  unavailableFields:
+    | {
+        [name: string]: string;
+      }
+    | undefined,
+  globalVariablesEntries: string[] | undefined,
+) {
+  if (node && node.template) {
+    Object.keys(node.template).forEach((field) => {
+      if (
+        globalVariablesEntries &&
+        node!.template[field].load_from_db &&
+        !globalVariablesEntries.includes(node!.template[field].value)
+      ) {
+        node!.template[field].value = "";
+        node!.template[field].load_from_db = false;
+      }
+      if (
+        !node!.template[field].load_from_db &&
+        node!.template[field].value === "" &&
+        unavailableFields &&
+        Object.keys(unavailableFields).includes(
+          node!.template[field].display_name ?? "",
+        )
+      ) {
+        node!.template[field].value =
+          unavailableFields[node!.template[field].display_name ?? ""];
+        node!.template[field].load_from_db = true;
+      }
+    });
   }
 }
 

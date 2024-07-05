@@ -16,7 +16,7 @@ from pydantic import PydanticDeprecatedSince20
 from rich import print as rprint
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from langflow.api import router
+from langflow.api import router, health_check_router
 #from langflow.api import router_v2
 
 from langflow.initial_setup.setup import (
@@ -33,7 +33,7 @@ from langflow.utils.logger import configure
 
 # Ignore Pydantic deprecation warnings from Langchain
 warnings.filterwarnings("ignore", category=PydanticDeprecatedSince20)
-logger.add(sys.stderr, format="{level}-{message}")
+
 
 class RequestCancelledMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
@@ -139,10 +139,6 @@ def create_app():
         request.scope["query_string"] = urlencode(flattened, doseq=True).encode("utf-8")
 
         return await call_next(request)
-
-    @app.get("/health")
-    def health():
-        return {"status": "ok"}
 
     app.include_router(router)
     #app.include_router(router_v2)

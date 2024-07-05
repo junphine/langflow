@@ -8,6 +8,7 @@ from ohflow.interface.textsplitters.ChineseTextSplitter import ChineseTextSplitt
 
 
 class ChineseTextSplitterComponent(CustomComponent):
+    name = "ChineseTextSplitter"
     display_name = "ChineseTextSplitter"
     description = "Splitting text that looks at chinese characters."
 

@@ -5,6 +5,7 @@ from ohflow.interface.embeddings import RawTextEmbeddings
 
 
 class RawTextEmbeddingsComponent(CustomComponent):
+    name = "RawTextEmbeddings"
     display_name: str = "Raw Text Embeddings"
     description: str = "Generate embeddings using ignite serverside api models."
     documentation = "https://python.langchain.com/docs/integrations/text_embedding/ollama"

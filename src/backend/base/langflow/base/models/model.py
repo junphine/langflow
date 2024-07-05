@@ -1,5 +1,6 @@
 import json
 import warnings
+from abc import abstractmethod
 from typing import Optional, Union
 
 from langchain_core.language_models.llms import LLM
@@ -143,13 +144,13 @@ class LCModelComponent(Component):
                 messages.append(HumanMessage(content=input_value))
         inputs: Union[list, dict] = messages or {}
         try:
-            runnable = runnable.with_config(
-                {"run_name": self.display_name, "project_name": self._tracing_service.project_name}
+            runnable = runnable.with_config(  # type: ignore
+                {"run_name": self.display_name, "project_name": self.tracing_service.project_name}  # type: ignore
             )
             if stream:
-                return runnable.stream(inputs)
+                return runnable.stream(inputs)  # type: ignore
             else:
-                message = runnable.invoke(inputs)
+                message = runnable.invoke(inputs)  # type: ignore
                 result = message.content if hasattr(message, "content") else message
                 if isinstance(message, AIMessage):
                     status_message = self.build_status_message(message)
@@ -164,3 +165,9 @@ class LCModelComponent(Component):
             if message := self._get_exception_message(e):
                 raise ValueError(message) from e
             raise e
+
+    @abstractmethod
+    def build_model(self) -> LanguageModel:  # type: ignore[type-var]
+        """
+        Implement this method to build the model.
+        """

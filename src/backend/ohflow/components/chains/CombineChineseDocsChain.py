@@ -10,6 +10,7 @@ from ohflow.interface.chains.custom import CombineChineseDocsChain
 
 
 class CombineChineseDocsChainComponent(CustomComponent):
+    name = "CombineChineseDocsChain"
     display_name = "Retrieval ChineseDocs QA"
     description = "Chain for question-answering against an index."
 

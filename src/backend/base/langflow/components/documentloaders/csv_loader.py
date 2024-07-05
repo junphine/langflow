@@ -8,6 +8,7 @@ from io import StringIO
 
 
 class CSVLoaderComponent(Component):
+    name = "CSVLoader"
     display_name = "CSV Loader"
     description = "Load a CSV file to a list of Data objects"
     icon = "file-csv"

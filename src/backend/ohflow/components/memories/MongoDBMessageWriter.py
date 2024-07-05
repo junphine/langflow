@@ -8,8 +8,9 @@ from langflow.schema.data import Data
 
 
 class MongoDBMessageWriterComponent(BaseMemoryComponent):
+    name = "MongoDBMessageWriter"
     display_name = "Mongo DB Message Writer"
-    description = "Writes a message to Astra DB."
+    description = "Writes a message to Mongo DB."
 
     def build_config(self):
         return {

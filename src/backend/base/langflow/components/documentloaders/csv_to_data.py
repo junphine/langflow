@@ -5,6 +5,7 @@ import csv
 from io import StringIO
 
 class CSVToDataComponent(Component):
+    name = "CSVToData"
     display_name = "CSV to Data"
     description = "Convert a CSV string to a list of Data objects"
     icon = "📊"

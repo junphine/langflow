@@ -20,7 +20,8 @@ from langflow.inputs import (
 
 
 class DeepseekChatEndpointComponent(LCModelComponent):
-    display_name: str = "Deepseek"
+    name = "DeepseekLLM"
+    display_name: str = "Deepseek LLM"
     description: str = "Generate text using Deepseek LLMs."
     documentation: str = "https://chat.deepseek.com/"
     icon = "OpenAI"

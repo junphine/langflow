@@ -7,8 +7,9 @@ from langflow.schema import Data
 
 
 class MongoDBMessageReaderComponent(BaseMemoryComponent):
+    name = "MongoDBMessageReader"
     display_name = "Mongo DB Message Reader"
-    description = "Retrieves stored chat messages from Astra DB."
+    description = "Retrieves stored chat messages from Mongo DB."
 
     def build_config(self):
         return {

@@ -4,7 +4,8 @@ from ohflow.interface.db.dremio_database import DremioDatabase
 
 
 class DremioDatabaseComponent(CustomComponent):
-    display_name = "DremioDatabase"
+    name = "DremioDatabase"
+    display_name = "Dremio Database"
     description = "SQL Database use Dremio"
 
     def build_config(self):
