@@ -167,11 +167,14 @@ embedding_model_dict = {
 model_name = HUB_MODELS_ROOT+embedding_model_dict[init_embedding_model]
 model_kwargs = {'device': 'cpu'}
 encode_kwargs = {'normalize_embeddings': False}
+"""
 embedding_function = HuggingFaceEmbeddings(
     model_name=model_name,
     model_kwargs=model_kwargs,
     encode_kwargs=encode_kwargs
 )
+"""
+
 
 
 
@@ -222,15 +225,15 @@ def demo_qdrant():
 
 
 def demo_mongo():
-    dbname = 'ignite'
+    dbname = 'graph'
     mongo_client = MongoClient("mongodb://172.16.29.84:2701/"+dbname)
 
-    collection_name = 'test_embedding'
+    collection_name = 'text_embedding_huge'
     collection = mongo_client[dbname][collection_name]
     collection.create_index([('text','text')])
     collection.create_index([('embedding','knnVector')])
-    embeddings = embedding_function
-    vectorstore = MongoDBAtlasVectorSearch(collection, embeddings)
+    #embeddings = embedding_function
+    #vectorstore = MongoDBAtlasVectorSearch(collection, embeddings)
 
     #vectorstore.add_texts(['中国的首都','日本的首都','西安','南京','日本海','蒙古大草原','北京','东京'])
 

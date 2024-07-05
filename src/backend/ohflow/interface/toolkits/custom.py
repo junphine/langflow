@@ -10,7 +10,7 @@ from langchain.tools import BaseTool
 from langchain.tools.vectorstore.tool import VectorStoreQAWithSourcesTool, VectorStoreQATool
 from langchain_community.tools.vectorstore.tool import BaseVectorStoreTool
 
-from langflow.interface.chains.custom import CombineChineseDocsChain
+from ohflow.interface.chains.custom import CombineChineseDocsChain
 from typing import Dict, Optional, Type, Union, List
 from pydantic import BaseModel, Field
 

@@ -1,5 +1,6 @@
 import asyncio
 import warnings
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Optional
@@ -32,7 +33,7 @@ from langflow.utils.logger import configure
 
 # Ignore Pydantic deprecation warnings from Langchain
 warnings.filterwarnings("ignore", category=PydanticDeprecatedSince20)
-
+logger.add(sys.stderr, format="{level}-{message}")
 
 class RequestCancelledMiddleware(BaseHTTPMiddleware):
     def __init__(self, app):
