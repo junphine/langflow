@@ -1,7 +1,6 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useContext, useEffect, useState } from "react";
 import { ErrorBoundary } from "react-error-boundary";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import "reactflow/dist/style.css";
 import "./App.css";
 import AlertDisplayArea from "./alerts/displayArea";
@@ -13,7 +12,8 @@ import {
   FETCH_ERROR_MESSAGE,
 } from "./constants/constants";
 import { AuthContext } from "./contexts/authContext";
-import { autoLogin, getGlobalVariables, getHealth } from "./controllers/API";
+import { autoLogin } from "./controllers/API";
+import { useGetHealthQuery } from "./controllers/API/queries/health";
 import { useGetVersionQuery } from "./controllers/API/queries/version";
 import { setupAxiosDefaults } from "./controllers/API/utils";
 import useTrackLastVisitedPath from "./hooks/use-track-last-visited-path";
@@ -25,33 +25,25 @@ import useFlowsManagerStore from "./stores/flowsManagerStore";
 import { useFolderStore } from "./stores/foldersStore";
 
 export default function App() {
-  const queryClient = new QueryClient();
-
   useTrackLastVisitedPath();
-  const [fetchError, setFetchError] = useState(false);
   const isLoading = useFlowsManagerStore((state) => state.isLoading);
   const { isAuthenticated, login, setUserData, setAutoLogin, getUser } =
     useContext(AuthContext);
   const setLoading = useAlertStore((state) => state.setLoading);
   const refreshStars = useDarkStore((state) => state.refreshStars);
-  const navigate = useNavigate();
   const dark = useDarkStore((state) => state.dark);
+
+  useGetVersionQuery();
 
   const isLoadingFolders = useFolderStore((state) => state.isLoadingFolders);
 
-  const [isLoadingHealth, setIsLoadingHealth] = useState(false);
-  const location = useLocation();
+  const {
+    data: healthData,
+    isFetching: fetchingHealth,
+    isError: isErrorHealth,
+    refetch,
+  } = useGetHealthQuery();
 
-  const routerJump = path =>  navigate(path)
-  // add@byron
-  useEffect(() => {
-    window.$wujie?.bus.$on("react-router-change", routerJump);
-  }, [])
-
-  // react-sub
-  useEffect(() => {
-    window.$wujie?.bus.$emit('sub-route-change', "langflow", location.pathname)
-  }, [location])
   useEffect(() => {
     if (!dark) {
       document.getElementById("body")!.classList.remove("dark");
@@ -114,49 +106,6 @@ export default function App() {
     });
   };
 
-  useEffect(() => {
-    checkApplicationHealth();
-    // Timer to call getHealth every 5 seconds
-    const timer = setInterval(() => {
-      getHealth()
-        .then(() => {
-          onHealthCheck();
-        })
-        .catch(() => {
-          setFetchError(true);
-        });
-    }, 20000); // 20 seconds
-
-    // Clean up the timer on component unmount
-    return () => {
-      clearInterval(timer);
-    };
-  }, []);
-
-  const checkApplicationHealth = () => {
-    setIsLoadingHealth(true);
-    getHealth()
-      .then(() => {
-        onHealthCheck();
-      })
-      .catch(() => {
-        setFetchError(true);
-      });
-
-    setTimeout(() => {
-      setIsLoadingHealth(false);
-    }, 2000);
-  };
-
-  const onHealthCheck = () => {
-    setFetchError(false);
-    //This condition is necessary to avoid infinite loop on starter page when the application is not healthy
-    if (isLoading === true && window.location.pathname === "/") {
-      navigate("/all");
-      window.location.reload();
-    }
-  };
-
   const isLoadingApplication = isLoading || isLoadingFolders;
 
   return (
@@ -173,11 +122,15 @@ export default function App() {
             <FetchErrorComponent
               description={FETCH_ERROR_DESCRIPION}
               message={FETCH_ERROR_MESSAGE}
-              openModal={fetchError}
+              openModal={
+                isErrorHealth ||
+                (healthData &&
+                  Object.values(healthData).some((value) => value !== "ok"))
+              }
               setRetry={() => {
-                checkApplicationHealth();
+                refetch();
               }}
-              isLoadingHealth={isLoadingHealth}
+              isLoadingHealth={fetchingHealth}
             ></FetchErrorComponent>
           }
 
