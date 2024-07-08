@@ -33,7 +33,7 @@
 <div align="center">
   <a href="./README.md"><img alt="README in English" src="https://img.shields.io/badge/English-d9d9d9"></a>
   <a href="./README.PT.md"><img alt="README in Portuguese" src="https://img.shields.io/badge/Portuguese-d9d9d9"></a>
-  <a href="./README.zh_CN.md"><img alt="README in Simplified Chinese" src="https://img.shields.io/badge/简体中文-d9d9d9"></a>
+  <a href="./README.zh_CN.md"><img alt="README in Simplified Chinese" src="https://img.shields.io/badge/�?��中文-d9d9d9"></a>
 </div>
 
 <p align="center">
@@ -42,8 +42,6 @@
 
 # 📝 Content
 
-- [](#)
-- [📝 Content](#-content)
 - [📦 Get Started](#-get-started)
 - [🎨 Create Flows](#-create-flows)
 - [Deploy](#deploy)
@@ -51,7 +49,7 @@
   - [Deploy on Railway](#deploy-on-railway)
   - [Deploy on Render](#deploy-on-render)
   - [Deploy on Kubernetes](#deploy-on-kubernetes)
-- [🖥️ Command Line Interface (CLI)](#️-command-line-interface-cli)
+- [🖥�?Command Line Interface (CLI)](#�?command-line-interface-cli)
   - [Usage](#usage)
     - [Environment Variables](#environment-variables)
 - [👋 Contribute](#-contribute)
@@ -123,7 +121,7 @@ Use this template to deploy Langflow 1.0 on Railway:
 
 Follow our step-by-step guide to deploy [Langflow on Kubernetes](https://github.com/langflow-ai/langflow/blob/dev/docs/docs/deployment/kubernetes.md).
 
-# 🖥️ Command Line Interface (CLI)
+# 🖥�?Command Line Interface (CLI)
 
 Langflow provides a command-line interface (CLI) for easy management and configuration.
 

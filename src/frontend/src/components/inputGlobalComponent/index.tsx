@@ -31,7 +31,7 @@ export default function InputGlobalComponent({
   useEffect(() => {
     if (data && globalVariablesEntries)
       if (data.load_from_db && !globalVariablesEntries.includes(data.value)) {
-       // onChange("", false, true);
+        // onChange("", false, true);
       }
   }, [globalVariablesEntries]);
 
