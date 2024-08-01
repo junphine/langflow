@@ -23,7 +23,7 @@ router = APIRouter(prefix="/nodes", tags=["Nodes"])
 
 
 @router.post("/", response_model=NodeRead, status_code=201)
-def create_flow(*, session: Session = Depends(get_session), flow: NodeCreate):
+def create_node(*, session: Session = Depends(get_session), flow: NodeCreate):
     """Create a new flow."""
     db_flow = Node.from_orm(flow)
     db_flow.createdAt = datetime.datetime.now()
@@ -35,7 +35,7 @@ def create_flow(*, session: Session = Depends(get_session), flow: NodeCreate):
 
 
 @router.get("/", response_model=list[NodeRead], status_code=200)
-def read_flows(*, session: Session = Depends(get_session)):
+def read_nodes(*, session: Session = Depends(get_session)):
     """Read all flows."""
     try:
         flows = session.exec(select(Node)).all()
@@ -44,22 +44,22 @@ def read_flows(*, session: Session = Depends(get_session)):
     return [jsonable_encoder(flow) for flow in flows]
 
 
-@router.get("/{flow_id}", response_model=NodeRead, status_code=200)
-def read_flow(*, session: Session = Depends(get_session), flow_id):
+@router.get("/{node_id}", response_model=NodeRead, status_code=200)
+def read_node(*, session: Session = Depends(get_session), node_id):
     """Read a flow."""
-    if flow := session.get(Node, flow_id):
+    if flow := session.get(Node, node_id):
         return flow
     else:
         raise HTTPException(status_code=404, detail="Node not found")
 
 
-@router.patch("/{flow_id}", response_model=NodeRead, status_code=200)
-def update_flow(
-    *, session: Session = Depends(get_session), flow_id, flow: NodeUpdate
+@router.patch("/{node_id}", response_model=NodeRead, status_code=200)
+def update_node(
+    *, session: Session = Depends(get_session), node_id, flow: NodeUpdate
 ):
     """Update a flow."""
 
-    db_flow = session.get(Node, flow_id)
+    db_flow = session.get(Node, node_id)
     if not db_flow:
         raise HTTPException(status_code=404, detail="Node not found")
     flow_data = flow.dict(exclude_unset=True)
@@ -72,10 +72,10 @@ def update_flow(
     return db_flow
 
 
-@router.delete("/{flow_id}", status_code=200)
-def delete_flow(*, session: Session = Depends(get_session), flow_id: str):
+@router.delete("/{node_id}", status_code=200)
+def delete_node(*, session: Session = Depends(get_session), node_id: str):
     """Delete a flow."""
-    flow = session.query(Node).filter(Node.uuid==flow_id).one_or_none()
+    flow = session.query(Node).filter(Node.uuid==node_id).one_or_none()
     if not flow:
         raise HTTPException(status_code=404, detail="Node not found")
     session.delete(flow)
@@ -87,7 +87,7 @@ def delete_flow(*, session: Session = Depends(get_session), flow_id: str):
 
 
 @router.post("/batch/", response_model=List[NodeRead], status_code=201)
-def create_flows(*, session: Session = Depends(get_session), flow_list: List[NodeCreate]):
+def create_nodes(*, session: Session = Depends(get_session), flow_list: List[NodeCreate]):
     """Create multiple new flows."""
     db_flows = []
     for flow in flow_list:
@@ -108,11 +108,11 @@ async def upload_file(
     contents = await file.read()
     data = json.loads(contents)
     flows=[NodeCreate(**flow) for flow in data]
-    return create_flows(session=session, flow_list=flows)
+    return create_nodes(session=session, flow_list=flows)
 
 
 @router.get("/download/", response_model=List[NodeRead], status_code=200)
 async def download_file(*, session: Session = Depends(get_session)):
     """Download all flows as a file."""
-    flows = read_flows(session=session)
+    flows = read_nodes(session=session)
     return flows

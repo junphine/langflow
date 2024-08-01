@@ -57,7 +57,7 @@ const dagreGraph = new dagre.graphlib.Graph();
 dagreGraph.setDefaultEdgeLabel(() => ({}));
 
 
-const api_base_url = hostMap('langflow-api')
+const api_base_url = hostMap('workflow-api')
 
 // const nodeWidth = 172;
 // const nodeHeight = 50;

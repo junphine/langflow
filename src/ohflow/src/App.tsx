@@ -24,14 +24,14 @@ export default function App() {
      <Router>
       <NavbarSimple active={active} onChange={setActive} />
       <div style={{ width: '100%' }}>
-        <Routes>
-          <Route path="/Collections" element={<CollectionFlow />} />
+        <Routes>          
           <Route path="/Workflows" element={<WorkflowListOrDetail />} />
           <Route path="/WorkflowTemplates" element={<WorkflowLibraryOrDetail />} />
           <Route path="/Workflows/:id" element={<WorkflowListOrDetail />} />
           <Route path="/WorkflowTemplates/:id" element={<WorkflowLibraryOrDetail />} />
           <Route path="/Triggers" element={<Triggers />} />
           <Route path="/NodeLibrary" element={<NodeLibrary />} />
+          <Route path="/Collections" element={<CollectionFlow />} />
           <Route path="/Logs" element={<Logs />} />
           <Route path="/Debug" element={<Debug />} />
           <Route path="*" element={<Navigate to="/Workflows" replace />} />

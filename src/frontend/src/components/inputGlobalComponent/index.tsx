@@ -1,6 +1,5 @@
+import { useDeleteGlobalVariables } from "@/controllers/API/queries/variables";
 import { useEffect } from "react";
-import { Controller } from "react-hook-form";
-import { deleteGlobalVariable } from "../../controllers/API";
 import DeleteConfirmationModal from "../../modals/deleteConfirmationModal";
 import useAlertStore from "../../stores/alertStore";
 import { useGlobalVariablesStore } from "../../stores/globalVariablesStore/globalVariables";
@@ -28,29 +27,35 @@ export default function InputGlobalComponent({
   );
   const setErrorData = useAlertStore((state) => state.setErrorData);
 
+  const { mutate: mutateDeleteGlobalVariable } = useDeleteGlobalVariables();
+
   useEffect(() => {
     if (data && globalVariablesEntries)
       if (data.load_from_db && !globalVariablesEntries.includes(data.value)) {
-        // onChange("", false, true);
+        onChange("", false, true);
       }
   }, [globalVariablesEntries]);
 
   async function handleDelete(key: string) {
     const id = getVariableId(key);
     if (id !== undefined) {
-      await deleteGlobalVariable(id)
-        .then(() => {
-          removeGlobalVariable(key);
-          if (data?.value === key && data?.load_from_db) {
-            onChange("", false);
-          }
-        })
-        .catch(() => {
-          setErrorData({
-            title: "Error deleting variable",
-            list: [cn("ID not found for variable: ", key)],
-          });
-        });
+      mutateDeleteGlobalVariable(
+        { id },
+        {
+          onSuccess: () => {
+            removeGlobalVariable(key);
+            if (data?.value === key && data?.load_from_db) {
+              onChange("", false);
+            }
+          },
+          onError: () => {
+            setErrorData({
+              title: "Error deleting variable",
+              list: [cn("ID not found for variable: ", key)],
+            });
+          },
+        },
+      );
     } else {
       setErrorData({
         title: "Error deleting variable",

@@ -27,7 +27,7 @@ router = APIRouter(prefix="/jobs", tags=["Jobs"])
 
 
 @router.post("/", response_model=JobRead, status_code=201)
-def create_flow(*, session: Session = Depends(get_session), flow: JobCreate):
+def create_flow_job(*, session: Session = Depends(get_session), flow: JobCreate):
     """Create a new flow."""
     db_flow = Job.from_orm(flow)
     db_flow.createdAt = datetime.datetime.now()
@@ -40,7 +40,7 @@ def create_flow(*, session: Session = Depends(get_session), flow: JobCreate):
 
 @router.post("/process_next_job", response_model=ExecutionLogRead, status_code=201)
 @router.get("/process_next_job", response_model=ExecutionLogRead, status_code=201)
-async def process_flow(*, session: Session = Depends(get_session)):
+async def process_flow_job(*, session: Session = Depends(get_session)):
     """Process a new flow. Find the first incomplete job"""
     try:
         job = session.exec(select(Job).filter(Job.currentTaskState!='_COMPLETE').limit(1)).one()
@@ -54,7 +54,7 @@ async def process_flow(*, session: Session = Depends(get_session)):
 
 
 @router.get("/", response_model=list[JobRead], status_code=200)
-def read_flows(*, session: Session = Depends(get_session)):
+def read_flow_jobs(*, session: Session = Depends(get_session)):
     """Read all flows."""
     try:
         flows = session.exec(select(Job)).all()
@@ -63,22 +63,22 @@ def read_flows(*, session: Session = Depends(get_session)):
     return [jsonable_encoder(flow) for flow in flows]
 
 
-@router.get("/{flow_id}", response_model=JobRead, status_code=200)
-def read_flow(*, session: Session = Depends(get_session), flow_id):
+@router.get("/{job_id}", response_model=JobRead, status_code=200)
+def read_flow_job(*, session: Session = Depends(get_session), job_id):
     """Read a flow."""
-    if flow := session.get(Job, flow_id):
+    if flow := session.get(Job, job_id):
         return flow
     else:
         raise HTTPException(status_code=404, detail="Job not found")
 
 
-@router.patch("/{flow_id}", response_model=JobRead, status_code=200)
-def update_flow(
-    *, session: Session = Depends(get_session), flow_id, flow: JobUpdate
+@router.patch("/{job_id}", response_model=JobRead, status_code=200)
+def update_flow_job(
+    *, session: Session = Depends(get_session), job_id, flow: JobUpdate
 ):
     """Update a flow."""
 
-    db_flow = session.get(Job, flow_id)
+    db_flow = session.get(Job, job_id)
     if not db_flow:
         raise HTTPException(status_code=404, detail="Job not found")
     flow_data = flow.dict(exclude_unset=True)
@@ -92,10 +92,10 @@ def update_flow(
     return db_flow
 
 
-@router.delete("/{flow_id}", status_code=200)
-def delete_flow(*, session: Session = Depends(get_session), flow_id):
+@router.delete("/{job_id}", status_code=200)
+def delete_flow_job(*, session: Session = Depends(get_session), job_id):
     """Delete a flow."""
-    flow = session.get(Job, flow_id)
+    flow = session.get(Job, job_id)
     if not flow:
         raise HTTPException(status_code=404, detail="Job not found")
     session.delete(flow)
@@ -107,7 +107,7 @@ def delete_flow(*, session: Session = Depends(get_session), flow_id):
 
 
 @router.post("/batch/", response_model=List[JobRead], status_code=201)
-def create_flows(*, session: Session = Depends(get_session), flow_list: List[JobCreate]):
+def create_flow_jobs(*, session: Session = Depends(get_session), flow_list: List[JobCreate]):
     """Create multiple new flows."""
     db_flows = []
     for flow in flow_list:
@@ -128,13 +128,13 @@ async def upload_file(
     contents = await file.read()
     data = json.loads(contents)
     flows=[JobCreate(**flow) for flow in data]
-    return create_flows(session=session, flow_list=flows)
+    return create_flow_jobs(session=session, flow_list=flows)
 
 
 @router.get("/download/", response_model=List[JobRead], status_code=200)
 async def download_file(*, session: Session = Depends(get_session)):
     """Download all flows as a file."""
-    flows = read_flows(session=session)
+    flows = read_flow_jobs(session=session)
     return flows
 
 

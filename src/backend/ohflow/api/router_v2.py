@@ -1,15 +1,14 @@
 # Router for base api
 from fastapi import APIRouter
-from .v2 import (
-    llm_chat,
-)
 
 router_v2 = APIRouter(
     prefix="/api/v2",
 )
 
 # custom chat api
-router_v2.include_router(llm_chat.router)
+from .v2.llm_chat import router as llm_chat_router
+
+router_v2.include_router(llm_chat_router)
 
 # workflows:
 

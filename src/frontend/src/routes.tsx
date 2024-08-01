@@ -1,3 +1,6 @@
+import FeatureFlags from "@/../feature-config.json";
+import useAuthStore from "@/stores/authStore";
+import { useStoreStore } from "@/stores/storeStore";
 import { Suspense, lazy } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { ProtectedAdminRoute } from "./components/authAdminGuard";
@@ -37,6 +40,13 @@ const ViewPage = lazy(() => import("./pages/ViewPage"));
 import WorkflowPage from "./pages/WorkflowPage";
 
 const Router = () => {
+  const autoLogin = useAuthStore((state) => state.autoLogin);
+  const hasStore = useStoreStore((state) => state.hasStore);
+
+  // Hides the General settings if there is nothing to show
+  const showGeneralSettings =
+    FeatureFlags.ENABLE_PROFILE_ICONS || hasStore || !autoLogin;
+
   return (
     <Suspense
       fallback={
@@ -86,10 +96,20 @@ const Router = () => {
             </ProtectedRoute>
           }
         >
-          <Route index element={<Navigate replace to={"general"} />} />
+          <Route
+            index
+            element={
+              <Navigate
+                replace
+                to={showGeneralSettings ? "general" : "global-variables"}
+              />
+            }
+          />
           <Route path="global-variables" element={<GlobalVariablesPage />} />
           <Route path="api-keys" element={<ApiKeysPage />} />
-          <Route path="general/:scrollId?" element={<GeneralPage />} />
+          {showGeneralSettings && (
+            <Route path="general/:scrollId?" element={<GeneralPage />} />
+          )}
           <Route path="shortcuts" element={<ShortcutsPage />} />
           <Route path="messages" element={<MessagesPage />} />
         </Route>

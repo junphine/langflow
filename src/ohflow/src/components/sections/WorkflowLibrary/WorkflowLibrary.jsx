@@ -20,7 +20,7 @@ import hostMap from "../../../wujie-config/hostMap";
 
 export default function WorkflowLibrary({ onSelect,onUpvote,isTemplate=false }) {
   const [workflows, setWorkflows] = useState([]);
-  const api_base_url = hostMap('langflow-api');
+  const api_base_url = hostMap('workflow-api');
   //Load nodes from API
   useEffect(() => {
     fetch(api_base_url+"/workflows/"+(isTemplate?'template':''))

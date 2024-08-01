@@ -8,6 +8,8 @@ from datetime import datetime
 import sqlalchemy as sa
 
 
+metadata = sa.MetaData(schema="workflow")
+
 class ExecutionLogBase(SQLModel):
     runId: str = Field(index=True)
     workflowId: Optional[str] = Field(index=True)
@@ -22,11 +24,12 @@ class ExecutionLogBase(SQLModel):
 
 class ExecutionLog(ExecutionLogBase, table=True):
     __tablename__ = 'ExecutionLogs'
+    metadata = metadata
     tenantId: str = Field(index=True,default='1')
-    id: Optional[int] = Field(primary_key=True, unique=True)
+    id: Optional[int] = Field(primary_key=True, default=None, unique=True)
 
-    createdAt: Optional[datetime] = Field(sa_column=sa.Column(sa.DateTime(timezone=True), nullable=False))
-    updatedAt: Optional[datetime] = Field(sa_column=sa.Column(sa.DateTime(timezone=True), nullable=False))
+    createdAt: Optional[datetime] = Field(sa_column=sa.Column(sa.DateTime(timezone=True), default=None, nullable=False))
+    updatedAt: Optional[datetime] = Field(sa_column=sa.Column(sa.DateTime(timezone=True), default=None, nullable=False))
 
 
 

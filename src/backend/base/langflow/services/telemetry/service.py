@@ -8,9 +8,9 @@ from typing import TYPE_CHECKING
 import httpx
 from loguru import logger
 from pydantic import BaseModel
-from langflow.services.telemetry.opentelemetry import OpenTelemetry
 
 from langflow.services.base import Service
+from langflow.services.telemetry.opentelemetry import OpenTelemetry
 from langflow.services.telemetry.schema import (
     ComponentPayload,
     PlaygroundPayload,
@@ -34,7 +34,6 @@ class TelemetryService(Service):
         self.telemetry_queue: asyncio.Queue = asyncio.Queue()
         self.client = httpx.AsyncClient(timeout=10.0)  # Set a reasonable timeout
         self.running = False
-        self.package = get_version_info()["package"]
 
         self.ot = OpenTelemetry(prometheus_enabled=settings_service.settings.prometheus_enabled)
 
@@ -58,11 +57,12 @@ class TelemetryService(Service):
             logger.debug("Telemetry tracking is disabled.")
             return
 
-        url = f"{self.base_url}/{self.package.lower()}"
+        url = f"{self.base_url}"
         if path:
             url = f"{url}/{path}"
         try:
-            response = await self.client.get(url, params=payload.model_dump())
+            payload_dict = payload.model_dump(exclude_none=True, exclude_unset=True)
+            response = await self.client.get(url, params=payload_dict)
             if response.status_code != 200:
                 logger.error(f"Failed to send telemetry data: {response.status_code} {response.text}")
             else:
@@ -86,6 +86,7 @@ class TelemetryService(Service):
         version_info = get_version_info()
         architecture = platform.architecture()[0]
         payload = VersionPayload(
+            package=version_info["package"].lower(),
             version=version_info["version"],
             platform=platform.platform(),
             python=python_version,
@@ -134,3 +135,6 @@ class TelemetryService(Service):
             await self.client.aclose()
         except Exception as e:
             logger.error(f"Error stopping tracing service: {e}")
+
+    async def teardown(self):
+        await self.stop()

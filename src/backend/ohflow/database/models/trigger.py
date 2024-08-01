@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 from typing import Dict, Optional, List
 from datetime import datetime
 import sqlalchemy as sa
-
+metadata = sa.MetaData(schema="workflow")
 
 class TriggerBase(SQLModel):
     name: str = Field(index=True)
@@ -15,9 +15,9 @@ class TriggerBase(SQLModel):
 
 class Trigger(TriggerBase, table=True):
     __tablename__ = 'Triggers'
+    metadata = metadata
     tenantId: str = Field(index=True,default='1')
-    id: Optional[int] = Field(primary_key=True, unique=True)
-    uuid: Optional[str] = Field(default_factory=uuid4, unique=True)
+    id: Optional[str] = Field(default_factory=uuid4, primary_key=True)
     createdAt: Optional[datetime] = Field(sa_column=sa.Column(sa.DateTime(timezone=True), nullable=False))
     updatedAt: Optional[datetime] = Field(sa_column=sa.Column(sa.DateTime(timezone=True), nullable=False))
 
@@ -26,8 +26,7 @@ class TriggerCreate(TriggerBase):
     pass
 
 class TriggerRead(TriggerBase):
-    id: int
-    uuid: Optional[str]
+    id: str
 
 class TriggerUpdate(TriggerBase):
     pass

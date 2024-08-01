@@ -22,7 +22,7 @@ router = APIRouter(prefix="/execution_logs", tags=["ExecutionLogs"])
 
 
 @router.post("/", response_model=ExecutionLogRead, status_code=201)
-def create_flow(*, session: Session = Depends(get_session), flow: ExecutionLogCreate):
+def create_execution_log(*, session: Session = Depends(get_session), flow: ExecutionLogCreate):
     """Create a new flow."""
     db_flow = ExecutionLog.from_orm(flow)
     db_flow.createdAt = datetime.datetime.now()
@@ -34,7 +34,7 @@ def create_flow(*, session: Session = Depends(get_session), flow: ExecutionLogCr
 
 
 @router.get("/", response_model=list[ExecutionLogRead], status_code=200)
-def read_flows(*, session: Session = Depends(get_session)):
+def read_execution_logs(*, session: Session = Depends(get_session)):
     """Read all flows."""
     try:
         flows = session.exec(select(ExecutionLog)).all()
@@ -44,7 +44,7 @@ def read_flows(*, session: Session = Depends(get_session)):
 
 
 @router.get("/{run_id}", response_model=list[ExecutionLogRead], status_code=200)
-def read_flow(*, session: Session = Depends(get_session), run_id):
+def read_execution_log(*, session: Session = Depends(get_session), run_id):
     """Read a flow."""
     if logs := session.query(ExecutionLog).filter(ExecutionLog.runId==run_id).all():
         return logs
@@ -52,13 +52,13 @@ def read_flow(*, session: Session = Depends(get_session), run_id):
         raise HTTPException(status_code=404, detail="ExecutionLog not found")
 
 
-@router.patch("/{flow_id}", response_model=ExecutionLogRead, status_code=200)
-def update_flow(
-    *, session: Session = Depends(get_session), flow_id, flow: ExecutionLogUpdate
+@router.patch("/{log_id}", response_model=ExecutionLogRead, status_code=200)
+def update_execution_log(
+    *, session: Session = Depends(get_session), log_id, flow: ExecutionLogUpdate
 ):
     """Update a flow."""
 
-    db_flow = session.get(ExecutionLog, flow_id)
+    db_flow = session.get(ExecutionLog, log_id)
     if not db_flow:
         raise HTTPException(status_code=404, detail="ExecutionLog not found")
     flow_data = flow.dict(exclude_unset=True)
@@ -71,10 +71,10 @@ def update_flow(
     return db_flow
 
 
-@router.delete("/{flow_id}", status_code=200)
-def delete_flow(*, session: Session = Depends(get_session), flow_id):
+@router.delete("/{log_id}", status_code=200)
+def delete_execution_log(*, session: Session = Depends(get_session), log_id):
     """Delete a flow."""
-    flow = session.get(ExecutionLog, flow_id)
+    flow = session.get(ExecutionLog, log_id)
     if not flow:
         raise HTTPException(status_code=404, detail="ExecutionLog not found")
     session.delete(flow)
@@ -86,7 +86,7 @@ def delete_flow(*, session: Session = Depends(get_session), flow_id):
 
 
 @router.post("/batch/", response_model=List[ExecutionLogRead], status_code=201)
-def create_flows(*, session: Session = Depends(get_session), flow_list: List[ExecutionLogCreate]):
+def create_execution_logs(*, session: Session = Depends(get_session), flow_list: List[ExecutionLogCreate]):
     """Create multiple new flows."""
     db_flows = []
     for flow in flow_list:
@@ -107,11 +107,11 @@ async def upload_file(
     contents = await file.read()
     data = json.loads(contents)
     flows=[ExecutionLogCreate(**flow) for flow in data]
-    return create_flows(session=session, flow_list=flows)
+    return create_execution_logs(session=session, flow_list=flows)
 
 
 @router.get("/download/", response_model=List[ExecutionLogRead], status_code=200)
 async def download_file(*, session: Session = Depends(get_session)):
     """Download all flows as a file."""
-    flows = read_flows(session=session)
+    flows = read_execution_logs(session=session)
     return flows

@@ -24,11 +24,11 @@ router = APIRouter(prefix="/triggers", tags=["Triggers"])
 
 
 @router.post("/", response_model=TriggerRead, status_code=201)
-def create_flow(*, session: Session = Depends(get_session), flow: TriggerCreate):
+def create_trigger(*, session: Session = Depends(get_session), flow: TriggerCreate):
     """Create a new flow."""
-    db_flow = Trigger.from_orm(flow)
-    db_flow.createdAt = datetime.datetime.now()
-    db_flow.updatedAt = datetime.datetime.now()
+    update = dict(createdAt = datetime.datetime.now(),updatedAt = datetime.datetime.now())
+    db_flow = Trigger.model_validate(flow,strict=False,update=update)
+
     session.add(db_flow)
     session.commit()
     session.refresh(db_flow)
@@ -36,7 +36,7 @@ def create_flow(*, session: Session = Depends(get_session), flow: TriggerCreate)
 
 
 @router.get("/", response_model=list[TriggerRead], status_code=200)
-def read_flows(*, session: Session = Depends(get_session)):
+def read_triggers(*, session: Session = Depends(get_session)):
     """Read all flows."""
     try:
         flows = session.exec(select(Trigger)).all()
@@ -46,7 +46,7 @@ def read_flows(*, session: Session = Depends(get_session)):
 
 
 @router.get("/{shortcode}", response_model=TriggerRead, status_code=200)
-def read_flow(*, session: Session = Depends(get_session), shortcode):
+def read_trigger(*, session: Session = Depends(get_session), shortcode):
     """Read a flow."""
     if flow := session.query(Trigger).filter(Trigger.shortcode==shortcode).one_or_none():
         return flow
@@ -77,7 +77,7 @@ async def create_trigger_job(*, session: Session = Depends(get_session), request
 
 
 @router.patch("/{flow_id}", response_model=TriggerRead, status_code=200)
-def update_flow(
+def update_trigger(
     *, session: Session = Depends(get_session), flow_id, flow: TriggerUpdate
 ):
     """Update a flow."""
@@ -96,7 +96,7 @@ def update_flow(
 
 
 @router.delete("/{flow_id}", status_code=200)
-def delete_flow(*, session: Session = Depends(get_session), flow_id: str):
+def delete_trigger(*, session: Session = Depends(get_session), flow_id: str):
     """Delete a flow."""
     flow = session.get(Trigger, flow_id)
     if not flow:
@@ -110,7 +110,7 @@ def delete_flow(*, session: Session = Depends(get_session), flow_id: str):
 
 
 @router.post("/batch/", response_model=List[TriggerRead], status_code=201)
-def create_flows(*, session: Session = Depends(get_session), flow_list: List[TriggerCreate]):
+def create_triggers(*, session: Session = Depends(get_session), flow_list: List[TriggerCreate]):
     """Create multiple new flows."""
     db_flows = []
     for flow in flow_list:
@@ -131,11 +131,11 @@ async def upload_file(
     contents = await file.read()
     data = json.loads(contents)
     flows=[TriggerCreate(**flow) for flow in data]
-    return create_flows(session=session, flow_list=flows)
+    return create_triggers(session=session, flow_list=flows)
 
 
 @router.get("/download/", response_model=List[TriggerRead], status_code=200)
 async def download_file(*, session: Session = Depends(get_session)):
     """Download all flows as a file."""
-    flows = read_flows(session=session)
+    flows = read_triggers(session=session)
     return flows

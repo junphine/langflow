@@ -1,7 +1,6 @@
 // src/constants/constants.ts
 
 import { languageMap } from "../types/components";
-import { nodeNames } from "../utils/styleUtils";
 
 /**
  * invalid characters for flow name
@@ -736,6 +735,9 @@ export const AUTHORIZED_DUPLICATE_REQUESTS = [
   "/auto_login",
 ];
 
+export const BROKEN_EDGES_WARNING =
+  "Some connections were removed because they were invalid:";
+
 export const SAVE_DEBOUNCE_TIME = 300;
 
 export const IS_MAC = navigator.userAgent.toUpperCase().includes("MAC");
@@ -818,6 +820,10 @@ export const defaultShortcuts = [
     shortcut: `${IS_MAC ? "Cmd" : "Ctrl"} + F`,
   },
   {
+    name: "Freeze Path",
+    shortcut: `${IS_MAC ? "Cmd" : "Ctrl"} + Shift + F`,
+  },
+  {
     name: "Flow Share",
     shortcut: `${IS_MAC ? "Cmd" : "Ctrl"} + B`,
   },
@@ -844,6 +850,8 @@ export const MODAL_CLASSES =
 
 export const ALLOWED_IMAGE_INPUT_EXTENSIONS = ["png", "jpg", "jpeg"];
 
+export const componentsToIgnoreUpdate = ["CustomComponent"];
+
 export const FS_ERROR_TEXT =
   "Please ensure your file has one of the following extensions:";
 export const SN_ERROR_TEXT = ALLOWED_IMAGE_INPUT_EXTENSIONS.join(", ");
@@ -855,6 +863,8 @@ export const TITLE_ERROR_UPDATING_COMPONENT =
 
 export const EMPTY_INPUT_SEND_MESSAGE = "No input message provided.";
 
+export const EMPTY_OUTPUT_SEND_MESSAGE = "Message empty.";
+
 export const TABS_ORDER = [
   "run curl",
   "python api",
@@ -862,3 +872,7 @@ export const TABS_ORDER = [
   "python code",
   "chat widget html",
 ];
+
+export const LANGFLOW_ACCESS_TOKEN = "access_token_lf";
+export const LANGFLOW_API_TOKEN = "apikey_tkn_lflw";
+export const LANGFLOW_AUTO_LOGIN_OPTION = "auto_login_lf";

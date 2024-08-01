@@ -14,7 +14,7 @@ class AuthSettings(BaseSettings):
     # Login settings
     CONFIG_DIR: str
     SECRET_KEY: SecretStr = Field(
-        default=SecretStr(""),
+        default=SecretStr("123456"),
         description="Secret key for JWT. If not provided, a random one will be generated.",
         frozen=False,
     )

@@ -8,7 +8,7 @@ from typing import Dict, Optional, List
 from datetime import datetime
 import sqlalchemy as sa
 
-
+metadata = sa.MetaData(schema="workflow")
 class RunLogBase(SQLModel):
     runId: Optional[str] = Field(default_factory=uuid4, unique=True)
     workflowId: Optional[str] = Field(index=True)
@@ -16,10 +16,11 @@ class RunLogBase(SQLModel):
 
 class RunLog(RunLogBase, table=True):
     __tablename__ = 'RunLogs'
+    metadata = metadata
     tenantId: str = Field(index=True,default='1')
-    id: Optional[int] = Field(primary_key=True, unique=True)
-    createdAt: Optional[datetime] = Field(sa_column=sa.Column(sa.DateTime(timezone=True), nullable=False))
-    updatedAt: Optional[datetime] = Field(sa_column=sa.Column(sa.DateTime(timezone=True), nullable=False))
+    id: Optional[int] = Field(primary_key=True, default=None, unique=True)
+    createdAt: Optional[datetime] = Field(sa_column=sa.Column(sa.DateTime(timezone=True), default=None, nullable=False))
+    updatedAt: Optional[datetime] = Field(sa_column=sa.Column(sa.DateTime(timezone=True), default=None, nullable=False))
 
 
 class RunLogCreate(RunLogBase):

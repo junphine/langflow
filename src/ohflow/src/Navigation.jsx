@@ -94,12 +94,12 @@ const useStyles = createStyles((theme, _params, getRef) => {
   };
 });
 
-const data = [
-  { link: "#/Collections", label: "Collections", icon: IconBackhoe },
+const data = [  
   { link: "#/Workflows", label: "Workflows", icon: IconSitemap },
   { link: "#/Triggers", label: "Workflow Triggers", icon: IconArrowMoveRight },
   { link: "#/WorkflowTemplates", label: "Workflow Templates", icon: IconBooks },
   { link: "#/NodeLibrary", label: "Node Library", icon: IconCategory2 },
+  { link: "#/Collections", label: "Collections", icon: IconBackhoe },
   { link: "#/Logs", label: "Logs", icon: IconList },
   { link: "#/Debug", label: "Debug", icon: IconBug },
 ];

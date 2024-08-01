@@ -119,15 +119,15 @@ export default function NodeDetailsModal({
             name="editableFields"
             control={control}
             rules={{ required: true }}
-            defaultValue={JSON.stringify(activeNode.editableFields) || ""}
+            defaultValue={JSON.stringify(activeNode.editableFields,null,2) || ""}
             render={({ field, fieldState }) => (
               <JsonInput
                 {...field}
                 name="editableFields"
                 label="Editable Fields"
                 autosize
-                minRows={3}
-                maxRows={8}
+                minRows={5}
+                maxRows={16}
                 description="Array of JSON objects with id, label, type. These get added to the data parameter of the final node, and are passed to the code as template variables."
                 placeholder='[{
                   id: "code",

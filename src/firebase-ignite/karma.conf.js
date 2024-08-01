@@ -17,7 +17,7 @@ exports = module.exports = function (config) {
         },
         exclude: [],
         files: [
-            "bundles/firebase-nightlight-test.umd.js"
+            "bundles/firebase-ignite-test.umd.js"
         ],
         frameworks: ["mocha"],
         logLevel: config.LOG_INFO,

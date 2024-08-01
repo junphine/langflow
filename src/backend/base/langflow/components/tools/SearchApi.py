@@ -1,55 +1,44 @@
-from typing import Optional
+from typing import Union
 
 from langchain_community.utilities.searchapi import SearchApiAPIWrapper
 
-from langflow.custom import CustomComponent
+from langflow.base.langchain_utilities.model import LCToolComponent
+from langflow.inputs import SecretStrInput, MultilineInput, DictInput, MessageTextInput
 from langflow.schema import Data
-from langflow.services.database.models.base import orjson_dumps
+from langflow.field_typing import Tool
 
 
-class SearchApi(CustomComponent):
-    display_name: str = "SearchApi"
-    description: str = "Real-time search engine results API."
-    name = "SearchApi"
-
-    output_types: list[str] = ["Document"]
+class SearchAPIComponent(LCToolComponent):
+    display_name: str = "Search API"
+    description: str = "Call the searchapi.io API"
+    name = "SearchAPI"
     documentation: str = "https://www.searchapi.io/docs/google"
-    field_config = {
-        "engine": {
-            "display_name": "Engine",
-            "field_type": "str",
-            "info": "The search engine to use.",
-        },
-        "params": {
-            "display_name": "Parameters",
-            "info": "The parameters to send with the request.",
-        },
-        "code": {"show": False},
-        "api_key": {
-            "display_name": "API Key",
-            "field_type": "str",
-            "required": True,
-            "password": True,
-            "info": "The API key to use SearchApi.",
-        },
-    }
 
-    def build(
-        self,
-        engine: str,
-        api_key: str,
-        params: Optional[dict] = None,
-    ) -> Data:
-        if params is None:
-            params = {}
+    inputs = [
+        MessageTextInput(name="engine", display_name="Engine", value="google"),
+        SecretStrInput(name="api_key", display_name="SearchAPI API Key", required=True),
+        MultilineInput(
+            name="input_value",
+            display_name="Input",
+        ),
+        DictInput(name="search_params", display_name="Search parameters", advanced=True, is_list=True),
+    ]
 
-        search_api_wrapper = SearchApiAPIWrapper(engine=engine, searchapi_api_key=api_key)
+    def run_model(self) -> Union[Data, list[Data]]:
+        wrapper = self._build_wrapper()
+        results = wrapper.results(query=self.input_value, **(self.search_params or {}))
+        list_results = results.get("organic_results", [])
+        data = [Data(data=result, text=result["snippet"]) for result in list_results]
+        self.status = data
+        return data
 
-        q = params.pop("q", "SearchApi Langflow")
-        results = search_api_wrapper.results(q, **params)
+    def build_tool(self) -> Tool:
+        wrapper = self._build_wrapper()
+        return Tool(
+            name="search_api",
+            description="Search for recent results.",
+            func=lambda x: wrapper.run(query=x, **(self.search_params or {})),
+        )
 
-        result = orjson_dumps(results, indent_2=False)
-
-        record = Data(data=result)
-        self.status = record
-        return record
+    def _build_wrapper(self):
+        return SearchApiAPIWrapper(engine=self.engine, searchapi_api_key=self.api_key)

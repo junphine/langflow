@@ -1,9 +1,11 @@
 from enum import Enum
 from typing import Annotated, Any, Optional
 
+from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, field_validator, model_serializer
+
 from langflow.field_typing.range_spec import RangeSpec
 from langflow.inputs.validators import CoalesceBool
-from pydantic import BaseModel, ConfigDict, Field, PlainSerializer, field_validator, model_serializer
+from langflow.schema.table import Column, TableSchema
 
 
 class FieldTypes(str, Enum):
@@ -17,6 +19,7 @@ class FieldTypes(str, Enum):
     FILE = "file"
     PROMPT = "prompt"
     OTHER = "other"
+    TABLE = "table"
 
 
 SerializableFieldTypes = Annotated[FieldTypes, PlainSerializer(lambda v: v.value, return_type=str)]
@@ -84,6 +87,7 @@ class BaseInputMixin(BaseModel, validate_assignment=True):
         dump = handler(self)
         if "field_type" in dump:
             dump["type"] = dump.pop("field_type")
+        dump["_input_type"] = self.__class__.__name__
         return dump
 
 
@@ -131,7 +135,22 @@ class RangeMixin(BaseModel):
 class DropDownMixin(BaseModel):
     options: Optional[list[str]] = None
     """List of options for the field. Only used when is_list=True. Default is an empty list."""
+    combobox: CoalesceBool = False
+    """Variable that defines if the user can insert custom values in the dropdown."""
 
 
 class MultilineMixin(BaseModel):
     multiline: CoalesceBool = True
+
+
+class TableMixin(BaseModel):
+    table_schema: Optional[TableSchema | list[Column]] = None
+
+    @field_validator("table_schema")
+    @classmethod
+    def validate_table_schema(cls, v):
+        if isinstance(v, list) and all(isinstance(column, Column) for column in v):
+            return TableSchema(columns=v)
+        if isinstance(v, TableSchema):
+            return v
+        raise ValueError("table_schema must be a TableSchema or a list of Columns")

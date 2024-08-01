@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "frontend"
+		},
+		{
+			"path": "sequill"
+		},
+		{
+			"path": "firebase-ignite"
+		},
+		{
+			"path": "ohflow"
+		}
+	],
+	"settings": {}
+}
