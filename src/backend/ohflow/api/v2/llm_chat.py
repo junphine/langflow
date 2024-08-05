@@ -10,7 +10,7 @@ from loguru import logger
 from sqlmodel import Session
 
 import ohflow.interface.models.chatwebui.api_ernie_bot as chat_api
-from langflow.api.utils import Dictate
+from ohflow.api.utils import Dictate
 from langflow.load import load_flow_from_json
 from langflow.services.auth.utils import (
     get_user_by_id
