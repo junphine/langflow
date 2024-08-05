@@ -1,6 +1,6 @@
 from enum import Enum
 from opentelemetry import metrics
-from opentelemetry.exporter.prometheus import PrometheusMetricReader
+
 from opentelemetry.metrics import Observation, CallbackOptions
 from opentelemetry.metrics._internal.instrument import Counter, Histogram, UpDownCounter
 from opentelemetry.sdk.metrics import MeterProvider
@@ -146,6 +146,7 @@ class OpenTelemetry(metaclass=ThreadSafeSingletonMetaUsingWeakref):
         # configure prometheus exporter
         self.prometheus_enabled = prometheus_enabled
         if prometheus_enabled:
+            from opentelemetry.exporter.prometheus import PrometheusMetricReader
             reader = PrometheusMetricReader()
             meter_provider = MeterProvider(resource=resource, metric_readers=[reader])
 

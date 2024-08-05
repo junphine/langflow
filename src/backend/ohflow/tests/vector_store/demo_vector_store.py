@@ -226,7 +226,7 @@ def demo_qdrant():
 
 def demo_mongo():
     dbname = 'graph'
-    mongo_client = MongoClient("mongodb://172.16.29.84:2701/"+dbname)
+    mongo_client = MongoClient("mongodb://127.0.0.1:2701/"+dbname)
 
     collection_name = 'text_embedding_huge'
     collection = mongo_client[dbname][collection_name]
