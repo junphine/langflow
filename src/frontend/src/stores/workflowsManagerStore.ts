@@ -1,8 +1,14 @@
+import { brokenEdgeMessage } from "@/utils/utils";
+import { AxiosError } from "axios";
 import { cloneDeep } from "lodash";
 import pDebounce from "p-debounce";
+import { useLocation } from "react-router-dom";
 import { Edge, Node, Viewport, XYPosition } from "reactflow";
 import { create } from "zustand";
-import { SAVE_DEBOUNCE_TIME } from "../constants/constants";
+import {
+  BROKEN_EDGES_WARNING,
+  SAVE_DEBOUNCE_TIME,
+} from "../constants/constants";
 import {
   deleteFlowFromDatabase,
   readFlowsFromDatabase,
@@ -10,7 +16,6 @@ import {
   updateFlowInDatabase,
   uploadFlowsToDatabase,
 } from "../controllers/API/workflow";
-
 import { FlowType, NodeDataType } from "../types/flow";
 import {
   FlowsManagerStoreType,
@@ -20,14 +25,17 @@ import {
   addVersionToDuplicates,
   createFlowComponent,
   createNewFlow,
+  detectBrokenEdgesEdges,
   extractFieldsFromComponenents,
   processDataFromFlow,
   processFlows,
+  updateGroupRecursion,
 } from "../utils/reactflowUtils";
 import useAlertStore from "./alertStore";
 import { useDarkStore } from "./darkStore";
 import useFlowStore from "./flowStore";
 import { useFolderStore } from "./foldersStore";
+import { useGlobalVariablesStore } from "./globalVariablesStore/globalVariables";
 import { useTypesStore } from "./typesStore";
 
 let saveTimeoutId: NodeJS.Timeout | null = null;
@@ -40,7 +48,7 @@ const defaultOptions: UseUndoRedoOptions = {
 const past = {};
 const future = {};
 
-const useWorkFlowsManagerStore = create<FlowsManagerStoreType>((set, get) => ({
+const useFlowsManagerStore = create<FlowsManagerStoreType>((set, get) => ({
   examples: [],
   setExamples: (examples: FlowType[]) => {
     set({ examples });
@@ -74,7 +82,8 @@ const useWorkFlowsManagerStore = create<FlowsManagerStoreType>((set, get) => ({
   },
   currentFlow: undefined,
   saveLoading: false,
-  isLoading: true,
+  setSaveLoading: (saveLoading: boolean) => set({ saveLoading }),
+  isLoading: false,
   setIsLoading: (isLoading: boolean) => set({ isLoading }),
   refreshFlows: () => {
     return new Promise<void>((resolve, reject) => {
@@ -129,6 +138,13 @@ const useWorkFlowsManagerStore = create<FlowsManagerStoreType>((set, get) => ({
     return get().saveFlowDebounce(flow, silent); // call the debounced function directly
   },
   saveFlowDebounce: pDebounce((flow: FlowType, silent?: boolean) => {
+    const folderUrl = useFolderStore.getState().folderUrl;
+    const hasFolderUrl = folderUrl != null && folderUrl !== "";
+
+    flow.folder_id = hasFolderUrl
+      ? useFolderStore.getState().folderUrl
+      : useFolderStore.getState().myCollectionId ?? "";
+
     set({ saveLoading: true });
     return new Promise<void>((resolve, reject) => {
       updateFlowInDatabase(flow)
@@ -155,9 +171,11 @@ const useWorkFlowsManagerStore = create<FlowsManagerStoreType>((set, get) => ({
           }
         })
         .catch((err) => {
+          useAlertStore.getState().setErrorData({
+            title: "Error while saving changes",
+            list: [(err as AxiosError).message],
+          });
           reject(err);
-          set({ saveLoading: false });
-          throw err;
         });
     });
   }, SAVE_DEBOUNCE_TIME),
@@ -197,11 +215,18 @@ const useWorkFlowsManagerStore = create<FlowsManagerStoreType>((set, get) => ({
     position?: XYPosition,
     fromDragAndDrop?: boolean,
   ): Promise<string | undefined> => {
+    let flowData = flow
+      ? processDataFromFlow(flow)
+      : { nodes: [], edges: [], viewport: { zoom: 1, x: 0, y: 0 } };
+    flowData?.nodes.forEach((node) => {
+      updateGroupRecursion(
+        node,
+        flowData?.edges,
+        useGlobalVariablesStore.getState().unavailableFields,
+        useGlobalVariablesStore.getState().globalVariablesEntries,
+      );
+    });
     if (newProject) {
-      let flowData = flow
-        ? processDataFromFlow(flow)
-        : { nodes: [], edges: [], viewport: { zoom: 1, x: 0, y: 0 } };
-
       // Create a new flow with a default name if no flow is provided.
       const folder_id = useFolderStore.getState().folderUrl;
       const my_collection_id = useFolderStore.getState().myCollectionId;
@@ -261,11 +286,33 @@ const useWorkFlowsManagerStore = create<FlowsManagerStoreType>((set, get) => ({
 
         // Return the id
         return id;
-      } catch (error) {
-        // Handle the error if needed
+      } catch (error: any) {
+        if (error.response?.data?.detail) {
+          useAlertStore.getState().setErrorData({
+            title: "Could not load flows from database",
+            list: [error.response?.data?.detail],
+          });
+        } else {
+          useAlertStore.getState().setErrorData({
+            title: "Could not load flows from database",
+            list: [
+              error.message ?? "An unexpected error occurred, please try again",
+            ],
+          });
+        }
         throw error; // Re-throw the error so the caller can handle it if needed
       }
     } else {
+      let brokenEdges = detectBrokenEdgesEdges(
+        flow!.data!.nodes,
+        flow!.data!.edges,
+      );
+      if (brokenEdges.length > 0) {
+        useAlertStore.getState().setErrorData({
+          title: BROKEN_EDGES_WARNING,
+          list: brokenEdges.map((edge) => brokenEdgeMessage(edge)),
+        });
+      }
       useFlowStore
         .getState()
         .paste(
@@ -277,7 +324,23 @@ const useWorkFlowsManagerStore = create<FlowsManagerStoreType>((set, get) => ({
   removeFlow: async (id: string | string[]) => {
     return new Promise<void>((resolve, reject) => {
       if (Array.isArray(id)) {
-        
+        deleteFlowFromDatabase(id.toString())
+          .then(() => {
+            const { data, flows } = processFlows(
+              get().flows.filter((flow) => !id.includes(flow.id)),
+            );
+            get().setFlows(flows);
+            set({ isLoading: false });
+            useTypesStore.setState((state) => ({
+              data: { ...state.data, ["saved_components"]: data },
+              ComponentFields: extractFieldsFromComponenents({
+                ...state.data,
+                ["saved_components"]: data,
+              }),
+            }));
+            resolve();
+          })
+          .catch((e) => reject(e));
       } else {
         const index = get().flows.findIndex((flow) => flow.id === id);
         if (index >= 0) {
@@ -474,4 +537,4 @@ const useWorkFlowsManagerStore = create<FlowsManagerStoreType>((set, get) => ({
   },
 }));
 
-export default useWorkFlowsManagerStore;
+export default useFlowsManagerStore;

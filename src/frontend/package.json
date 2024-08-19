@@ -3,6 +3,9 @@
   "version": "0.1.2",
   "private": true,
   "dependencies": {
+    "@emotion/react": "^11.0.0",
+    "@emotion/styled": "^11.0.0",
+    "@chakra-ui/system": "^2.1.2",
     "@chakra-ui/number-input": "^2.1.2",
     "@headlessui/react": "^2.0.4",
     "@hookform/resolvers": "^3.6.0",
@@ -117,7 +120,7 @@
     "@tailwindcss/typography": "^0.5.13",
     "@testing-library/jest-dom": "^6.4.6",
     "@testing-library/react": "^16.0.0",
-    "@testing-library/dom": "^7.21.4",
+    "@testing-library/dom": "^7.12.4",
     "@testing-library/user-event": "^14.5.2",
     "@types/jest": "^29.5.12",
     "@types/lodash": "4.17.5",

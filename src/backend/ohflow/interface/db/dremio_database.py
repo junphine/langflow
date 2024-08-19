@@ -10,9 +10,8 @@ from sqlalchemy.engine import Engine
 from sqlalchemy.exc import ProgrammingError, SQLAlchemyError
 from sqlalchemy.schema import CreateTable
 
-from langchain.utils import get_from_env
+from ohflow.api.utils import dict_to_object
 from langchain import sql_database
-
 from sqlalchemy_dremio.flight import DremioDialect_flight
 
 
@@ -133,11 +132,11 @@ class DremioDatabase(sql_database.SQLDatabase):
     def from_flight(
             cls,
             host: str,
-            port: str = "32010",
+            port: int = 32010,
             user: str = "root",
             password: str = "",
             schema: str = "public",
-            session_properties: dict = None,
+            engine_args: dict = None,
             sample_rows_in_table_info: int = 0,
     ) -> DremioDatabase:
         """
@@ -147,7 +146,7 @@ class DremioDatabase(sql_database.SQLDatabase):
 
         return cls.from_uri(
             database_uri=uri,
-            engine_args=session_properties,
+            engine_args=engine_args,
             schema=schema,
             view_support=True,
             sample_rows_in_table_info=int(sample_rows_in_table_info)
@@ -172,7 +171,7 @@ class DremioDatabase(sql_database.SQLDatabase):
             connection_args = dict(hostname=host,port=port,username=user,password=password,schema=schema,session_properties=session_properties,
                                    engine='',token=None,path_to_certs=None,disable_certificate_verification=False,tls=False)
             # Instantiate DremioFlightEndpoint object
-            dremio_flight_endpoint = DremioFlightEndpoint(utils.dict_to_object(connection_args))
+            dremio_flight_endpoint = DremioFlightEndpoint(dict_to_object(connection_args))
 
             # Connect to Dremio Arrow Flight server endpoint.
             flight_client = dremio_flight_endpoint.connect()
@@ -262,7 +261,7 @@ class DremioDatabase(sql_database.SQLDatabase):
             if has_extra_info:
                 table_info += "*/"
             tables.append(table_info)
-        tables.sort()
+
         final_str = "\n\n".join(tables)
         return final_str
 

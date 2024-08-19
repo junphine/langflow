@@ -1,7 +1,7 @@
 import { useContext, useEffect } from "react";
 import { Download, Upload, Plus, Home, Combine, ExternalLink } from "lucide-react";
 import useWorkFlowsManagerStore from "../../stores/workflowsManagerStore";
-import { downloadFlow,downloadFlows } from "../../utils/reactflowUtils";
+import { downloadFlowsFromDatabase } from "../../controllers/API/workflow";
 import { Button } from "../../components/ui/button";
 import { Link, useNavigate } from "react-router-dom";
 import CollectionCardComponent from "../../components/cardComponent";
@@ -23,7 +23,7 @@ export default function WorkflowPage() {
           <Button
             variant="primary"
             onClick={() => {
-              downloadFlows();
+              downloadFlowsFromDatabase();
             }}
           >
             <Download className="w-4 mr-2" />

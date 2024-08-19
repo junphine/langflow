@@ -1,4 +1,4 @@
-
+from langchain_experimental.sql.base import SQLDatabase
 from langflow.custom import CustomComponent
 from ohflow.interface.db.dremio_database import DremioDatabase
 
@@ -13,14 +13,12 @@ class DremioDatabaseComponent(CustomComponent):
             "uri": {"display_name": "URI", "info": "URI to the dremio database."},
             "host": {"display_name": "Dremio Host", "info": "IP to the dremio database."},
             "port": {"display_name": "Dremio Port", "info": "Port to the dremio database."},
-            "user": {"display_name": "Dremio User", "info": "User to the dremio database."},
-            "password": {"display_name": "Dremio Password", "info": "Password to the dremio database."},
+            "user": {"display_name": "Dremio User", "info": "User to the dremio database.","advanced": True,"required": False},
+            "password": {"display_name": "Dremio Password", "info": "Password to the dremio database.","advanced": True,"required": False},
             "schema": {"display_name": "Dremio schema", "info": "schema to the dremio database."},
         }
 
     def clean_up_uri(self, uri: str) -> str:
-        if uri.startswith("postgresql://"):
-            uri = uri.replace("postgresql://", "postgres://")
         return uri.strip()
 
     def build(self, uri: str='',
@@ -28,9 +26,9 @@ class DremioDatabaseComponent(CustomComponent):
           port: int=32010,
           user: str = "root",
           password: str = "",
-          schema: str='public') -> DremioDatabase:
-        uri = self.clean_up_uri(uri)
+          schema: str='public') -> SQLDatabase:
         if uri:
+            uri = self.clean_up_uri(uri)
             return DremioDatabase.from_uri(uri)
         else:
             return DremioDatabase.from_flight(host,port=port,user=user,password=password,schema=schema)

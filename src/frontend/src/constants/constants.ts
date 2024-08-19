@@ -682,7 +682,7 @@ export const CHAT_SECOND_INITIAL_TEXT = "to inspect previous messages.";
 
 export const ZERO_NOTIFICATIONS = "No new notifications";
 
-export const SUCCESS_BUILD = "Built sucessfully âœ?;
+export const SUCCESS_BUILD = "Built sucessfully";
 
 export const ALERT_SAVE_WITH_API =
   "Caution: Unchecking this box only removes API keys from fields specifically designated for API keys.";

@@ -39,3 +39,22 @@ export async function uploadFlowToFolder(
     throw error;
   }
 }
+
+
+export async function downloadFlowsFromFolders(
+  folderId: string,
+): Promise<FolderType> {
+  try {
+    const url = `${BASE_URL_API}flows/upload/?folder_id=${encodeURIComponent(folderId)}`;
+
+    const response = await api.get(url);
+
+    if (response?.status !== 201) {
+      throw new Error(`HTTP error! status: ${response?.status}`);
+    }
+    return response.data;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}

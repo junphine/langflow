@@ -73,7 +73,7 @@ export const MenuBar = ({}: {}): JSX.Element => {
   return currentFlow ? (
     <div className="round-button-div">
       <div className="header-menu-bar">
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button
               asChild
@@ -89,7 +89,13 @@ export const MenuBar = ({}: {}): JSX.Element => {
               </div>
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-44">
+          <DropdownMenuContent className="w-44" onCloseAutoFocus={
+                () => {
+                  setTimeout(() => {
+                    document.getElementById("body")?.style.removeProperty('pointer-events');
+                  }, 2000);
+                }
+              }>
             <DropdownMenuLabel>Options</DropdownMenuLabel>
             <DropdownMenuItem
               onClick={() => {
@@ -100,11 +106,10 @@ export const MenuBar = ({}: {}): JSX.Element => {
               <IconComponent name="Plus" className="header-menu-options" />
               New
             </DropdownMenuItem>
-
             <DropdownMenuItem
               onClick={() => {
-                setOpenSettings(true);
-              }}
+                setOpenSettings(true);                
+              }}              
               className="cursor-pointer"
             >
               <IconComponent name="Settings2" className="header-menu-options" />

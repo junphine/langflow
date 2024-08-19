@@ -28,11 +28,11 @@ from langflow.services.settings.constants import DEFAULT_SUPERUSER
 from langflow.services.utils import initialize_services
 from langflow.utils.logger import configure, logger
 from langflow.utils.util import update_settings
+from schema import Optional as OptionalSchema
 
 console = Console()
 
 app = typer.Typer(no_args_is_help=True)
-
 
 def get_number_of_workers(workers=None):
     if workers == -1 or workers is None:
