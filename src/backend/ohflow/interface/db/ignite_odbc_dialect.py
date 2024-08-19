@@ -459,10 +459,10 @@ class IgniteDialect_pyodbc(PyODBCConnector, BaseIgniteDialect):
         opts = url.translate_connect_args(username="user")
         opts.update(url.query)
 
-        if 'configServer' in opts:
-            self.cluster_config_server = opts['configServer']
-        if 'token' in opts:
-            self.cluster_access_token = opts['token']
+        if 'metaServerURL' in opts:
+            self.cluster_config_server = opts['metaServerURL']
+        if 'metaAccessToken' in opts:
+            self.cluster_access_token = opts['metaAccessToken']
 
         return super().create_connect_args(url)
 

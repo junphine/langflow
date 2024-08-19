@@ -144,15 +144,15 @@ class IgniteDatabase(sql_database.SQLDatabase):
         engine_args: dict = None,
         sample_rows_in_table_info: int = 0,
         include_tables: str=None,
-        config_server_url: str=None,
-        config_access_token: str=None,
+        meta_server_url: str=None,
+        meta_access_token: str=None,
     ) -> IgniteDatabase:
         """
         Construct a Dremio flight engine from parms.
         """
         uri = f"ignite+thin://{user}:{password}@{host}:{port}/{schema}"
-        if config_server_url and config_access_token:
-            uri += f"?configServer={config_server_url}&token={config_access_token}"
+        if meta_server_url and meta_access_token:
+            uri += f"?metaServerURL={meta_server_url}&metaAccessToken={meta_access_token}"
 
         return cls.from_uri(
             database_uri=uri,

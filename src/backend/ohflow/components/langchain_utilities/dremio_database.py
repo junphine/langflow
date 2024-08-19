@@ -1,4 +1,4 @@
-from langchain_experimental.sql.base import SQLDatabase
+from langchain_community.utilities.sql_database import SQLDatabase
 from langflow.custom import CustomComponent
 from ohflow.interface.db.dremio_database import DremioDatabase
 
