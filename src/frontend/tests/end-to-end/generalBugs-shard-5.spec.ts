@@ -21,7 +21,7 @@ test("should be able to see output preview from grouped components", async ({
 
   while (modalCount === 0) {
     await page.getByText("New Project", { exact: true }).click();
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(3000);
     modalCount = await page.getByTestId("modal-title")?.count();
   }
 
@@ -192,14 +192,11 @@ test("should be able to see output preview from grouped components", async ({
   await elementTextOutputInput.hover();
   await page.mouse.up();
 
-  await page
-    .getByTestId("popover-anchor-input-input_value")
-    .nth(0)
-    .fill(randomName);
+  await page.getByTestId("textarea_str_input_value").nth(0).fill(randomName);
 
   await page.waitForTimeout(1000);
   await page
-    .getByTestId("popover-anchor-input-input_value")
+    .getByTestId("textarea_str_input_value")
     .nth(1)
     .fill(secondRandomName);
   await page.waitForTimeout(1000);

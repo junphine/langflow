@@ -36,8 +36,8 @@ def is_list_of_any(field: FieldInfo) -> bool:
         else:
             union_args = []
 
-        return field.annotation.__origin__ == list or any(
-            arg.__origin__ == list for arg in union_args if hasattr(arg, "__origin__")
+        return field.annotation.__origin__ is list or any(
+            arg.__origin__ is list for arg in union_args if hasattr(arg, "__origin__")
         )
     except AttributeError:
         return False
@@ -74,6 +74,8 @@ class Settings(BaseSettings):
     max_overflow: int = 20
     """The number of connections to allow that can be opened beyond the pool size.
     If not provided, the default is 20."""
+    db_connect_timeout: int = 20
+    """The number of seconds to wait before giving up on a lock to released or establishing a connection to the database."""
 
     # sqlite configuration
     sqlite_pragmas: Optional[dict] = {"synchronous": "NORMAL", "journal_mode": "WAL"}
@@ -155,6 +157,10 @@ class Settings(BaseSettings):
     # Config
     auto_saving: bool = True
     """If set to True, Langflow will auto save flows."""
+    auto_saving_interval: int = 1000
+    """The interval in ms at which Langflow will auto save flows."""
+    health_check_max_retries: int = 5
+    """The maximum number of retries for the health check."""
 
     @field_validator("dev")
     @classmethod
@@ -214,13 +220,12 @@ class Settings(BaseSettings):
                 # if there is a database in that location
                 if not info.data["config_dir"]:
                     raise ValueError("config_dir not set, please set it or provide a database_url")
-                try:
-                    from langflow.version import is_pre_release  # type: ignore
-                except ImportError:
-                    from importlib import metadata
 
-                    version = metadata.version("langflow-base")
-                    is_pre_release = "a" in version or "b" in version or "rc" in version
+                from langflow.utils.version import get_version_info
+                from langflow.utils.version import is_pre_release as langflow_is_pre_release
+
+                version = get_version_info()["version"]
+                is_pre_release = langflow_is_pre_release(version)
 
                 if info.data["save_db_in_config_dir"]:
                     database_dir = info.data["config_dir"]

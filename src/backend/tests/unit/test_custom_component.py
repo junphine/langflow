@@ -19,7 +19,7 @@ def client():
 
 @pytest.fixture
 def code_component_with_multiple_outputs():
-    with open("src/backend/tests/data/component_multiple_outputs.py", "r") as f:
+    with open("src/backend/tests/data/component_multiple_outputs.py") as f:
         code = f.read()
         return Component(_code=code)
 
@@ -400,6 +400,7 @@ def test_custom_component_get_function_entrypoint_args_no_args():
     the CustomComponent class with a build method with no arguments.
     """
     my_code = """
+from langflow.custom import CustomComponent
 class MyMainClass(CustomComponent):
     def build():
         pass"""
@@ -415,6 +416,7 @@ def test_custom_component_get_function_entrypoint_return_type_no_return_type():
     CustomComponent class with a build method with no return type.
     """
     my_code = """
+from langflow.custom import CustomComponent
 class MyClass(CustomComponent):
     def build():
         pass"""

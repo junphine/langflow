@@ -4,7 +4,13 @@ test("user must see on handle click the possibility connections - RetrievalQA", 
   page,
 }) => {
   await page.goto("/");
-  await page.waitForTimeout(2000);
+  await page.waitForSelector('[data-testid="mainpage_title"]', {
+    timeout: 30000,
+  });
+
+  await page.waitForSelector('[id="new-project-btn"]', {
+    timeout: 30000,
+  });
 
   let modalCount = 0;
   try {
@@ -18,7 +24,7 @@ test("user must see on handle click the possibility connections - RetrievalQA", 
 
   while (modalCount === 0) {
     await page.getByText("New Project", { exact: true }).click();
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(3000);
     modalCount = await page.getByTestId("modal-title")?.count();
   }
   await page.waitForTimeout(1000);
@@ -64,62 +70,68 @@ test("user must see on handle click the possibility connections - RetrievalQA", 
     force: true,
   });
 
-  await expect(page.getByTestId("disclosure-inputs")).toBeVisible();
-  await expect(page.getByTestId("disclosure-outputs")).toBeVisible();
-  await expect(page.getByTestId("disclosure-data")).toBeVisible();
-  await expect(page.getByTestId("disclosure-models")).toBeVisible();
-  await expect(page.getByTestId("disclosure-helpers")).toBeVisible();
-  await expect(page.getByTestId("disclosure-vector stores")).toBeVisible();
-  await expect(page.getByTestId("disclosure-embeddings")).toBeVisible();
-  await expect(page.getByTestId("disclosure-agents")).toBeVisible();
-  await expect(page.getByTestId("disclosure-chains")).toBeVisible();
-  await expect(page.getByTestId("disclosure-memories")).toBeVisible();
-  await expect(page.getByTestId("disclosure-prototypes")).toBeVisible();
-  await expect(page.getByTestId("disclosure-retrievers")).toBeVisible();
-  await expect(page.getByTestId("disclosure-text splitters")).toBeVisible();
+  const disclosureTestIds = [
+    "disclosure-inputs",
+    "disclosure-outputs",
+    "disclosure-data",
+    "disclosure-models",
+    "disclosure-helpers",
+    "disclosure-vector stores",
+    "disclosure-embeddings",
+    "disclosure-agents",
+    "disclosure-chains",
+    "disclosure-memories",
+    "disclosure-prototypes",
+    "disclosure-retrievers",
+    "disclosure-text splitters",
+  ];
 
-  await expect(page.getByTestId("inputsChat Input").first()).toBeVisible();
-  await expect(page.getByTestId("outputsChat Output").first()).toBeVisible();
-  await expect(page.getByTestId("dataAPI Request").first()).toBeVisible();
-  await expect(page.getByTestId("modelsAmazon Bedrock").first()).toBeVisible();
-  await expect(page.getByTestId("helpersChat Memory").first()).toBeVisible();
-  await expect(page.getByTestId("vectorstoresAstra DB").first()).toBeVisible();
-  await expect(
-    page.getByTestId("embeddingsAmazon Bedrock Embeddings").first(),
-  ).toBeVisible();
-  await expect(
-    page.getByTestId("agentsTool Calling Agent").first(),
-  ).toBeVisible();
-  await expect(
-    page.getByTestId("chainsConversationChain").first(),
-  ).toBeVisible();
-  await expect(
-    page.getByTestId("memoriesAstra DB Chat Memory").first(),
-  ).toBeVisible();
-  await expect(
-    page.getByTestId("prototypesConditional Router").first(),
-  ).toBeVisible();
-  await expect(
-    page.getByTestId("retrieversSelf Query Retriever").first(),
-  ).toBeVisible();
-  await expect(
-    page.getByTestId("textsplittersCharacterTextSplitter").first(),
-  ).toBeVisible();
+  const elementTestIds = [
+    "inputsChat Input",
+    "outputsChat Output",
+    "dataAPI Request",
+    "modelsAmazon Bedrock",
+    "helpersChat Memory",
+    "vectorstoresAstra DB",
+    "embeddingsAmazon Bedrock Embeddings",
+    "agentsTool Calling Agent",
+    "chainsConversationChain",
+    "memoriesAstra DB Chat Memory",
+    "prototypesConditional Router",
+    "retrieversSelf Query Retriever",
+    "textsplittersCharacterTextSplitter",
+  ];
+
+  await Promise.all(
+    disclosureTestIds.map((id) => expect(page.getByTestId(id)).toBeVisible()),
+  );
+
+  await Promise.all(
+    elementTestIds.map((id) =>
+      expect(page.getByTestId(id).first()).toBeVisible(),
+    ),
+  );
 
   await page.getByPlaceholder("Search").click();
 
-  await expect(page.getByTestId("model_specsVertexAI")).not.toBeVisible();
-  await expect(page.getByTestId("model_specsCTransformers")).not.toBeVisible();
-  await expect(page.getByTestId("model_specsAmazon Bedrock")).not.toBeVisible();
-  await expect(page.getByTestId("modelsAzure OpenAI")).not.toBeVisible();
-  await expect(
-    page.getByTestId("model_specsAzureChatOpenAI"),
-  ).not.toBeVisible();
-  await expect(page.getByTestId("model_specsChatAnthropic")).not.toBeVisible();
-  await expect(page.getByTestId("model_specsChatLiteLLM")).not.toBeVisible();
-  await expect(page.getByTestId("model_specsChatOllama")).not.toBeVisible();
-  await expect(page.getByTestId("model_specsChatOpenAI")).not.toBeVisible();
-  await expect(page.getByTestId("model_specsChatVertexAI")).not.toBeVisible();
+  const notVisibleModelSpecsTestIds = [
+    "model_specsVertexAI",
+    "model_specsCTransformers",
+    "model_specsAmazon Bedrock",
+    "modelsAzure OpenAI",
+    "model_specsAzureChatOpenAI",
+    "model_specsChatAnthropic",
+    "model_specsChatLiteLLM",
+    "model_specsChatOllama",
+    "model_specsChatOpenAI",
+    "model_specsChatVertexAI",
+  ];
+
+  await Promise.all(
+    notVisibleModelSpecsTestIds.map((id) =>
+      expect(page.getByTestId(id)).not.toBeVisible(),
+    ),
+  );
 
   const chainInputElements1 = await page
     .getByTestId("handle-retrievalqa-shownode-llm-left")

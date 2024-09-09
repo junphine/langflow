@@ -1,5 +1,6 @@
 // src/constants/constants.ts
 
+import custom from "../customization/config-constants";
 import { languageMap } from "../types/components";
 
 /**
@@ -569,9 +570,7 @@ export const ADMIN_HEADER_TITLE = "Admin Page";
 export const ADMIN_HEADER_DESCRIPTION =
   "Navigate through this section to efficiently oversee all application users. From here, you can seamlessly manage user accounts.";
 
-export const BASE_URL_API = "/api/v1/";
-
-export const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:7860/";
+export const BASE_URL_API = custom.BASE_URL_API || "/api/v1/";
 
 /**
  * URLs excluded from error retries.
@@ -582,7 +581,7 @@ export const URL_EXCLUDED_FROM_ERROR_RETRIES = [
   `${BASE_URL_API}validate/code`,
   `${BASE_URL_API}custom_component`,
   `${BASE_URL_API}validate/prompt`,
-  `http://localhost:7860/login`,
+  `${BASE_URL_API}/login`,
   `${BASE_URL_API}api_key/store`,
 ];
 
@@ -624,6 +623,10 @@ export const tabsCode = [];
 export const FETCH_ERROR_MESSAGE = "Couldn't establish a connection.";
 export const FETCH_ERROR_DESCRIPION =
   "Check if everything is working properly and try again.";
+
+export const TIMEOUT_ERROR_MESSAGE =
+  "Please wait a few moments while the server processes your request.";
+export const TIMEOUT_ERROR_DESCRIPION = "Server is busy.";
 
 export const SIGN_UP_SUCCESS = "Account created! Await admin activation. ";
 
@@ -726,6 +729,8 @@ export const PRIORITY_SIDEBAR_ORDER = [
   "vectorstores",
   "embeddings",
 ];
+
+export const BUNDLES_SIDEBAR_FOLDER_NAMES = ["notion", "Notion"];
 
 export const AUTHORIZED_DUPLICATE_REQUESTS = [
   "/health",
@@ -881,6 +886,7 @@ export const TABS_ORDER = [
 export const LANGFLOW_ACCESS_TOKEN = "access_token_lf";
 export const LANGFLOW_API_TOKEN = "apikey_tkn_lflw";
 export const LANGFLOW_AUTO_LOGIN_OPTION = "auto_login_lf";
+export const LANGFLOW_REFRESH_TOKEN = "refresh_token_lf";
 
 export const LANGFLOW_ACCESS_TOKEN_EXPIRE_SECONDS = 60 * 60 - 60 * 60 * 0.1;
 export const LANGFLOW_ACCESS_TOKEN_EXPIRE_SECONDS_ENV =
@@ -891,3 +897,22 @@ export const NODE_WIDTH = 400;
 export const NODE_HEIGHT = NODE_WIDTH * 3;
 
 export const SHORTCUT_KEYS = ["cmd", "ctrl", "alt", "shift"];
+
+export const SERVER_HEALTH_INTERVAL = 10000;
+export const REFETCH_SERVER_HEALTH_INTERVAL = 20000;
+export const DRAG_EVENTS_CUSTOM_TYPESS = {
+  genericnode: "genericNode",
+  notenode: "noteNode",
+};
+
+export const NOTE_NODE_MIN_WIDTH = 324;
+export const NOTE_NODE_MIN_HEIGHT = 324;
+export const NOTE_NODE_MAX_HEIGHT = 800;
+export const NOTE_NODE_MAX_WIDTH = 600;
+
+export const COLOR_OPTIONS = {
+  indigo: "var(--note-indigo)",
+  emerald: "var(--note-emerald)",
+  amber: "var(--note-amber)",
+  red: "var(--note-red)",
+};

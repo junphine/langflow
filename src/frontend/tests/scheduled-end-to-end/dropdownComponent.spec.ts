@@ -2,7 +2,13 @@ import { expect, test } from "@playwright/test";
 
 test("dropDownComponent", async ({ page }) => {
   await page.goto("/");
-  await page.waitForTimeout(2000);
+  await page.waitForSelector('[data-testid="mainpage_title"]', {
+    timeout: 30000,
+  });
+
+  await page.waitForSelector('[id="new-project-btn"]', {
+    timeout: 30000,
+  });
 
   let modalCount = 0;
   try {
@@ -16,7 +22,7 @@ test("dropDownComponent", async ({ page }) => {
 
   while (modalCount === 0) {
     await page.getByText("New Project", { exact: true }).click();
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(3000);
     modalCount = await page.getByTestId("modal-title")?.count();
   }
   await page.waitForSelector('[data-testid="blank-flow"]', {
@@ -139,11 +145,8 @@ test("dropDownComponent", async ({ page }) => {
     expect(false).toBeTruthy();
   }
   await page.getByTestId("code-button-modal").click();
-  await page
-    .locator("#CodeEditor div")
-    .filter({ hasText: "import ChatBedrock" })
-    .nth(1)
-    .click();
+  await page.waitForTimeout(1000);
+
   await page.locator("textarea").press("Control+a");
   const emptyOptionsCode = `from langchain_community.chat_models.bedrock import BedrockChat
 

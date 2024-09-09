@@ -258,6 +258,7 @@ export type DisclosureComponentType = {
       title: string;
       onClick: (event?: React.MouseEvent) => void;
     }[];
+    beta?: boolean;
   };
   testId?: string;
 };
@@ -417,7 +418,7 @@ export type signUpInputStateType = {
 
 export type inputHandlerEventType = {
   target: {
-    value: string;
+    value: string | boolean;
     name: string;
   };
 };
@@ -439,14 +440,14 @@ export type ConfirmationModalType = {
   modalContentTitle?: string;
   loading?: boolean;
   cancelText?: string;
-  confirmationText: string;
+  confirmationText?: string;
   children:
     | [React.ReactElement<ContentProps>, React.ReactElement<TriggerProps>]
     | React.ReactElement<ContentProps>;
   icon?: string;
   data?: any;
   index?: number;
-  onConfirm: (index, data) => void;
+  onConfirm?: (index, data) => void;
   open?: boolean;
   onClose?: () => void;
   size?:
@@ -617,7 +618,7 @@ export interface Props {
 
 export type fileCardPropsType = {
   fileName: string;
-  content: string;
+  path: string;
   fileType: string;
   showFile?: boolean;
 };
@@ -774,7 +775,7 @@ export type tabsArrayType = {
 };
 
 export type codeTabsPropsType = {
-  open: boolean;
+  open?: boolean;
   tabs: Array<tabsArrayType>;
   activeTab: string;
   setActiveTab: (value: string) => void;

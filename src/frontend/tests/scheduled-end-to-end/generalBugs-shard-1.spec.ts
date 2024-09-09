@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { test } from "@playwright/test";
 import * as dotenv from "dotenv";
 import path from "path";
 
@@ -11,7 +11,13 @@ test("should delete rows from table message", async ({ page }) => {
     dotenv.config({ path: path.resolve(__dirname, "../../.env") });
   }
   await page.goto("/");
-  await page.waitForTimeout(2000);
+  await page.waitForSelector('[data-testid="mainpage_title"]', {
+    timeout: 30000,
+  });
+
+  await page.waitForSelector('[id="new-project-btn"]', {
+    timeout: 30000,
+  });
 
   let modalCount = 0;
   try {
@@ -25,7 +31,7 @@ test("should delete rows from table message", async ({ page }) => {
 
   while (modalCount === 0) {
     await page.getByText("New Project", { exact: true }).click();
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(3000);
     modalCount = await page.getByTestId("modal-title")?.count();
   }
 
@@ -55,7 +61,7 @@ test("should delete rows from table message", async ({ page }) => {
   await page.getByTestId("dropdown_str_model_name").click();
   await page.getByTestId("gpt-4o-1-option").click();
 
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(1000);
 
   await page.getByTestId("button_run_chat output").click();
   await page.waitForSelector("text=built successfully", { timeout: 30000 });
@@ -64,14 +70,30 @@ test("should delete rows from table message", async ({ page }) => {
     timeout: 30000,
   });
 
+  await page.waitForTimeout(2000);
+
   await page.getByTestId("user-profile-settings").last().click();
+  await page.waitForSelector(
+    '[data-testid="user-profile-settings"]:last-child',
+  );
+
+  await page.waitForTimeout(500);
+
+  await page.waitForSelector('text="Settings"');
   await page.getByText("Settings").last().click();
+
+  await page.waitForSelector('text="Messages"');
   await page.getByText("Messages").last().click();
 
-  const label = "Press Space to toggle all rows selection (unchecked)";
-  await page.getByLabel(label).first().click();
+  await page.waitForSelector(".ag-checkbox-input");
+  await page.locator(".ag-checkbox-input").first().click();
 
+  await page.waitForTimeout(500);
+
+  await page.waitForSelector('[data-testid="icon-Trash2"]:first-child');
   await page.getByTestId("icon-Trash2").first().click();
+
+  await page.waitForTimeout(500);
 
   await page.waitForSelector("text=No Data Available", { timeout: 30000 });
   await page.getByText("No Data Available").isVisible();

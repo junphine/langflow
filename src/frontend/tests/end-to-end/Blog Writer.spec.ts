@@ -13,7 +13,13 @@ test("Blog Writer", async ({ page }) => {
   }
 
   await page.goto("/");
-  await page.waitForTimeout(2000);
+  await page.waitForSelector('[data-testid="mainpage_title"]', {
+    timeout: 30000,
+  });
+
+  await page.waitForSelector('[id="new-project-btn"]', {
+    timeout: 30000,
+  });
 
   let modalCount = 0;
   try {
@@ -27,7 +33,7 @@ test("Blog Writer", async ({ page }) => {
 
   while (modalCount === 0) {
     await page.getByText("New Project", { exact: true }).click();
-    await page.waitForTimeout(5000);
+    await page.waitForTimeout(3000);
     modalCount = await page.getByTestId("modal-title")?.count();
   }
 
@@ -54,7 +60,7 @@ test("Blog Writer", async ({ page }) => {
   await page.getByTestId("dropdown_str_model_name").click();
   await page.getByTestId("gpt-4o-1-option").click();
 
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(1000);
   await page
     .getByTestId("inputlist_str_urls_0")
     .nth(0)
@@ -67,8 +73,7 @@ test("Blog Writer", async ({ page }) => {
     .fill("https://www.originaldiving.com/blog/top-ten-turtle-facts");
 
   await page
-    .getByTestId("popover-anchor-input-input_value")
-    .nth(0)
+    .getByTestId("textarea_str_input_value")
     .fill(
       "Use the references above for style to write a new blog/tutorial about turtles. Suggest non-covered topics.",
     );

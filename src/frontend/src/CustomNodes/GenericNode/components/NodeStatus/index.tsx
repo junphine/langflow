@@ -65,14 +65,11 @@ export default function NodeStatus({
 
   const getBaseBorderClass = (selected) => {
     let className = selected
-      ? "border border-ring hover:shadow-node"
+      ? "border ring ring-[0.5px] ring-selected border-selected hover:shadow-node"
       : "border hover:shadow-node";
-    let frozenClass = selected ? "border-ring-frozen" : "border-frozen";
+    let frozenClass = selected ? "outline-ring-frozen" : "outline-frozen";
     return frozen ? frozenClass : className;
   };
-
-  const getNodeSizeClass = (showNode) =>
-    showNode ? "w-96 rounded-lg" : "w-26 h-26 rounded-full";
 
   const getNodeBorderClassName = (
     selected: boolean,
@@ -87,18 +84,11 @@ export default function NodeStatus({
     );
 
     const baseBorderClass = getBaseBorderClass(selected);
-    const nodeSizeClass = getNodeSizeClass(showNode);
-    const names = classNames(
-      baseBorderClass,
-      nodeSizeClass,
-      "generic-node-div group/node",
-      specificClassFromBuildStatus,
-    );
+    const names = classNames(baseBorderClass, specificClassFromBuildStatus);
     return names;
   };
 
   useEffect(() => {
-    console.log(selected);
     setBorderColor(
       getNodeBorderClassName(selected, showNode, buildStatus, validationStatus),
     );
