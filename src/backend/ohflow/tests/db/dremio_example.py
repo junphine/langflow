@@ -42,17 +42,16 @@ def flight_demo():
     print(dataframe)
 
 def sqlalchemy_demo():
-    from sqlalchemy import create_engine
+    from sqlalchemy import create_engine,text
     from sqlalchemy_dremio.flight import DremioDialect_flight
 
     db_uri = "dremio+flight://root:123456@172.16.29.85:3201/dremio?UseEncryption=false"
     engine = create_engine(db_uri)
     sql = 'SELECT * FROM sys.options limit 5 -- SQL Alchemy Flight Test '
-
-    result = engine.execute(sql)
-
-    for row in result:
-        print(row[0])
+    with engine.connect() as conn:
+        result = conn.execute(text(sql))
+        for row in result:
+            print(row[0])
 
 if __name__ == "__main__":
     sqlalchemy_demo()

@@ -91,6 +91,7 @@ class IgniteCompiler(compiler.SQLCompiler):
 
 
 class IgniteDDLCompiler(compiler.DDLCompiler):
+
     def get_column_specification(self, column, **kwargs):
         colspec = self.preparer.format_column(column)
         colspec += " " + self.dialect.type_compiler.process(column.type)
@@ -169,6 +170,15 @@ class IgniteIdentifierPreparer(compiler.IdentifierPreparer):
 
     def __init__(self, dialect):
         super(IgniteIdentifierPreparer, self).__init__(dialect, initial_quote='"', final_quote='"')
+
+    def _requires_quotes(self, value: str) -> bool:
+        """Return True if the given identifier requires quoting."""
+        lc_value = value.lower()
+        return (
+            lc_value in self.reserved_words
+            or value[0] in self.illegal_initial_characters
+            or not self.legal_characters.match(str(value))
+        )
 
 
 class BaseIgniteDialect(default.DefaultDialect):
@@ -267,7 +277,7 @@ class BaseIgniteDialect(default.DefaultDialect):
         cursor.close()
         return indexes if indexes else ReflectionDefaults.unique_constraints()
 
-
+    @reflection.cache
     def get_pk_constraint(self, connection, table_name, schema=None, **kw):
         if schema == '':
             parts = table_name.rsplit('.',2)
@@ -390,6 +400,7 @@ class BaseIgniteDialect(default.DefaultDialect):
         countRows = [r[0] for r in result]
         return countRows[0] > 0
 
+    @reflection.cache
     def get_view_names(self, connection, schema=None, **kwargs):
         sql = 'SELECT NAME,SCHEMA FROM sys.views'
         if schema is not None and schema != "":

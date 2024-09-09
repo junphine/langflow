@@ -151,6 +151,7 @@ class DremioExecutionContext_flight(DremioExecutionContext):
 class DremioDialect_flight(default.DefaultDialect):
 
     name = 'dremio+flight'
+    driver = "flight"
     supports_sane_rowcount = False
     supports_sane_multi_rowcount = False
     poolclass = pool.SingletonThreadPool
@@ -211,6 +212,7 @@ class DremioDialect_flight(default.DefaultDialect):
     def get_foreign_keys(self, connection, table_name, schema=None, **kw):
         return []
 
+    @reflection.cache
     def get_columns(self, connection, table_name, schema, **kw):
         sql = "DESCRIBE \"{0}\"".format(table_name)
         if schema != None and schema != "":
@@ -245,7 +247,6 @@ class DremioDialect_flight(default.DefaultDialect):
         schema_names = [r[0] for r in result]
         return schema_names
 
-
     @reflection.cache
     def has_table(self, connection, table_name, schema=None, **kw):
         sql = 'SELECT COUNT(*) FROM INFORMATION_SCHEMA."TABLES"'
@@ -256,6 +257,7 @@ class DremioDialect_flight(default.DefaultDialect):
         countRows = [r[0] for r in result]
         return countRows[0] > 0
 
+    @reflection.cache
     def get_view_names(self, connection, schema=None, **kwargs):
         sql = 'SELECT TABLE_NAME FROM INFORMATION_SCHEMA."VIEWS"'
         if schema is not None:

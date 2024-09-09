@@ -37,12 +37,14 @@ class IgniteDatabaseComponent(CustomComponent):
         meta_access_token: str=None,
         ) -> SQLDatabase:
         if uri:
+            print("conncect ignite to {uri}")
             uri = self.clean_up_uri(uri)
             return IgniteDatabase.from_uri(f"{uri}?metaServerURL={meta_server_url}&metaAccessToken={meta_access_token}",
                                            schema=schema,
                                            include_tables=include_tables,
                                            sample_rows_in_table_info=sample_rows_in_table_info)
         else:
+            print("conncect ignite to {host}:{port}")
             return IgniteDatabase.from_pyignite(host,port=port,user=user,password=password,
                                             schema=schema,
                                             include_tables=include_tables,

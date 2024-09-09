@@ -166,8 +166,8 @@ class IgniteDatabase(sql_database.SQLDatabase):
     @property
     def dialect(self) -> str:
         """Return string representation of dialect to use."""
-        return self._engine.dialect.name
-        #return 'ignite+pyodbc'
+        #return self._engine.dialect.name
+        return 'h2'
 
     def get_usable_table_names(self) -> Iterable[str]:
         """Get names of tables available."""
