@@ -1,10 +1,15 @@
+from typing import TYPE_CHECKING
+
 from langchain.chains import create_sql_query_chain
 from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import Runnable
+
 from langflow.base.chains.model import LCChainComponent
 from langflow.field_typing import Message
-from langflow.inputs import MultilineInput, HandleInput, IntInput
+from langflow.inputs import HandleInput, IntInput, MultilineInput
 from langflow.template import Output
+
+if TYPE_CHECKING:
+    from langchain_core.runnables import Runnable
 
 
 class SQLGeneratorComponent(LCChainComponent):
@@ -27,13 +32,11 @@ class SQLGeneratorComponent(LCChainComponent):
     outputs = [Output(display_name="Text", name="text", method="invoke_chain")]
 
     def invoke_chain(self) -> Message:
-        if self.prompt:
-            prompt_template = PromptTemplate.from_template(template=self.prompt)
-        else:
-            prompt_template = None
+        prompt_template = PromptTemplate.from_template(template=self.prompt) if self.prompt else None
 
         if self.top_k < 1:
-            raise ValueError("Top K must be greater than 0.")
+            msg = "Top K must be greater than 0."
+            raise ValueError(msg)
 
         if not prompt_template:
             sql_query_chain = create_sql_query_chain(llm=self.llm, db=self.db, k=self.top_k)

@@ -39,7 +39,8 @@ class SettingsService(Service):
 
         settings = Settings(**settings_dict)
         if not settings.config_dir:
-            raise ValueError("CONFIG_DIR must be set in settings")
+            msg = "CONFIG_DIR must be set in settings"
+            raise ValueError(msg)
 
         auth_settings = AuthSettings(
             CONFIG_DIR=settings.config_dir,

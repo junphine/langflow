@@ -43,7 +43,7 @@ const WorkflowPage = lazy(() => import("./pages/WorkflowPage"));
 const router = createBrowserRouter(
   createRoutesFromElements([
     <Route
-      path={ENABLE_CUSTOM_PARAM ? "/:customParam" : "/"}
+      path={ENABLE_CUSTOM_PARAM ? "/:customParam?" : "/"}
       element={
         <ContextWrapper>
           <Outlet />
