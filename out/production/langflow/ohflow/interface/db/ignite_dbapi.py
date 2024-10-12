@@ -162,10 +162,9 @@ class Cursor(object):
         return -1 if self._results is None else -1
 
     def close(self):
-        if not self.closed:
+        if not self.closed and self._results is not None:
             self._results.close()
             self._results = None
-            print('###close curser')
             """Close the cursor."""
             self.closed = True
 

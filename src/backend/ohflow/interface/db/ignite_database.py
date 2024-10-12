@@ -11,7 +11,7 @@ from sqlalchemy.exc import ProgrammingError, SQLAlchemyError
 from sqlalchemy.schema import CreateTable
 from langchain import sql_database
 from ohflow.interface.db import *
-
+from ohflow.interface.db.ignite_odbc_dialect import can_comment_identifier,comment_as_name
 
 
 def _format_index(index: sqlalchemy.engine.interfaces.ReflectedIndex) -> str:
@@ -51,21 +51,27 @@ class IgniteDatabase(sql_database.SQLDatabase):
         custom_table_info: Optional[dict] = None,
         view_support: bool = False,
         max_string_length: int = 300,
+        comment_as_identifier: bool = False,
     ):
         """Create engine from database URI."""
         self._engine = engine
         self._schema = schema
+        self._comment_as_identifier = comment_as_identifier
 
-        if isinstance(include_tables,str):
+        if isinstance(include_tables,str) and include_tables:
             include_tables = include_tables.replace(' ','').split(',')
 
-        if isinstance(ignore_tables,str):
+        if isinstance(ignore_tables,str) and ignore_tables:
             ignore_tables = ignore_tables.replace(' ','').split(',')
 
         if include_tables and ignore_tables:
             raise ValueError("Cannot specify both include_tables and ignore_tables")
 
+        if comment_as_identifier and sample_rows_in_table_info:
+            raise ValueError("Cannot specify both comment_as_identifier and sample_rows_in_table_info")
+
         self._engine.dialect.driver = 'ignite'
+        self._engine.dialect.comment_as_identifier = comment_as_identifier
 
         self._inspector = inspect(self._engine)
 
@@ -90,7 +96,7 @@ class IgniteDatabase(sql_database.SQLDatabase):
                 raise ValueError(
                     f"ignore_tables {missing_tables} not found in database"
                 )
-        usable_tables = self.get_usable_table_names()
+        usable_tables = self.get_table_names()
         self._usable_tables = set(usable_tables) if usable_tables else self._all_tables
 
         if not isinstance(sample_rows_in_table_info, int):
@@ -143,9 +149,10 @@ class IgniteDatabase(sql_database.SQLDatabase):
         schema: str = "public",
         engine_args: dict = None,
         sample_rows_in_table_info: int = 0,
-        include_tables: str=None,
-        meta_server_url: str=None,
-        meta_access_token: str=None,
+        include_tables: str = None,
+        meta_server_url: str = None,
+        meta_access_token: str = None,
+        comment_as_identifier: bool = False,
     ) -> IgniteDatabase:
         """
         Construct a Dremio flight engine from parms.
@@ -161,26 +168,41 @@ class IgniteDatabase(sql_database.SQLDatabase):
             view_support=True,
             sample_rows_in_table_info=int(sample_rows_in_table_info),
             include_tables = include_tables,
+            comment_as_identifier = comment_as_identifier,
         )
 
     @property
     def dialect(self) -> str:
         """Return string representation of dialect to use."""
         #return self._engine.dialect.name
-        return 'h2'
+        return 'hive'
 
-    def get_usable_table_names(self) -> Iterable[str]:
+    def get_usable_table_names(self,quotes=True) -> Iterable[str]:
+        """Get names of tables available."""
+        if not self._comment_as_identifier:
+            return self.get_table_names()
+        tables = []
+        for table in self._metadata.sorted_tables:
+            if self._include_tables:
+                if table.name not in self._include_tables:
+                    continue
+            elif self._ignore_tables:
+                if table.name in self._ignore_tables:
+                    continue
+
+            name = comment_as_name(table)
+            if quotes:
+                tables.append('"'+name+'"')
+            else:
+                tables.append(name)
+        return sorted(tables)
+
+
+    def get_table_names(self) -> Iterable[str]:
         """Get names of tables available."""
         if self._include_tables:
             return sorted(self._include_tables)
         return sorted(self._all_tables - self._ignore_tables)
-
-    def get_table_names(self) -> Iterable[str]:
-        """Get names of tables available."""
-        warnings.warn(
-            "This method is deprecated - please use `get_usable_table_names`."
-        )
-        return self.get_usable_table_names()
 
     @property
     def table_info(self) -> str:
@@ -197,37 +219,44 @@ class IgniteDatabase(sql_database.SQLDatabase):
         appended to each table description. This can increase performance as
         demonstrated in the paper.
         """
-        all_table_names = self.get_usable_table_names()
+        all_table_names = self.get_usable_table_names(False)
+        all_table_names = set(all_table_names)
         if table_names is not None:
-            missing_tables = set(table_names).difference(all_table_names)
-            if missing_tables:
-                raise ValueError(f"table_names {missing_tables} not found in database")
-            all_table_names = table_names
+            real_table_names = []
+            for table_name in table_names:
+                table_name = table_name.strip('"')
+                exist_table =  table_name in all_table_names
+                if not exist_table:
+                    raise ValueError(f"table_names {table_name} not found in database")
+                real_table_names.append(table_name)
+            all_table_names = real_table_names
 
         meta_tables = [
             tbl
             for tbl in self._metadata.sorted_tables
-            if tbl.name in set(all_table_names)
-            and not (self.dialect == "sqlite" and tbl.name.startswith("sqlite_"))
+            if tbl.name in all_table_names or tbl.comment in all_table_names
         ]
 
         tables = []
         tables.append('You can only use the following tables:')
         if self._sample_rows_in_table_info:
-            tables.append(', '.join(all_table_names).lower())
+            tables.append('"'+'", "'.join(all_table_names).lower()+'"')
             tables.append('The table and columns definitions and sample data are below:')
         else:
-            tables.append(', '.join(all_table_names).lower())
+            tables.append('"'+'", "'.join(all_table_names).lower()+'"')
             tables.append('The table and columns definitions are below:')
-
 
         for table in meta_tables:
             if self._custom_table_info and table.name in self._custom_table_info:
                 tables.append(self._custom_table_info[table.name])
                 continue
 
+            sample_rows = ""
+            if self._sample_rows_in_table_info:
+                sample_rows = self._get_sample_rows(table)
+
             # add create table command
-            create_table = str(CreateTable(table).compile(self._engine))
+            create_table = str(CreateTable(table).compile(self._engine, compile_kwargs=dict(comment_as_identifier=self._comment_as_identifier)))
             table_info = f"{create_table.rstrip().lower()}"
             if table.comment:
                 table_info += f"\ncomment '{table.comment}'\n"
@@ -240,7 +269,7 @@ class IgniteDatabase(sql_database.SQLDatabase):
             if self._indexes_in_table_info:
                 table_info += f"\n{self._get_table_indexes(table)}\n"
             if self._sample_rows_in_table_info:
-                table_info += f"\n{self._get_sample_rows(table)}\n"
+                table_info += f"\n{sample_rows}\n"
             if has_extra_info:
                 table_info += "*/"
             tables.append(table_info)
@@ -258,7 +287,12 @@ class IgniteDatabase(sql_database.SQLDatabase):
         command = select(table).limit(self._sample_rows_in_table_info)
 
         # save the columns in string format
-        columns_str = "\t|\t".join([col.name for col in table.columns])
+        if self._comment_as_identifier:
+            table_name = comment_as_name(table)
+            columns_str = "\t|\t".join([comment_as_name(col) for col in table.columns])
+        else:
+            table_name = table.name
+            columns_str = "\t|\t".join([col.name for col in table.columns])
 
         try:
             # get the sample rows
@@ -281,7 +315,7 @@ class IgniteDatabase(sql_database.SQLDatabase):
             sample_rows_str = ""
 
         return (
-            f"{len(sample_rows)} rows from {table.name} table:\n"
+            f"{len(sample_rows)} rows from {table_name} table:\n"
             f"|\t{columns_str}\t|\n"
             f"{sample_rows_str}"
         )
@@ -292,6 +326,16 @@ class IgniteDatabase(sql_database.SQLDatabase):
 
         If the statement returns no rows, an empty list is returned.
         """
+
+        command0 = command
+        if command.endswith('\""'):
+            command = command[:-1]
+        if self._comment_as_identifier:
+            command = self._engine.dialect.identifier_preparer.uncomment_identifiers(command)
+        command = command.strip('"')
+
+        self.last_sql_query = command
+
         with self._engine.begin() as connection:
             if self._schema is not None:
                 if self.dialect.startswith("dremio"):

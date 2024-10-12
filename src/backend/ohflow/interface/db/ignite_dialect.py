@@ -102,6 +102,7 @@ class IgniteDialect_pyignite(BaseIgniteDialect):
             if super_ is not None:
                 super_(conn)
             conn.autocommit=True
+            conn.invalidated=True
         return on_connect
 
 

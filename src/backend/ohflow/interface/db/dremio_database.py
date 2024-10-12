@@ -57,6 +57,13 @@ class DremioDatabase(sql_database.SQLDatabase):
         """Create engine from database URI."""
         self._engine = engine
         self._schema = schema
+
+        if isinstance(include_tables,str) and include_tables:
+            include_tables = include_tables.replace(' ','').split(',')
+
+        if isinstance(ignore_tables,str) and ignore_tables:
+            ignore_tables = ignore_tables.replace(' ','').split(',')
+
         if include_tables and ignore_tables:
             raise ValueError("Cannot specify both include_tables and ignore_tables")
 
@@ -309,6 +316,7 @@ class DremioDatabase(sql_database.SQLDatabase):
 
         If the statement returns no rows, an empty list is returned.
         """
+        self.last_sql_query = command
         with self._engine.begin() as connection:
             if self._schema is not None:
                 if self.dialect == "snowflake":

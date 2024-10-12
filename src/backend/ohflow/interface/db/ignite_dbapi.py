@@ -165,13 +165,13 @@ class Cursor(object):
         if not self.closed and self._results is not None:
             self._results.close()
             self._results = None
-            print('###close curser')
             """Close the cursor."""
             self.closed = True
 
     @check_closed
     def execute(self, query, params=None):
         field_result = []
+        print("SQL:"+query)
         self._results = self.client.sql(query, query_args=params, include_field_names=True,**self.options)
         field_names = next(self._results)
         for x in field_names:

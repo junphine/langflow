@@ -1,6 +1,9 @@
-from sqlalchemy import schema, types, pool
+from sqlalchemy import schema, types, pool, text
 from sqlalchemy.engine import default, reflection
+from sqlalchemy.engine.reflection import ReflectionDefaults
 from sqlalchemy.sql import compiler
+import re
+import requests
 
 _type_map = {
     'boolean': types.BOOLEAN,
@@ -11,10 +14,12 @@ _type_map = {
     'DATE': types.DATE,
     'float': types.FLOAT,
     'FLOAT': types.FLOAT,
+    'float32': types.FLOAT,
     'decimal': types.DECIMAL,
     'DECIMAL': types.DECIMAL,
-    'double': types.FLOAT,
-    'DOUBLE': types.FLOAT,
+    'double': types.DOUBLE,
+    'DOUBLE': types.DOUBLE,
+    'float64': types.DOUBLE,
     'interval': types.Interval,
     'INTERVAL': types.Interval,
     'int': types.INTEGER,
@@ -32,7 +37,8 @@ _type_map = {
     'smallint': types.SMALLINT,
     'CHARACTER VARYING': types.VARCHAR,
     'ANY': types.VARCHAR,
-    
+    'object': types.VARCHAR,
+    'dict': types.JSON,
     'ARRAY': types.ARRAY,
     'ROW': types.JSON,
     'BINARY VARYING': types.LargeBinary,
@@ -65,7 +71,9 @@ class DremioCompiler(compiler.SQLCompiler):
         print(tablesample)
 
     def process(self, obj, **kwargs):
-        return obj._compiler_dispatch(self, literal_binds=True, **kwargs)
+        #return obj._compiler_dispatch(self, literal_binds=True, **kwargs)
+        kwargs.update(literal_binds=True)
+        return super().process(obj,**kwargs)
 
 
 class DremioDDLCompiler(compiler.DDLCompiler):
@@ -89,7 +97,16 @@ class DremioDDLCompiler(compiler.DDLCompiler):
 
         if not column.nullable:
             colspec += " NOT NULL"
+
+        if column.comment and not hasattr(column, 'comment_as_name'):
+            colspec += f" COMMENT '{column.comment}'"
+
         return colspec
+
+    def create_table_suffix(self, table):
+        if table.comment and not hasattr(table, 'comment_as_name'):
+            return f"/* {table.comment} */"
+        return ''
 
 
 class DremioIdentifierPreparer(compiler.IdentifierPreparer):
@@ -146,12 +163,21 @@ class DremioIdentifierPreparer(compiler.IdentifierPreparer):
         super(DremioIdentifierPreparer, self). \
             __init__(dialect, initial_quote='"', final_quote='"')
 
+    def _requires_quotes(self, value: str) -> bool:
+        """Return True if the given identifier requires quoting."""
+        lc_value = value.lower()
+        return (
+            lc_value in self.reserved_words
+            or value[0] in self.illegal_initial_characters
+        )
+
 
 class DremioDialect(default.DefaultDialect):
-    name = 'dremio'
-    driver = 'flight'
+    name = 'dremio+pyodbc'
+    driver = 'pyodbc'
     supports_sane_rowcount = False
     supports_sane_multi_rowcount = False
+    supports_statement_cache = True
     poolclass = pool.SingletonThreadPool
     statement_compiler = DremioCompiler
     ddl_compiler = DremioDDLCompiler
@@ -159,6 +185,10 @@ class DremioDialect(default.DefaultDialect):
     execution_ctx_cls = DremioExecutionContext
     default_paramstyle = "qmark"
     filter_schema_names = []
+
+    meta_config_server: str = None
+    meta_access_token: str = None
+    models = {}
 
     @classmethod
     def dbapi(cls):
@@ -169,11 +199,43 @@ class DremioDialect(default.DefaultDialect):
         engine_params = [param.lower() for param in cparams.keys()]
         if 'autocommit' not in engine_params:
             cparams['autocommit'] = 1
+        # metaServerUrl
+        if 'metaserverurl' in engine_params:
+            self.meta_config_server = engine_params['metaserverurl']
+        # metaAccessToken
+        if 'metaaccesstoken' in engine_params:
+            self.meta_access_token = engine_params['metaaccesstoken']
 
         return self.dbapi.connect(*cargs, **cparams)
 
     def last_inserted_ids(self):
         return self.context.last_inserted_ids
+
+    def get_schema_info_from_config_server(self,table,schema):
+        if table not in self.models:
+            catelog = 'dremio'
+            parts = schema.split('.',2)
+            if len(parts)>1:
+                catelog = parts[0]
+                schema = parts[1]
+            path = f'/{catelog}/{schema}/{table}'
+            response = requests.get(self.meta_config_server+path,headers=dict(Authorization='Bearer '+self.meta_access_token))
+            if response.status_code == 200:
+                json_data = response.json()
+                fields = {}
+                for field in json_data['fields']:
+                    fields[field['name']] = field
+                json_data['fields'] = fields
+                json_data['tableComment'] = ';'.join(filter(None,json_data['tags'])) if json_data['tags'] else None
+                self.models[table] = json_data
+            else:
+                print("Error:", response.status_code)
+
+        if table in self.models:
+            table_info = self.models[table]
+            return table_info
+
+        return None
 
     def get_indexes(self, connection, table_name, schema, **kw):
         return []
@@ -184,20 +246,31 @@ class DremioDialect(default.DefaultDialect):
     def get_foreign_keys(self, connection, table_name, schema=None, **kw):
         return []
 
+    @reflection.cache
     def get_columns(self, connection, table_name, schema, **kw):
+        fields = {}
+        if self.meta_config_server:
+            table_info = self.get_schema_info_from_config_server(table_name,schema)
+            if table_info is not None:
+                fields = table_info['fields']
         sql = "DESCRIBE \"{0}\"".format(table_name)
         if schema != None and schema != "":
             sql = "DESCRIBE \"{0}\".\"{1}\"".format(schema, table_name)
-        cursor = connection.execute(sql)
+        cursor = connection.execute(text(sql))
         result = []
         for col in cursor:
             cname = col[0]
             ctype = _type_map[col[1]]
+            comment = None
+            if fields:
+                field = fields.get(cname)
+                if field is not None:
+                    comment = field.get('comment')
             column = {
                 "name": cname,
                 "type": ctype,
                 "default": None,
-                "comment": None,
+                "comment": comment,
                 "nullable": True
             }
             result.append(column)
@@ -211,15 +284,32 @@ class DremioDialect(default.DefaultDialect):
         if schema is not None:
             sql += " WHERE TABLE_SCHEMA = '" + schema + "'"
 
-        result = connection.execute(sql)
+        result = connection.execute(text(sql))
         table_names = [r[0] for r in result]
         return table_names
 
+    @reflection.cache
+    def get_table_comment(self, connection, table_name, schema=None, **kw):
+        if schema == '':
+            parts = table_name.rsplit('.',2)
+            if len(parts)==2:
+                schema,table_name = parts
+        comment = None
+        if self.meta_config_server:
+            table_info = self.get_schema_info_from_config_server(table_name,schema)
+            if table_info is not None:
+                comment = table_info['tableComment']
+        if comment is not None:
+            return {"text": comment}
+        else:
+            return ReflectionDefaults.table_comment()
+
+    @reflection.cache
     def get_schema_names(self, connection, schema=None, **kw):
         if len(self.filter_schema_names) > 0:
             return self.filter_schema_names
 
-        result = connection.execute("SHOW SCHEMAS")
+        result = connection.execute(text("SHOW SCHEMAS"))
         schema_names = [r[0] for r in result]
         return schema_names
 
@@ -229,12 +319,21 @@ class DremioDialect(default.DefaultDialect):
         sql += " WHERE TABLE_NAME = '" + str(table_name) + "'"
         if schema is not None and schema != "":
             sql += " AND TABLE_SCHEMA = '" + str(schema) + "'"
-        result = connection.execute(sql)
+        result = connection.execute(text(sql))
         countRows = [r[0] for r in result]
         return countRows[0] > 0
 
+    @reflection.cache
     def get_view_names(self, connection, schema=None, **kwargs):
-        return []
+        sql = 'SELECT TABLE_NAME FROM INFORMATION_SCHEMA."VIEWS"'
+
+        # Reverting #5 as Dremio does not support parameterized queries.
+        if schema is not None:
+            sql += " WHERE TABLE_SCHEMA = '" + schema + "'"
+
+        result = connection.execute(text(sql))
+        table_names = [r[0] for r in result]
+        return table_names
 
     # Workaround since Dremio does not support parameterized stmts
     # Old queries should not have used queries with parameters, since Dremio does not support it

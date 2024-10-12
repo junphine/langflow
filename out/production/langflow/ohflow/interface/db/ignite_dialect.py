@@ -29,17 +29,22 @@ class IgniteDialect_pyignite(BaseIgniteDialect):
 
         if 'user' in opts:
             connectors.append('{0}={1}'.format('UID', opts['user']))
-            connectors.append('{0}={1}'.format('PWD', opts['password']))
 
-        if 'token' in opts:
-            connectors.append('{0}={1}'.format('Token', opts['token']))
+        if 'password' in opts:
+            connectors.append('{0}={1}'.format('PWD', opts['password']))
 
         if 'database' in opts:
             connectors.append('{0}={1}'.format('Schema', opts['database']))
             lc_query_dict['schema'] = opts['database']
 
-        if 'configServer' in opts:
-            self.cluster_config_server = opts['configServer']
+        if 'token' in lc_query_dict:
+            connectors.append('{0}={1}'.format('Token', lc_query_dict['token']))
+
+        if 'metaserverurl' in lc_query_dict:
+            self.cluster_config_server = lc_query_dict['metaserverurl']
+
+        if 'metaaccesstoken' in lc_query_dict:
+            self.cluster_access_token = lc_query_dict['metaaccesstoken']
 
         def add_property(lc_query_dict, property_name, type):
             if property_name.lower() in lc_query_dict:
@@ -96,7 +101,8 @@ class IgniteDialect_pyignite(BaseIgniteDialect):
         def on_connect(conn):
             if super_ is not None:
                 super_(conn)
-            conn.autocommit=False
+            conn.autocommit=True
+            conn.invalidated=True
         return on_connect
 
 

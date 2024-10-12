@@ -61,6 +61,22 @@ def db_type(java_type:str):
         print("unkown ignite field java type:"+java_type)
         return types.String
     return type
+def can_comment_identifier(comment:str):
+    if not comment or comment.isspace() or comment.isascii():
+        return False
+    if len(comment)>128 or comment.find(',')>=0 or comment.find(';')>=0 or comment.find(':')>=0:
+        return False
+    if comment.find('"')>=0 or comment.find('\'')>=0:
+        return False
+    if comment.find('；')>=0 or comment.find('，')>=0 or comment.find('。')>=0 or comment.find('：')>=0:
+        return False
+    return True
+def comment_as_name(column):
+    if can_comment_identifier(column.comment):
+        return column.comment
+    else:
+        return column.name
+
 
 class IgniteExecutionContext(default.DefaultExecutionContext):
     pass
@@ -113,9 +129,31 @@ class IgniteDDLCompiler(compiler.DDLCompiler):
         if not column.nullable:
             colspec += " NOT NULL"
 
-        if column.comment:
+        if column.comment and not hasattr(column, 'comment_as_name'):
             colspec += f" comment '{column.comment}'"
         return colspec
+
+    def visit_create_column(self, create, first_pk=False, **kw):
+        column = create.element
+        if column.system:
+            return None
+
+        if column.name in ['YLJGDM','']:
+            return None
+
+        text = self.get_column_specification(column, first_pk=first_pk)
+        const = " ".join(
+            self.process(constraint) for constraint in column.constraints
+        )
+        if const:
+            text += " " + const
+
+        return text
+
+    def create_table_suffix(self, table):
+        if table.comment and not hasattr(table, 'comment_as_name'):
+            return f"/* {table.comment} */"
+        return ''
 
 
 class IgniteIdentifierPreparer(compiler.IdentifierPreparer):
@@ -170,6 +208,48 @@ class IgniteIdentifierPreparer(compiler.IdentifierPreparer):
 
     def __init__(self, dialect):
         super(IgniteIdentifierPreparer, self).__init__(dialect, initial_quote='"', final_quote='"')
+        self.rev_table_string={}
+        self.rev_column_string={}
+
+    def format_table(self, table, use_schema=True, name=None):
+        """Prepare a quoted table and schema name."""
+        if hasattr(self.dialect,'comment_as_identifier') and self.dialect.comment_as_identifier:
+            if can_comment_identifier(table.comment):
+                name = table.comment
+                self.rev_table_string[name] = table.name
+                self._strings[table.name] = self.quote_identifier(name)
+                table.comment_as_name = True
+            self.rev_column_string[table.name] = {}
+
+        if name is None:
+            name = table.name
+
+        result = self.quote(name)
+
+        effective_schema = self.schema_for_object(table)
+
+        if not self.omit_schema and use_schema and effective_schema:
+            result = self.quote_schema(effective_schema) + "." + result
+        return result
+
+    def format_column(
+            self,
+            column,
+            use_table=False,
+            name=None,
+            table_name=None,
+            use_schema=False,
+            anon_map=None,
+    ):
+        """Prepare a quoted column name."""
+        if hasattr(self.dialect,'comment_as_identifier') and self.dialect.comment_as_identifier:
+            if can_comment_identifier(column.comment):
+                name = column.comment
+                self.rev_column_string[column.table.name][name] = column.name
+                self._strings[column.name] = self.quote_identifier(name)
+                column.comment_as_name = True
+
+        return super().format_column(column, use_table, name, table_name, use_schema, anon_map)
 
     def _requires_quotes(self, value: str) -> bool:
         """Return True if the given identifier requires quoting."""
@@ -179,6 +259,21 @@ class IgniteIdentifierPreparer(compiler.IdentifierPreparer):
             or value[0] in self.illegal_initial_characters
             or not self.legal_characters.match(str(value))
         )
+
+    def uncomment_identifiers(self, sql):
+        """Unpack 'schema.table.column'-like strings into components."""
+        used_tables = []
+        sql = sql.replace('\\"','"')
+        sql2 = sql
+        for comment,table in self.rev_table_string.items():
+            sql2 = sql.replace(f'"{comment}"',table)
+            if sql2!=sql:
+                used_tables.append(table)
+                sql = sql2
+        for table in used_tables:
+            for comment,column in self.rev_column_string[table].items():
+                sql2 = sql2.replace(f'"{comment}"',column)
+        return sql2
 
 
 class BaseIgniteDialect(default.DefaultDialect):
@@ -194,10 +289,11 @@ class BaseIgniteDialect(default.DefaultDialect):
     cluster_config_server: str = None
     cluster_access_token: str = None
     models = None
+
     def last_inserted_ids(self):
         return self.context.last_inserted_ids
 
-    def get_schema_info_from_config_server(self,table):
+    def get_schema_info_from_config_server(self,table,schema):
         if self.models is None:
             self.models = {}
             response = requests.get(self.cluster_config_server+"/models",headers=dict(Authorization='Token '+self.cluster_access_token))
@@ -313,7 +409,7 @@ class BaseIgniteDialect(default.DefaultDialect):
                 schema,table_name = parts
         fields = {}
         if self.cluster_config_server:
-            table_info = self.get_schema_info_from_config_server(table_name)
+            table_info = self.get_schema_info_from_config_server(table_name,schema)
             if table_info is not None:
                 fields = table_info['fields']
         pks = self.get_pk_constraint(connection,table_name,schema,**kw)
@@ -368,7 +464,7 @@ class BaseIgniteDialect(default.DefaultDialect):
                 schema,table_name = parts
         comment = None
         if self.cluster_config_server:
-            table_info = self.get_schema_info_from_config_server(table_name)
+            table_info = self.get_schema_info_from_config_server(table_name,schema)
             if table_info is not None:
                 comment = table_info['tableComment']
         if comment is not None:
@@ -517,6 +613,7 @@ class IgniteDialect_pyodbc(PyODBCConnector, BaseIgniteDialect):
             conn.setdecoding(pyodbc_SQL_WCHAR, encoding="utf-8")
             conn.setencoding(encoding="utf-8")
             conn.autocommit=True
+            conn.invalidated=True
         return on_connect
 
 

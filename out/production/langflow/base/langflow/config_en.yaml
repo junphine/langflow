@@ -226,6 +226,8 @@ wrappers:
     documentation: ""
   DremioDatabase:
     documentation: ""
+  IgniteDatabase:
+    documentation: ""
 
 custom_components:
   CustomComponent:

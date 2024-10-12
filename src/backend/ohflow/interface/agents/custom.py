@@ -9,6 +9,7 @@ from langchain.agents.agent import AgentOutputParser
 from langchain.agents.mrkl.prompt import FORMAT_INSTRUCTIONS
 from langchain.agents.output_parsers.react_single_input import *
 
+
 class CustomReActSingleInputOutputParser(ReActSingleInputOutputParser):
     """Parses ReAct-style LLM calls that have a single tool input.
 
@@ -53,7 +54,12 @@ class CustomReActSingleInputOutputParser(ReActSingleInputOutputParser):
             action_input = action_match.group(2)
             tool_input = action_input.strip(" ")
             tool_input = tool_input.strip('"')
+            if action=='sql_db_query':
+                tool_input = tool_input.strip('`\n;|')
+                if tool_input.startswith("sql\n"):
+                    tool_input = tool_input[len("sql\n"):]
 
+            print("tool_input:"+tool_input)
             return AgentAction(action, tool_input, text)
 
         elif includes_answer:

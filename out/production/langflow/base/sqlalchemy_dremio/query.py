@@ -7,36 +7,7 @@ from sqlalchemy import types
 
 import pyarrow as pa
 from pyarrow import flight
-
-_type_map = {
-    'boolean': types.BOOLEAN,
-    'BOOLEAN': types.BOOLEAN,
-    'bool': types.BOOLEAN,
-    'varbinary': types.LargeBinary,
-    'VARBINARY': types.LargeBinary,
-    'date': types.DATE,
-    'DATE': types.DATE,
-    'float64': types.FLOAT,
-    'float32': types.FLOAT,
-    'decimal': types.DECIMAL,
-    'DECIMAL': types.DECIMAL,
-    'double': types.FLOAT,
-    'DOUBLE': types.FLOAT,
-    'interval': types.Interval,
-    'INTERVAL': types.Interval,
-    'int32': types.INTEGER,
-    'int64': types.BIGINT,
-    'time': types.TIME,
-    'TIME': types.TIME,
-    'datetime64[ns]': types.DATETIME,
-    'timestamp': types.TIMESTAMP,
-    'TIMESTAMP': types.TIMESTAMP,
-    'varchar': types.VARCHAR,
-    'VARCHAR': types.VARCHAR,
-    'smallint': types.SMALLINT,
-    'CHARACTER VARYING': types.VARCHAR,
-    'object': types.VARCHAR
-}
+from .base import _type_map
 
 
 def run_query(query, flightclient=None, options=None):

@@ -39,8 +39,8 @@ class SQLGeneratorComponent(LCChainComponent):
             sql_query_chain = create_sql_query_chain(llm=self.llm, db=self.db, k=self.top_k)
         else:
             # Check if {question} is in the prompt
-            if "{question}" not in prompt_template.template or "question" not in prompt_template.input_variables:
-                raise ValueError("Prompt must contain `{question}` to be used with Natural Language to SQL.")
+            if "{input}" not in prompt_template.template or "input" not in prompt_template.input_variables:
+                raise ValueError("Prompt must contain `{input}` to be used with Natural Language to SQL.")
             sql_query_chain = create_sql_query_chain(llm=self.llm, db=self.db, prompt=prompt_template, k=self.top_k)
         query_writer: Runnable = sql_query_chain | {"query": lambda x: x.replace("SQLQuery:", "").strip()}
         response = query_writer.invoke(

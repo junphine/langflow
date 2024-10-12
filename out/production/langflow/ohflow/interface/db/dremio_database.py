@@ -12,7 +12,6 @@ from sqlalchemy.schema import CreateTable
 
 from ohflow.api.utils import dict_to_object
 from langchain import sql_database
-
 from sqlalchemy_dremio.flight import DremioDialect_flight
 
 
@@ -58,6 +57,13 @@ class DremioDatabase(sql_database.SQLDatabase):
         """Create engine from database URI."""
         self._engine = engine
         self._schema = schema
+
+        if isinstance(include_tables,str) and include_tables:
+            include_tables = include_tables.replace(' ','').split(',')
+
+        if isinstance(ignore_tables,str) and ignore_tables:
+            ignore_tables = ignore_tables.replace(' ','').split(',')
+
         if include_tables and ignore_tables:
             raise ValueError("Cannot specify both include_tables and ignore_tables")
 
@@ -133,11 +139,11 @@ class DremioDatabase(sql_database.SQLDatabase):
     def from_flight(
             cls,
             host: str,
-            port: str = "32010",
+            port: int = 32010,
             user: str = "root",
             password: str = "",
             schema: str = "public",
-            session_properties: dict = None,
+            engine_args: dict = None,
             sample_rows_in_table_info: int = 0,
     ) -> DremioDatabase:
         """
@@ -147,7 +153,7 @@ class DremioDatabase(sql_database.SQLDatabase):
 
         return cls.from_uri(
             database_uri=uri,
-            engine_args=session_properties,
+            engine_args=engine_args,
             schema=schema,
             view_support=True,
             sample_rows_in_table_info=int(sample_rows_in_table_info)
@@ -262,7 +268,7 @@ class DremioDatabase(sql_database.SQLDatabase):
             if has_extra_info:
                 table_info += "*/"
             tables.append(table_info)
-        tables.sort()
+
         final_str = "\n\n".join(tables)
         return final_str
 
