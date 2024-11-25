@@ -7,8 +7,9 @@ import threading
 
 import astra_assistants.tools as astra_assistants_tools
 import requests
-from astra_assistants import OpenAI, patch
+from astra_assistants import patch
 from astra_assistants.tools.tool_interface import ToolInterface
+from openai import OpenAI
 
 client_lock = threading.Lock()
 client = None
@@ -23,9 +24,9 @@ def get_patched_openai_client(shared_component_cache):
     return client
 
 
-url = "https://raw.githubusercontent.com/BerriAI/litellm/refs/heads/main/model_prices_and_context_window.json"
-response = requests.get(url)
-data = json.loads(response.text)
+url = "model_prices_and_context_window.json"
+response = open(url,'r',encoding='utf-8').read()
+data = json.loads(response)
 
 # Extract the model names into a Python list
 litellm_model_names = [model for model, _ in data.items() if model != "sample_spec"]

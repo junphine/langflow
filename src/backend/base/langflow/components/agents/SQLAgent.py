@@ -4,7 +4,7 @@ from langchain_community.agent_toolkits.sql.base import create_sql_agent
 from langchain_community.utilities import SQLDatabase
 
 from langflow.base.agents.agent import LCAgentComponent
-from langflow.inputs import MessageTextInput, HandleInput, PromptInput
+from langflow.inputs import MessageTextInput, HandleInput, MultilineInput
 
 
 class SQLAgentComponent(LCAgentComponent):
@@ -23,7 +23,11 @@ class SQLAgentComponent(LCAgentComponent):
             is_list=True,
             advanced=True,
         ),
-        PromptInput(name="prompt", display_name="Template", value=None),
+        MultilineInput(
+            name="prefix",
+            display_name="prefix",
+            info="Prompt prefix string. Must contain variables top_k and dialect",
+        ),
     ]
 
     def build_agent(self) -> AgentExecutor:
@@ -32,4 +36,4 @@ class SQLAgentComponent(LCAgentComponent):
         agent_args = self.get_agent_kwargs()
         agent_args["max_iterations"] = agent_args["agent_executor_kwargs"]["max_iterations"]
         del agent_args["agent_executor_kwargs"]["max_iterations"]
-        return create_sql_agent(llm=self.llm, toolkit=toolkit, extra_tools=self.extra_tools or [], prompt=self.prompt, **agent_args)
+        return create_sql_agent(llm=self.llm, toolkit=toolkit, extra_tools=self.extra_tools or [], prefix=self.prefix, **agent_args)

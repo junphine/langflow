@@ -4,7 +4,7 @@ from typing import List
 
 from langchain_core.output_parsers.transform import BaseTransformOutputParser
 from langchain_core.language_models import BaseLanguageModel
-from langchain_core.pydantic_v1 import Field
+from pydantic.v1 import Field
 from langchain_core.tools import BaseToolkit
 
 from langchain_community.tools import BaseTool

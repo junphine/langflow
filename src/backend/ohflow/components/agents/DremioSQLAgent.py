@@ -4,7 +4,7 @@ from langchain_community.agent_toolkits.sql.base import create_sql_agent
 from langchain_community.utilities import SQLDatabase
 from langflow.template import Output
 from langflow.base.agents.agent import LCAgentComponent
-from langflow.inputs import MessageTextInput, HandleInput, PromptInput
+from langflow.inputs import MessageTextInput, HandleInput, MultilineInput
 from ohflow.interface.agents.create_sql_agent import create_dremio_sql_agent
 from ohflow.interface.agents.custom import CustomReActSingleInputOutputParser
 from ohflow.interface.toolkits.sqltookits import DremioSQLDatabaseToolkit
@@ -28,7 +28,11 @@ class DremioSQLAgentComponent(LCAgentComponent):
             is_list=True,
             advanced=True,
         ),
-        PromptInput(name="prompt", display_name="Template", value=None),
+        MultilineInput(
+            name="prefix",
+            display_name="prefix",
+            info="Prompt prefix string. Must contain variables top_k and dialect",
+        ),
     ]
 
     outputs = [
@@ -47,8 +51,7 @@ class DremioSQLAgentComponent(LCAgentComponent):
         return create_dremio_sql_agent(llm=self.llm,
                                 toolkit=toolkit,
                                 extra_tools=self.extra_tools or [],
-                                prompt=self.prompt,
-                                prefix=agent_description,
+                                prefix=self.prefix,
                                 output_parser=output_parser,
                                 **agent_args)
 

@@ -60,7 +60,7 @@ class DeepseekChatEndpointComponent(LCModelComponent):
             name="openai_api_base",
             display_name="OpenAI API Base",
             advanced=True,
-            info="The base URL of the OpenAI API. Defaults to https://api.openai.com/v1. You can change this to use other APIs like JinaChat, LocalAI and Prem.",
+            info="The base URL of the OpenAI API. Defaults to https://api.deepseek.com. You can change this to use other APIs like JinaChat, LocalAI and Prem.",
         ),
         SecretStrInput(
             name="openai_api_key",

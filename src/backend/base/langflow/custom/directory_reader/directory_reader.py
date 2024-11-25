@@ -346,8 +346,8 @@ class DirectoryReader:
             if validation_result:
                 try:
                     output_types = await self.get_output_types_from_code_async(result_content)
-                except Exception:  # noqa: BLE001
-                    logger.exception("Error while getting output types from code")
+                except Exception as e:  # noqa: BLE001
+                    logger.exception("Error while getting output types from code",e)
                     output_types = [component_name_camelcase]
             else:
                 output_types = [component_name_camelcase]

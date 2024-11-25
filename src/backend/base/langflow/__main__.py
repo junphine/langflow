@@ -4,6 +4,7 @@ import socket
 import sys
 import time
 import warnings
+
 from pathlib import Path
 
 import click
@@ -11,7 +12,7 @@ import httpx
 import typer
 from dotenv import load_dotenv
 from httpx import HTTPError
-from multiprocess import cpu_count
+from multiprocessing import cpu_count
 from multiprocess.context import Process
 from packaging import version as pkg_version
 from rich import box
@@ -147,7 +148,7 @@ def run(
         None,
         help="Defines the maximum file size for the upload in MB.",
         show_default=False,
-    ),
+    )
 ):
     """
     Run Langflow.

@@ -142,7 +142,7 @@ class OpenTelemetry(metaclass=ThreadSafeSingletonMetaUsingWeakref):
             labels={"flow_id": mandatory_label},
         )
 
-    def __init__(self, prometheus_enabled: bool = True):
+    def __init__(self, prometheus_enabled: bool = not True):
         if not self._metrics_registry:
             self._register_metric()
 
@@ -153,7 +153,7 @@ class OpenTelemetry(metaclass=ThreadSafeSingletonMetaUsingWeakref):
             # configure prometheus exporter
             self.prometheus_enabled = prometheus_enabled
             if prometheus_enabled:
-            	from opentelemetry.exporter.prometheus import PrometheusMetricReader
+                from opentelemetry.exporter.prometheus import PrometheusMetricReader
                 metric_readers.append(PrometheusMetricReader())
 
             self._meter_provider = MeterProvider(resource=resource, metric_readers=metric_readers)
