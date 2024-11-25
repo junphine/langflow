@@ -1,7 +1,10 @@
 from __future__ import annotations
 
+import asyncio
+import re
+import sqlite3
 import time
-from contextlib import contextmanager
+from contextlib import asynccontextmanager, contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -11,17 +14,18 @@ from alembic import command, util
 from alembic.config import Config
 from loguru import logger
 from sqlalchemy import event, inspect
+from sqlalchemy.dialects import sqlite as dialect_sqlite
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import OperationalError
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlmodel import Session, SQLModel, create_engine, select, text
+from sqlmodel.ext.asyncio.session import AsyncSession
 
+from langflow.initial_setup.constants import STARTER_FOLDER_NAME
 from langflow.services.base import Service
 from langflow.services.database import models
 from langflow.services.database.models.user.crud import get_user_by_username
-from langflow.services.database.utils import (
-    Result,
-    TableResults,
-)
+from langflow.services.database.utils import Result, TableResults
 from langflow.services.deps import get_settings_service
 from langflow.services.utils import teardown_superuser
 
@@ -38,18 +42,69 @@ class DatabaseService(Service):
             msg = "No database URL provided"
             raise ValueError(msg)
         self.database_url: str = settings_service.settings.database_url
+        self._sanitize_database_url()
         # This file is in langflow.services.database.manager.py
         # the ini is in langflow
         langflow_dir = Path(__file__).parent.parent.parent
         self.script_location = langflow_dir / "alembic"
         self.alembic_cfg_path = langflow_dir / "alembic.ini"
+        # register the event listener for sqlite as part of this class.
+        # Using decorator will make the method not able to use self
+        event.listen(Engine, "connect", self.on_connection)
         self.engine = self._create_engine()
+        self.async_engine = self._create_async_engine()
+        alembic_log_file = self.settings_service.settings.alembic_log_file
 
-    def reload_engine(self):
+        # Check if the provided path is absolute, cross-platform.
+        if Path(alembic_log_file).is_absolute():
+            # Use the absolute path directly.
+            self.alembic_log_path = Path(alembic_log_file)
+        else:
+            # Construct the path using the langflow directory.
+            self.alembic_log_path = Path(langflow_dir) / alembic_log_file
+
+    def reload_engine(self) -> None:
+        self._sanitize_database_url()
         self.engine = self._create_engine()
+        self.async_engine = self._create_async_engine()
+
+    def _sanitize_database_url(self):
+        if self.database_url.startswith("postgres://"):
+            self.database_url = self.database_url.replace("postgres://", "postgresql://")
+            logger.warning(
+                "Fixed postgres dialect in database URL. Replacing postgres:// with postgresql://. "
+                "To avoid this warning, update the database URL."
+            )
 
     def _create_engine(self) -> Engine:
         """Create the engine for the database."""
+        return create_engine(
+            self.database_url,
+            connect_args=self._get_connect_args(),
+            pool_size=self.settings_service.settings.pool_size,
+            max_overflow=self.settings_service.settings.max_overflow,
+        )
+
+    def _create_async_engine(self) -> AsyncEngine:
+        """Create the engine for the database."""
+        url_components = self.database_url.split("://", maxsplit=1)
+        if url_components[0].startswith("sqlite"):
+            database_url = "sqlite+aiosqlite://"
+            kwargs = {}
+        else:
+            kwargs = {
+                "pool_size": self.settings_service.settings.pool_size,
+                "max_overflow": self.settings_service.settings.max_overflow,
+            }
+            database_url = "postgresql+psycopg://" if url_components[0].startswith("postgresql") else url_components[0]
+        database_url += url_components[1]
+        return create_async_engine(
+            database_url,
+            connect_args=self._get_connect_args(),
+            **kwargs,
+        )
+
+    def _get_connect_args(self):
         if self.settings_service.settings.database_url and self.settings_service.settings.database_url.startswith(
             "sqlite"
         ):
@@ -59,36 +114,13 @@ class DatabaseService(Service):
             }
         else:
             connect_args = {}
-        try:
-            # register the event listener for sqlite as part of this class.
-            # Using decorator will make the method not able to use self
-            event.listen(Engine, "connect", self.on_connection)
+        return connect_args
 
-            return create_engine(
-                self.database_url,
-                connect_args=connect_args,
-                pool_size=self.settings_service.settings.pool_size,
-                max_overflow=self.settings_service.settings.max_overflow,
-            )
-        except sa.exc.NoSuchModuleError as exc:
-            if "postgres" in str(exc) and not self.database_url.startswith("postgresql"):
-                # https://stackoverflow.com/questions/62688256/sqlalchemy-exc-nosuchmoduleerror-cant-load-plugin-sqlalchemy-dialectspostgre
-                self.database_url = self.database_url.replace("postgres://", "postgresql://")
-                logger.warning(
-                    "Fixed postgres dialect in database URL. Replacing postgres:// with postgresql://. "
-                    "To avoid this warning, update the database URL."
-                )
-                return self._create_engine()
-            msg = "Error creating database engine"
-            raise RuntimeError(msg) from exc
-
-    def on_connection(self, dbapi_connection, connection_record):
-        from sqlite3 import Connection as sqliteConnection
-
-        if isinstance(dbapi_connection, sqliteConnection):
-            pragmas: dict | None = self.settings_service.settings.sqlite_pragmas
+    def on_connection(self, dbapi_connection, _connection_record) -> None:
+        if isinstance(dbapi_connection, sqlite3.Connection | dialect_sqlite.aiosqlite.AsyncAdapt_aiosqlite_connection):
+            pragmas: dict = self.settings_service.settings.sqlite_pragmas or {}
             pragmas_list = []
-            for key, val in pragmas.items() or {}:
+            for key, val in pragmas.items():
                 pragmas_list.append(f"PRAGMA {key} = {val}")
             logger.info(f"sqlite connection, setting pragmas: {pragmas_list}")
             if pragmas_list:
@@ -107,26 +139,84 @@ class DatabaseService(Service):
         with Session(self.engine) as session:
             yield session
 
-    def migrate_flows_if_auto_login(self):
-        # if auto_login is enabled, we need to migrate the flows
-        # to the default superuser if they don't have a user id
-        # associated with them
+    @asynccontextmanager
+    async def with_async_session(self):
+        async with AsyncSession(self.async_engine, expire_on_commit=False) as session:
+            yield session
+
+    async def assign_orphaned_flows_to_superuser(self) -> None:
+        """Assign orphaned flows to the default superuser when auto login is enabled."""
         settings_service = get_settings_service()
-        if settings_service.auth_settings.AUTO_LOGIN:
-            with self.with_session() as session:
-                flows = session.exec(select(models.Flow).where(models.Flow.user_id is None)).all()
-                if flows:
-                    logger.debug("Migrating flows to default superuser")
-                    username = settings_service.auth_settings.SUPERUSER
-                    user = get_user_by_username(session, username)
-                    if not user:
-                        logger.error("Default superuser not found")
-                        msg = "Default superuser not found"
-                        raise RuntimeError(msg)
-                    for flow in flows:
-                        flow.user_id = user.id
-                    session.commit()
-                    logger.debug("Flows migrated successfully")
+
+        if not settings_service.auth_settings.AUTO_LOGIN:
+            return
+
+        async with self.with_async_session() as session:
+            # Fetch orphaned flows
+            stmt = (
+                select(models.Flow)
+                .join(models.Folder)
+                .where(
+                    models.Flow.user_id == None,  # noqa: E711
+                    models.Folder.name != STARTER_FOLDER_NAME,
+                )
+            )
+            orphaned_flows = (await session.exec(stmt)).all()
+
+            if not orphaned_flows:
+                return
+
+            logger.debug("Assigning orphaned flows to the default superuser")
+
+            # Retrieve superuser
+            superuser_username = settings_service.auth_settings.SUPERUSER
+            superuser = await get_user_by_username(session, superuser_username)
+
+            if not superuser:
+                error_message = "Default superuser not found"
+                logger.error(error_message)
+                raise RuntimeError(error_message)
+
+            # Get existing flow names for the superuser
+            existing_names: set[str] = set(
+                (await session.exec(select(models.Flow.name).where(models.Flow.user_id == superuser.id))).all()
+            )
+
+            # Process orphaned flows
+            for flow in orphaned_flows:
+                flow.user_id = superuser.id
+                flow.name = self._generate_unique_flow_name(flow.name, existing_names)
+                existing_names.add(flow.name)
+                session.add(flow)
+
+            # Commit changes
+            await session.commit()
+            logger.debug("Successfully assigned orphaned flows to the default superuser")
+
+    def _generate_unique_flow_name(self, original_name: str, existing_names: set[str]) -> str:
+        """Generate a unique flow name by adding or incrementing a suffix."""
+        if original_name not in existing_names:
+            return original_name
+
+        match = re.search(r"^(.*) \((\d+)\)$", original_name)
+        if match:
+            base_name, current_number = match.groups()
+            new_name = f"{base_name} ({int(current_number) + 1})"
+        else:
+            new_name = f"{original_name} (1)"
+
+        # Ensure unique name by incrementing suffix
+        while new_name in existing_names:
+            match = re.match(r"^(.*) \((\d+)\)$", new_name)
+            if match is not None:
+                base_name, current_number = match.groups()
+            else:
+                error_message = "Invalid format: match is None"
+                raise ValueError(error_message)
+
+            new_name = f"{base_name} ({int(current_number) + 1})"
+
+        return new_name
 
     def check_schema_health(self) -> bool:
         inspector = inspect(self.engine)
@@ -161,14 +251,14 @@ class DatabaseService(Service):
 
         return True
 
-    def init_alembic(self, alembic_cfg):
+    def init_alembic(self, alembic_cfg) -> None:
         logger.info("Initializing alembic")
         command.ensure_version(alembic_cfg)
         # alembic_cfg.attributes["connection"].commit()
         command.upgrade(alembic_cfg, "head")
         logger.info("Alembic initialized")
 
-    def run_migrations(self, fix=False):
+    def run_migrations(self, *, fix=False) -> None:
         # First we need to check if alembic has been initialized
         # If not, we need to initialize it
         # if not self.script_location.exists(): # this is not the correct way to check if alembic has been initialized
@@ -178,7 +268,7 @@ class DatabaseService(Service):
         # which is a buffer
         # I don't want to output anything
         # subprocess.DEVNULL is an int
-        with (self.script_location / "alembic.log").open("w") as buffer:
+        with self.alembic_log_path.open("w", encoding="utf-8") as buffer:
             alembic_cfg = Config(stdout=buffer)
             # alembic_cfg.attributes["connection"] = session
             alembic_cfg.set_main_option("script_location", str(self.script_location))
@@ -191,7 +281,7 @@ class DatabaseService(Service):
                 try:
                     session.exec(text("SELECT * FROM alembic_version"))
                 except Exception:  # noqa: BLE001
-                    logger.opt(exception=True).info("Alembic not initialized")
+                    logger.debug("Alembic not initialized")
                     should_initialize_alembic = True
 
             if should_initialize_alembic:
@@ -210,7 +300,7 @@ class DatabaseService(Service):
                 buffer.write(f"{datetime.now(tz=timezone.utc).astimezone().isoformat()}: Checking migrations\n")
                 command.check(alembic_cfg)
             except Exception as exc:  # noqa: BLE001
-                logger.opt(exception=True).debug("Error checking migrations")
+                logger.debug(f"Error checking migrations: {exc}")
                 if isinstance(exc, util.exc.CommandError | util.exc.AutogenerateDiffsDetected):
                     command.upgrade(alembic_cfg, "head")
                     time.sleep(3)
@@ -227,7 +317,7 @@ class DatabaseService(Service):
             if fix:
                 self.try_downgrade_upgrade_until_success(alembic_cfg)
 
-    def try_downgrade_upgrade_until_success(self, alembic_cfg, retries=5):
+    def try_downgrade_upgrade_until_success(self, alembic_cfg, retries=5) -> None:
         # Try -1 then head, if it fails, try -2 then head, etc.
         # until we reach the number of retries
         for i in range(1, retries + 1):
@@ -236,7 +326,7 @@ class DatabaseService(Service):
                 break
             except util.exc.AutogenerateDiffsDetected:
                 # downgrade to base and upgrade again
-                logger.opt(exception=True).warning("AutogenerateDiffsDetected")
+                logger.warning("AutogenerateDiffsDetected")
                 command.downgrade(alembic_cfg, f"-{i}")
                 # wait for the database to be ready
                 time.sleep(3)
@@ -273,7 +363,7 @@ class DatabaseService(Service):
                 results.append(Result(name=column, type="column", success=True))
         return results
 
-    def create_db_and_tables(self):
+    def create_db_and_tables(self) -> None:
         from sqlalchemy import inspect
 
         inspector = inspect(self.engine)
@@ -308,16 +398,15 @@ class DatabaseService(Service):
 
         logger.debug("Database and tables created successfully")
 
-    async def teardown(self):
+    async def teardown(self) -> None:
         logger.debug("Tearing down database")
         try:
             settings_service = get_settings_service()
             # remove the default superuser if auto_login is enabled
             # using the SUPERUSER to get the user
-            with self.with_session() as session:
-                teardown_superuser(settings_service, session)
-
+            async with self.with_async_session() as session:
+                await teardown_superuser(settings_service, session)
         except Exception:  # noqa: BLE001
             logger.exception("Error tearing down database")
-
-        self.engine.dispose()
+        await self.async_engine.dispose()
+        await asyncio.to_thread(self.engine.dispose)

@@ -1,6 +1,4 @@
 import { expect, test } from "@playwright/test";
-import * as dotenv from "dotenv";
-import path from "path";
 
 test("user must be able to freeze a component", async ({ page }) => {
   await page.goto("/");
@@ -23,25 +21,28 @@ test("user must be able to freeze a component", async ({ page }) => {
   }
 
   while (modalCount === 0) {
-    await page.getByText("New Project", { exact: true }).click();
-    await page.waitForTimeout(3000);
+    await page.getByText("New Flow", { exact: true }).click();
+    await page.waitForSelector('[data-testid="modal-title"]', {
+      timeout: 3000,
+    });
     modalCount = await page.getByTestId("modal-title")?.count();
   }
 
-  await page.getByRole("heading", { name: "Blank Flow" }).click();
+  await page.getByTestId("blank-flow").click();
 
   //first component
 
-  await page.getByTestId("extended-disclosure").click();
-  await page.getByPlaceholder("Search").click();
-  await page.getByPlaceholder("Search").fill("text input");
-  await page.waitForTimeout(1000);
+  await page.getByTestId("sidebar-search-input").click();
+  await page.getByTestId("sidebar-search-input").fill("text input");
+  await page.waitForSelector('[data-testid="inputsText Input"]', {
+    timeout: 1000,
+  });
 
   await page
     .getByTestId("inputsText Input")
     .dragTo(page.locator('//*[@id="react-flow-id"]'));
 
-  await page.getByTitle("zoom out").click();
+  await page.getByTestId("zoom_out").click();
   await page
     .locator('//*[@id="react-flow-id"]')
     .hover()
@@ -54,16 +55,17 @@ test("user must be able to freeze a component", async ({ page }) => {
 
   //second component
 
-  await page.getByTestId("extended-disclosure").click();
-  await page.getByPlaceholder("Search").click();
-  await page.getByPlaceholder("Search").fill("url");
-  await page.waitForTimeout(1000);
+  await page.getByTestId("sidebar-search-input").click();
+  await page.getByTestId("sidebar-search-input").fill("url");
+  await page.waitForSelector('[data-testid="dataURL"]', {
+    timeout: 1000,
+  });
 
   await page
     .getByTestId("dataURL")
     .dragTo(page.locator('//*[@id="react-flow-id"]'));
 
-  await page.getByTitle("zoom out").click();
+  await page.getByTestId("zoom_out").click();
   await page
     .locator('//*[@id="react-flow-id"]')
     .hover()
@@ -76,16 +78,17 @@ test("user must be able to freeze a component", async ({ page }) => {
 
   //third component
 
-  await page.getByTestId("extended-disclosure").click();
-  await page.getByPlaceholder("Search").click();
-  await page.getByPlaceholder("Search").fill("split text");
-  await page.waitForTimeout(1000);
+  await page.getByTestId("sidebar-search-input").click();
+  await page.getByTestId("sidebar-search-input").fill("split text");
+  await page.waitForSelector('[data-testid="processingSplit Text"]', {
+    timeout: 1000,
+  });
 
   await page
-    .getByTestId("helpersSplit Text")
+    .getByTestId("processingSplit Text")
     .dragTo(page.locator('//*[@id="react-flow-id"]'));
 
-  await page.getByTitle("zoom out").click();
+  await page.getByTestId("zoom_out").click();
   await page
     .locator('//*[@id="react-flow-id"]')
     .hover()
@@ -98,16 +101,17 @@ test("user must be able to freeze a component", async ({ page }) => {
 
   //fourth component
 
-  await page.getByTestId("extended-disclosure").click();
-  await page.getByPlaceholder("Search").click();
-  await page.getByPlaceholder("Search").fill("parse data");
-  await page.waitForTimeout(1000);
+  await page.getByTestId("sidebar-search-input").click();
+  await page.getByTestId("sidebar-search-input").fill("parse data");
+  await page.waitForSelector('[data-testid="processingParse Data"]', {
+    timeout: 1000,
+  });
 
   await page
-    .getByTestId("helpersParse Data")
+    .getByTestId("processingParse Data")
     .dragTo(page.locator('//*[@id="react-flow-id"]'));
 
-  await page.getByTitle("zoom out").click();
+  await page.getByTestId("zoom_out").click();
   await page
     .locator('//*[@id="react-flow-id"]')
     .hover()
@@ -120,16 +124,17 @@ test("user must be able to freeze a component", async ({ page }) => {
 
   //fifth component
 
-  await page.getByTestId("extended-disclosure").click();
-  await page.getByPlaceholder("Search").click();
-  await page.getByPlaceholder("Search").fill("chat output");
-  await page.waitForTimeout(1000);
+  await page.getByTestId("sidebar-search-input").click();
+  await page.getByTestId("sidebar-search-input").fill("chat output");
+  await page.waitForSelector('[data-testid="outputsChat Output"]', {
+    timeout: 1000,
+  });
 
   await page
     .getByTestId("outputsChat Output")
     .dragTo(page.locator('//*[@id="react-flow-id"]'));
 
-  await page.getByTitle("zoom out").click();
+  await page.getByTestId("zoom_out").click();
   await page
     .locator('//*[@id="react-flow-id"]')
     .hover()
@@ -144,11 +149,19 @@ test("user must be able to freeze a component", async ({ page }) => {
 
   while (outdatedComponents > 0) {
     await page.getByTestId("icon-AlertTriangle").first().click();
-    await page.waitForTimeout(1000);
+    await page.waitForSelector('[data-testid="icon-AlertTriangle"]', {
+      timeout: 1000,
+    });
     outdatedComponents = await page.getByTestId("icon-AlertTriangle").count();
   }
 
-  await page.getByTitle("fit view").click();
+  let filledApiKey = await page.getByTestId("remove-icon-badge").count();
+  while (filledApiKey > 0) {
+    await page.getByTestId("remove-icon-badge").first().click();
+    filledApiKey = await page.getByTestId("remove-icon-badge").count();
+  }
+
+  await page.getByTestId("fit_view").click();
 
   //connection 1
   const urlOutput = await page
@@ -174,7 +187,7 @@ test("user must be able to freeze a component", async ({ page }) => {
   await splitTextInput.hover();
   await page.mouse.up();
 
-  await page.getByTitle("fit view").click();
+  await page.getByTestId("fit_view").click();
 
   //connection 3
   const splitTextOutput = await page
@@ -200,7 +213,7 @@ test("user must be able to freeze a component", async ({ page }) => {
   await chatOutputInput.hover();
   await page.mouse.up();
 
-  await page.getByTitle("fit view").click();
+  await page.getByTestId("fit_view").click();
 
   await page
     .getByTestId("textarea_str_input_value")
@@ -219,11 +232,13 @@ test("user must be able to freeze a component", async ({ page }) => {
     timeout: 15000,
   });
 
-  await page.waitForTimeout(1000);
+  await page.waitForSelector('[data-testid="output-inspection-message"]', {
+    timeout: 1000,
+  });
 
   await page.getByTestId("output-inspection-message").first().click();
 
-  await page.getByRole("gridcell").first().click();
+  await page.getByRole("gridcell").nth(4).click();
 
   const firstRunWithoutFreezing = await page
     .getByPlaceholder("Empty")
@@ -242,11 +257,13 @@ test("user must be able to freeze a component", async ({ page }) => {
     timeout: 15000,
   });
 
-  await page.waitForTimeout(1000);
+  await page.waitForSelector('[data-testid="output-inspection-message"]', {
+    timeout: 1000,
+  });
 
   await page.getByTestId("output-inspection-message").first().click();
 
-  await page.getByRole("gridcell").first().click();
+  await page.getByRole("gridcell").nth(4).click();
 
   const secondRunWithoutFreezing = await page
     .getByPlaceholder("Empty")
@@ -255,17 +272,19 @@ test("user must be able to freeze a component", async ({ page }) => {
   await page.getByText("Close").last().click();
   await page.getByText("Close").last().click();
 
-  await page.getByText("Split Text", { exact: true }).click();
+  await page.getByText("Split Text", { exact: true }).last().click();
 
-  await page.waitForTimeout(1000);
+  await page.waitForSelector('[data-testid="more-options-modal"]', {
+    timeout: 1000,
+  });
 
   await page.getByTestId("more-options-modal").click();
 
-  await page.waitForTimeout(1000);
+  await page.waitForSelector('[data-testid="icon-Snowflake"]', {
+    timeout: 1000,
+  });
 
   await page.getByTestId("icon-Snowflake").click();
-
-  await page.waitForTimeout(1000);
 
   await page.keyboard.press("Escape");
 
@@ -276,7 +295,9 @@ test("user must be able to freeze a component", async ({ page }) => {
     .first()
     .fill("lorem ipsum");
 
-  await page.waitForTimeout(1000);
+  await page.waitForSelector('[data-testid="button_run_chat output"]', {
+    timeout: 1000,
+  });
 
   await page.getByTestId("button_run_chat output").click();
 
@@ -286,11 +307,13 @@ test("user must be able to freeze a component", async ({ page }) => {
     timeout: 15000,
   });
 
-  await page.waitForTimeout(1000);
+  await page.waitForSelector('[data-testid="output-inspection-message"]', {
+    timeout: 1000,
+  });
 
   await page.getByTestId("output-inspection-message").first().click();
 
-  await page.getByRole("gridcell").first().click();
+  await page.getByRole("gridcell").nth(4).click();
 
   const firstTextFreezed = await page.getByPlaceholder("Empty").textContent();
 
@@ -299,15 +322,17 @@ test("user must be able to freeze a component", async ({ page }) => {
 
   await page.getByText("Split Text", { exact: true }).click();
 
-  await page.waitForTimeout(1000);
+  await page.waitForSelector('[data-testid="more-options-modal"]', {
+    timeout: 1000,
+  });
 
   await page.getByTestId("more-options-modal").click();
 
-  await page.waitForTimeout(1000);
+  await page.waitForSelector('[data-testid="icon-Snowflake"]', {
+    timeout: 1000,
+  });
 
-  await page.getByTestId("icon-Snowflake").last().click();
-
-  await page.waitForTimeout(1000);
+  await page.getByText("Freeze", { exact: true }).click();
 
   await page.keyboard.press("Escape");
 
@@ -321,11 +346,13 @@ test("user must be able to freeze a component", async ({ page }) => {
     timeout: 15000,
   });
 
-  await page.waitForTimeout(1000);
+  await page.waitForSelector('[data-testid="output-inspection-message"]', {
+    timeout: 1000,
+  });
 
   await page.getByTestId("output-inspection-message").first().click();
 
-  await page.getByRole("gridcell").first().click();
+  await page.getByRole("gridcell").nth(4).click();
 
   const thirdTextWithoutFreezing = await page
     .getByPlaceholder("Empty")

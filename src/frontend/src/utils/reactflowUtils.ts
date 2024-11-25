@@ -41,7 +41,6 @@ import {
   addEscapedHandleIdsToEdgesType,
   findLastNodeType,
   generateFlowType,
-  unselectAllNodesType,
   updateEdgesHandleIdsType,
 } from "../types/utils/reactflowUtils";
 import { getLayoutedNodes } from "./layoutUtils";
@@ -130,7 +129,7 @@ export function detectBrokenEdgesEdges(nodes: NodeType[], edges: Edge[]) {
         displayName: targetNode.data.node!.display_name,
         field:
           targetNode.data.node!.template[targetHandleObject.fieldName]
-            .display_name,
+            ?.display_name ?? targetHandleObject.fieldName,
       },
     };
   }
@@ -202,12 +201,13 @@ export function detectBrokenEdgesEdges(nodes: NodeType[], edges: Edge[]) {
   return BrokenEdges;
 }
 
-export function unselectAllNodes({ updateNodes, data }: unselectAllNodesType) {
-  let newNodes = cloneDeep(data);
-  newNodes.forEach((node: Node) => {
+export function unselectAllNodesEdges(nodes: Node[], edges: Edge[]) {
+  nodes.forEach((node: Node) => {
     node.selected = false;
   });
-  updateNodes(newNodes!);
+  edges.forEach((edge: Edge) => {
+    edge.selected = false;
+  });
 }
 
 export function isValidConnection(
@@ -1562,11 +1562,15 @@ export function downloadFlow(
   removeFileNameFromComponents(clonedFlow);
   // create a data URI with the current flow data
   const jsonString = `data:text/json;chatset=utf-8,${encodeURIComponent(
-    JSON.stringify({
-      ...clonedFlow,
-      name: flowName,
-      description: flowDescription,
-    }),
+    JSON.stringify(
+      {
+        ...clonedFlow,
+        name: flowName,
+        description: flowDescription,
+      },
+      null,
+      2,
+    ),
   )}`;
 
   // create a link element and set its properties
@@ -1596,6 +1600,8 @@ export const createNewFlow = (
     name: flow?.name ? flow.name : "Untitled document",
     data: flowData,
     id: "",
+    icon: flow?.icon ?? undefined,
+    gradient: flow?.gradient ?? undefined,
     is_component: flow?.is_component ?? false,
     folder_id: folderId,
     endpoint_name: flow?.endpoint_name ?? undefined,
@@ -1718,4 +1724,15 @@ export function checkOldComponents({ nodes }: { nodes: any[] }) {
         "(CustomComponent):",
       ),
   );
+}
+
+export function someFlowTemplateFields(
+  { nodes }: { nodes: NodeType[] },
+  validateFn: (field: InputFieldType) => boolean,
+): boolean {
+  return nodes.some((node) => {
+    return Object.keys(node.data.node?.template ?? {}).some((field) => {
+      return validateFn((node.data.node?.template ?? {})[field]);
+    });
+  });
 }

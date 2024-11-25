@@ -1,4 +1,4 @@
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import * as dotenv from "dotenv";
 import path from "path";
 
@@ -32,21 +32,29 @@ test("should able to see and interact with logs", async ({ page }) => {
   }
 
   while (modalCount === 0) {
-    await page.getByText("New Project", { exact: true }).click();
-
-    await page.waitForTimeout(3000);
+    await page.getByText("New Flow", { exact: true }).click();
+    await page.waitForSelector('[data-testid="modal-title"]', {
+      timeout: 3000,
+    });
     modalCount = await page.getByTestId("modal-title")?.count();
   }
 
+  await page.getByTestId("side_nav_options_all-templates").click();
   await page.getByRole("heading", { name: "Basic Prompting" }).click();
-  await page.waitForTimeout(1000);
-
+  await expect(page.getByTestId(/.*rf__node.*/).first()).toBeVisible({
+    timeout: 1000,
+  });
   let outdatedComponents = await page.getByTestId("icon-AlertTriangle").count();
 
   while (outdatedComponents > 0) {
     await page.getByTestId("icon-AlertTriangle").first().click();
-    await page.waitForTimeout(1000);
     outdatedComponents = await page.getByTestId("icon-AlertTriangle").count();
+  }
+
+  let filledApiKey = await page.getByTestId("remove-icon-badge").count();
+  while (filledApiKey > 0) {
+    await page.getByTestId("remove-icon-badge").first().click();
+    filledApiKey = await page.getByTestId("remove-icon-badge").count();
   }
 
   await page.getByTestId("icon-ChevronDown").click();
@@ -54,14 +62,19 @@ test("should able to see and interact with logs", async ({ page }) => {
   await page.getByText("No Data Available", { exact: true }).isVisible();
   await page.keyboard.press("Escape");
 
-  await page
-    .getByTestId("popover-anchor-input-api_key")
-    .fill(process.env.OPENAI_API_KEY ?? "");
+  const apiKeyInput = page.getByTestId("popover-anchor-input-api_key");
+  const isApiKeyInputVisible = await apiKeyInput.isVisible();
+
+  if (isApiKeyInputVisible) {
+    await apiKeyInput.fill(process.env.OPENAI_API_KEY ?? "");
+  }
 
   await page.getByTestId("dropdown_str_model_name").click();
   await page.getByTestId("gpt-4o-1-option").click();
 
-  await page.waitForTimeout(1000);
+  await page.waitForSelector('[data-testid="button_run_chat output"]', {
+    timeout: 1000,
+  });
   await page.getByTestId("button_run_chat output").first().click();
 
   await page.waitForSelector("text=built successfully", { timeout: 30000 });

@@ -2,26 +2,37 @@ from __future__ import annotations
 
 import uuid
 from datetime import timedelta
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
-from fastapi import HTTPException
+from fastapi import Depends, HTTPException, Query
+from fastapi_pagination import Params
 from loguru import logger
 from sqlalchemy import delete
+from sqlmodel import Session
+from sqlmodel.ext.asyncio.session import AsyncSession
 
 from langflow.graph.graph.base import Graph
+from langflow.services.auth.utils import get_current_active_user
+from langflow.services.database.models import User
 from langflow.services.database.models.flow import Flow
 from langflow.services.database.models.transactions.model import TransactionTable
 from langflow.services.database.models.vertex_builds.model import VertexBuildTable
+from langflow.services.deps import async_session_scope, get_async_session, get_session
 from langflow.services.store.utils import get_lf_version_from_pypi
 
 if TYPE_CHECKING:
-    from sqlmodel import Session
-
     from langflow.services.chat.service import ChatService
     from langflow.services.store.schema import StoreComponentCreate
 
 
 API_WORDS = ["api", "key", "token"]
+
+MAX_PAGE_SIZE = 50
+MIN_PAGE_SIZE = 1
+
+CurrentActiveUser = Annotated[User, Depends(get_current_active_user)]
+DbSession = Annotated[Session, Depends(get_session)]
+AsyncDbSession = Annotated[AsyncSession, Depends(get_async_session)]
 
 
 def has_api_terms(word: str):
@@ -43,7 +54,6 @@ def remove_api_keys(flow: dict):
 
 def build_input_keys_response(langchain_object, artifacts):
     """Build the input keys response."""
-
     input_keys_response = {
         "input_keys": dict.fromkeys(langchain_object.input_keys, ""),
         "memory_keys": [],
@@ -90,7 +100,7 @@ def get_is_component_from_data(data: dict):
     return data.get("is_component")
 
 
-async def check_langflow_version(component: StoreComponentCreate):
+async def check_langflow_version(component: StoreComponentCreate) -> None:
     from langflow.utils.version import get_version_info
 
     __version__ = get_version_info()["version"]
@@ -98,7 +108,7 @@ async def check_langflow_version(component: StoreComponentCreate):
     if not component.last_tested_version:
         component.last_tested_version = __version__
 
-    langflow_version = get_lf_version_from_pypi()
+    langflow_version = await get_lf_version_from_pypi()
     if langflow_version is None:
         raise HTTPException(status_code=500, detail="Unable to verify the latest version of Langflow")
     if langflow_version != component.last_tested_version:
@@ -132,15 +142,28 @@ def format_elapsed_time(elapsed_time: float) -> str:
     return f"{minutes} {minutes_unit}, {seconds} {seconds_unit}"
 
 
+async def _get_flow_name(flow_id: str) -> str:
+    async with async_session_scope() as session:
+        flow = await session.get(Flow, flow_id)
+        if flow is None:
+            msg = f"Flow {flow_id} not found"
+            raise ValueError(msg)
+    return flow.name
+
+
 async def build_graph_from_data(flow_id: str, payload: dict, **kwargs):
     """Build and cache the graph."""
+    # Get flow name
+    if "flow_name" not in kwargs:
+        flow_name = await _get_flow_name(flow_id)
+        kwargs["flow_name"] = flow_name
     graph = Graph.from_payload(payload, flow_id, **kwargs)
-    for vertex_id in graph._has_session_id_vertices:
+    for vertex_id in graph.has_session_id_vertices:
         vertex = graph.get_vertex(vertex_id)
         if vertex is None:
             msg = f"Vertex {vertex_id} not found"
             raise ValueError(msg)
-        if not vertex._raw_params.get("session_id"):
+        if not vertex.raw_params.get("session_id"):
             vertex.update_raw_params({"session_id": flow_id}, overwrite=True)
 
     run_id = uuid.uuid4()
@@ -150,16 +173,16 @@ async def build_graph_from_data(flow_id: str, payload: dict, **kwargs):
     return graph
 
 
-async def build_graph_from_db_no_cache(flow_id: str, session: Session):
+async def build_graph_from_db_no_cache(flow_id: str, session: AsyncSession):
     """Build and cache the graph."""
-    flow: Flow | None = session.get(Flow, flow_id)
+    flow: Flow | None = await session.get(Flow, flow_id)
     if not flow or not flow.data:
         msg = "Invalid flow ID"
         raise ValueError(msg)
     return await build_graph_from_data(flow_id, flow.data, flow_name=flow.name, user_id=str(flow.user_id))
 
 
-async def build_graph_from_db(flow_id: str, session: Session, chat_service: ChatService):
+async def build_graph_from_db(flow_id: str, session: AsyncSession, chat_service: ChatService):
     graph = await build_graph_from_db_no_cache(flow_id, session)
     await chat_service.set_cache(flow_id, graph)
     return graph
@@ -201,8 +224,7 @@ def format_exception_message(exc: Exception) -> str:
 
 
 def get_top_level_vertices(graph, vertices_ids):
-    """
-    Retrieves the top-level vertices from the given graph based on the provided vertex IDs.
+    """Retrieves the top-level vertices from the given graph based on the provided vertex IDs.
 
     Args:
         graph (Graph): The graph object containing the vertices.
@@ -257,11 +279,20 @@ def parse_value(value: Any, input_type: str) -> Any:
     return value
 
 
-async def cascade_delete_flow(session: Session, flow: Flow):
+async def cascade_delete_flow(session: AsyncSession, flow_id: uuid.UUID) -> None:
     try:
-        session.exec(delete(TransactionTable).where(TransactionTable.flow_id == flow.id))
-        session.exec(delete(VertexBuildTable).where(VertexBuildTable.flow_id == flow.id))
-        session.exec(delete(Flow).where(Flow.id == flow.id))
+        await session.exec(delete(TransactionTable).where(TransactionTable.flow_id == flow_id))
+        await session.exec(delete(VertexBuildTable).where(VertexBuildTable.flow_id == flow_id))
+        await session.exec(delete(Flow).where(Flow.id == flow_id))
     except Exception as e:
-        msg = f"Unable to cascade delete flow: ${flow.id}"
+        msg = f"Unable to cascade delete flow: ${flow_id}"
         raise RuntimeError(msg, e) from e
+
+
+def custom_params(
+    page: int | None = Query(None),
+    size: int | None = Query(None),
+):
+    if page is None and size is None:
+        return None
+    return Params(page=page or MIN_PAGE_SIZE, size=size or MAX_PAGE_SIZE)

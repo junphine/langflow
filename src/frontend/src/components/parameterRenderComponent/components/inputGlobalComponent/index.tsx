@@ -10,6 +10,7 @@ import GlobalVariableModal from "../../../GlobalVariableModal/GlobalVariableModa
 import ForwardedIconComponent from "../../../genericIconComponent";
 import InputComponent from "../../../inputComponent";
 import { CommandItem } from "../../../ui/command";
+import { getPlaceholder } from "../../helpers/get-placeholder-disabled";
 import { InputGlobalComponentType, InputProps } from "../../types";
 
 export default function InputGlobalComponent({
@@ -20,6 +21,8 @@ export default function InputGlobalComponent({
   load_from_db,
   password,
   editNode = false,
+  placeholder,
+  isToolMode = false,
 }: InputProps<string, InputGlobalComponentType>): JSX.Element {
   const setErrorData = useAlertStore((state) => state.setErrorData);
 
@@ -68,6 +71,8 @@ export default function InputGlobalComponent({
   }
   return (
     <InputComponent
+      nodeStyle
+      placeholder={getPlaceholder(disabled, placeholder)}
       id={id}
       editNode={editNode}
       disabled={disabled}
@@ -77,7 +82,7 @@ export default function InputGlobalComponent({
       optionsPlaceholder={"Global Variables"}
       optionsIcon="Globe"
       optionsButton={
-        <GlobalVariableModal>
+        <GlobalVariableModal disabled={disabled}>
           <CommandItem value="doNotFilter-addNewVariable">
             <ForwardedIconComponent
               name="Plus"
@@ -133,6 +138,7 @@ export default function InputGlobalComponent({
           { skipSnapshot },
         );
       }}
+      isToolMode={isToolMode}
     />
   );
 }

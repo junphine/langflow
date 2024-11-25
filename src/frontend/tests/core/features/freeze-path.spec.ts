@@ -32,21 +32,24 @@ test("user must be able to freeze a path", async ({ page }) => {
   }
 
   while (modalCount === 0) {
-    await page.getByText("New Project", { exact: true }).click();
-    await page.waitForTimeout(3000);
+    await page.getByText("New Flow", { exact: true }).click();
+    await page.waitForSelector('[data-testid="modal-title"]', {
+      timeout: 3000,
+    });
     modalCount = await page.getByTestId("modal-title")?.count();
   }
 
+  await page.getByTestId("side_nav_options_all-templates").click();
   await page.getByRole("heading", { name: "Basic Prompting" }).click();
 
-  await page.waitForSelector('[title="fit view"]', {
+  await page.waitForSelector('[data-testid="fit_view"]', {
     timeout: 100000,
   });
 
-  await page.getByTitle("fit view").click();
-  await page.getByTitle("zoom out").click();
-  await page.getByTitle("zoom out").click();
-  await page.getByTitle("zoom out").click();
+  await page.getByTestId("fit_view").click();
+  await page.getByTestId("zoom_out").click();
+  await page.getByTestId("zoom_out").click();
+  await page.getByTestId("zoom_out").click();
 
   let outdatedComponents = await page.getByTestId("icon-AlertTriangle").count();
 
@@ -56,9 +59,19 @@ test("user must be able to freeze a path", async ({ page }) => {
     outdatedComponents = await page.getByTestId("icon-AlertTriangle").count();
   }
 
-  await page
-    .getByTestId("popover-anchor-input-api_key")
-    .fill(process.env.OPENAI_API_KEY ?? "");
+  //remove all saved api keys
+  let filledApiKey = await page.getByTestId("remove-icon-badge").count();
+  while (filledApiKey > 0) {
+    await page.getByTestId("remove-icon-badge").first().click();
+    filledApiKey = await page.getByTestId("remove-icon-badge").count();
+  }
+
+  const apiKeyInput = page.getByTestId("popover-anchor-input-api_key");
+  const isApiKeyInputVisible = await apiKeyInput.isVisible();
+
+  if (isApiKeyInputVisible) {
+    await apiKeyInput.fill(process.env.OPENAI_API_KEY ?? "");
+  }
 
   await page
     .getByTestId("textarea_str_input_value")
@@ -70,11 +83,15 @@ test("user must be able to freeze a path", async ({ page }) => {
   await page.getByTestId("dropdown_str_model_name").click();
   await page.getByTestId("gpt-4o-1-option").click();
 
-  await page.waitForTimeout(1000);
+  await page.waitForSelector('[data-testid="float_float_temperature"]', {
+    timeout: 1000,
+  });
 
-  await page.getByTestId("float-input").fill("1.0");
+  await page.getByTestId("float_float_temperature").fill("1.0");
 
-  await page.waitForTimeout(1000);
+  await page.waitForSelector('[data-testid="button_run_chat output"]', {
+    timeout: 1000,
+  });
 
   await page.getByTestId("button_run_chat output").click();
 
@@ -93,11 +110,16 @@ test("user must be able to freeze a path", async ({ page }) => {
 
   await page.getByText("Close").first().click();
 
-  await page.waitForTimeout(3000);
+  await page.waitForSelector('[data-testid="float_float_temperature"]', {
+    timeout: 3000,
+  });
 
-  await page.getByTestId("float-input").fill("1.2");
+  await page.getByTestId("float_float_temperature").fill("");
+  await page.getByTestId("float_float_temperature").fill("1.2");
 
-  await page.waitForTimeout(1000);
+  await page.waitForSelector('[data-testid="button_run_chat output"]', {
+    timeout: 1000,
+  });
 
   await page.getByTestId("button_run_chat output").click();
   await page.waitForSelector("text=built successfully", { timeout: 30000 });
@@ -115,19 +137,34 @@ test("user must be able to freeze a path", async ({ page }) => {
 
   await page.getByText("Close").first().click();
 
-  await page.waitForTimeout(3000);
+  await page.waitForSelector("text=OpenAI", {
+    timeout: 1000,
+  });
 
-  await page.getByText("openai").first().click();
+  await page.getByText("OpenAI", { exact: true }).last().click();
 
-  await page.waitForTimeout(1000);
+  await page.waitForSelector('[data-testid="more-options-modal"]', {
+    timeout: 1000,
+  });
 
-  await page.getByTestId("icon-FreezeAll").click();
+  await page.getByTestId("more-options-modal").click();
 
-  await page.waitForTimeout(1000);
+  await page.waitForSelector('[data-testid="freeze-path-button"]', {
+    timeout: 1000,
+  });
+
+  await page.getByTestId("freeze-path-button").click();
+
+  await page.waitForSelector('[data-testid="icon-Snowflake"]', {
+    timeout: 1000,
+  });
 
   expect(await page.getByTestId("icon-Snowflake").count()).toBeGreaterThan(0);
 
-  await page.waitForTimeout(1000);
+  await page.waitForSelector('[data-testid="button_run_chat output"]', {
+    timeout: 1000,
+  });
+
   await page.getByTestId("button_run_chat output").click();
 
   await page.waitForSelector("text=built successfully", { timeout: 30000 });

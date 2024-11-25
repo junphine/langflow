@@ -6,15 +6,17 @@ import TextAreaComponent from "../textAreaComponent";
 export function StrRenderComponent({
   templateData,
   name,
+  placeholder,
   ...baseInputProps
 }: InputProps<string, StrRenderComponentType>) {
-  const { handleOnNewValue, id, disabled, editNode, value } = baseInputProps;
+  const { handleOnNewValue, id, disabled, editNode, value, isToolMode } =
+    baseInputProps;
 
   if (!templateData.options) {
     return templateData.multiline ? (
       <TextAreaComponent
         {...baseInputProps}
-        password={templateData.password}
+        // password={templateData.password}
         updateVisibility={() => {
           if (templateData.password !== undefined) {
             handleOnNewValue(
@@ -24,13 +26,16 @@ export function StrRenderComponent({
           }
         }}
         id={`textarea_${id}`}
+        isToolMode={isToolMode}
       />
     ) : (
       <InputGlobalComponent
         {...baseInputProps}
         password={templateData.password}
         load_from_db={templateData.load_from_db}
+        placeholder={placeholder}
         id={"input-" + name}
+        isToolMode={isToolMode}
       />
     );
   }
@@ -41,6 +46,7 @@ export function StrRenderComponent({
         {...baseInputProps}
         options={templateData.options}
         combobox={templateData.combobox}
+        name={templateData?.name!}
       />
     );
   }

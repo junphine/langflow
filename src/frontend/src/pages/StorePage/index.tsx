@@ -42,7 +42,7 @@ import useFlowsManagerStore from "../../stores/flowsManagerStore";
 import { useStoreStore } from "../../stores/storeStore";
 import { storeComponent } from "../../types/store";
 import { cn } from "../../utils/utils";
-import InputSearchComponent from "../MainPage/components/myCollectionComponent/components/inputSearchComponent";
+import InputSearchComponent from "../MainPage/oldComponents/myCollectionComponent/components/inputSearchComponent";
 
 export default function StorePage(): JSX.Element {
   const hasApiKey = useStoreStore((state) => state.hasApiKey);
@@ -380,7 +380,6 @@ export default function StorePage(): JSX.Element {
         {!loading && searchData.length > 0 && (
           <div className="relative py-6">
             <PaginatorComponent
-              storeComponent={true}
               pageIndex={pageIndex}
               pageSize={pageSize}
               rowsCount={STORE_PAGINATION_ROWS_COUNT}

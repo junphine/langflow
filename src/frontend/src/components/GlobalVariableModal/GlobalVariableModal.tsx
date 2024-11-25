@@ -14,6 +14,13 @@ import ForwardedIconComponent from "../genericIconComponent";
 import InputComponent from "../inputComponent";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { Textarea } from "../ui/textarea";
 import sortByName from "./utils/sort-by-name";
 
@@ -25,12 +32,14 @@ export default function GlobalVariableModal({
   initialData,
   open: myOpen,
   setOpen: mySetOpen,
+  disabled = false,
 }: {
   children?: JSX.Element;
   asChild?: boolean;
   initialData?: GlobalVariable;
   open?: boolean;
   setOpen?: (a: boolean | ((o?: boolean) => boolean)) => void;
+  disabled?: boolean;
 }): JSX.Element {
   const [key, setKey] = useState(initialData?.name ?? "");
   const [value, setValue] = useState(initialData?.value ?? "");
@@ -122,6 +131,7 @@ export default function GlobalVariableModal({
       setOpen={setOpen}
       size="x-small"
       onSubmit={submitForm}
+      disable={disabled}
     >
       <BaseModal.Header
         description={
@@ -138,7 +148,9 @@ export default function GlobalVariableModal({
           aria-hidden="true"
         />
       </BaseModal.Header>
-      <BaseModal.Trigger asChild={asChild}>{children}</BaseModal.Trigger>
+      <BaseModal.Trigger disable={disabled} asChild={asChild}>
+        {children}
+      </BaseModal.Trigger>
       <BaseModal.Content>
         <div className="flex h-full w-full flex-col gap-4 align-middle">
           <Label>Variable Name</Label>
@@ -150,17 +162,28 @@ export default function GlobalVariableModal({
             placeholder="Insert a name for the variable..."
           ></Input>
           <Label>Type (optional)</Label>
-          <InputComponent
-            disabled={initialData?.type !== undefined}
-            setSelectedOption={(e) => {
-              setType(e);
-            }}
-            selectedOption={type}
-            password={false}
-            options={["Generic", "Credential"]}
-            placeholder="Choose a type for the variable..."
-            id={"type-global-variables"}
-          ></InputComponent>
+
+          <Select
+            disabled={disabled}
+            onValueChange={setType}
+            value={type}
+            defaultValue={type}
+          >
+            <SelectTrigger
+              className="h-full w-full"
+              data-testid="select-type-global-variables"
+            >
+              <SelectValue placeholder="Choose a type for the variable..." />
+            </SelectTrigger>
+            <SelectContent id="type-global-variables">
+              {["Generic", "Credential"].map((option) => (
+                <SelectItem key={option} value={option}>
+                  {option}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Label>Value</Label>
           {type === "Credential" ? (
             <InputComponent
@@ -170,6 +193,7 @@ export default function GlobalVariableModal({
                 setValue(e);
               }}
               placeholder="Insert a value for the variable..."
+              nodeStyle
             />
           ) : (
             <Textarea
