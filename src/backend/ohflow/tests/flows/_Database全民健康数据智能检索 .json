@@ -1,0 +1,2352 @@
+{
+  "id": "3b55ebf9-538d-46b0-83c6-fd64260356c1",
+  "data": {
+    "nodes": [
+      {
+        "id": "Prompt-7b2Ep",
+        "type": "genericNode",
+        "position": {
+          "x": 133.11053933198798,
+          "y": 1096.122948539322
+        },
+        "data": {
+          "type": "Prompt",
+          "node": {
+            "template": {
+              "_type": "Component",
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from langflow.base.prompts.api_utils import process_prompt_template\nfrom langflow.custom import Component\nfrom langflow.inputs.inputs import DefaultPromptField\nfrom langflow.io import Output, PromptInput\nfrom langflow.schema.message import Message\nfrom langflow.template.utils import update_template_values\n\n\nclass PromptComponent(Component):\n    display_name: str = \"Prompt\"\n    description: str = \"Create a prompt template with dynamic variables.\"\n    icon = \"prompts\"\n    trace_type = \"prompt\"\n    name = \"Prompt\"\n\n    inputs = [\n        PromptInput(name=\"template\", display_name=\"Template\"),\n    ]\n\n    outputs = [\n        Output(display_name=\"Prompt Message\", name=\"prompt\", method=\"build_prompt\"),\n    ]\n\n    async def build_prompt(self) -> Message:\n        prompt = Message.from_template(**self._attributes)\n        self.status = prompt.text\n        return prompt\n\n    def _update_template(self, frontend_node: dict):\n        prompt_template = frontend_node[\"template\"][\"template\"][\"value\"]\n        custom_fields = frontend_node[\"custom_fields\"]\n        frontend_node_template = frontend_node[\"template\"]\n        _ = process_prompt_template(\n            template=prompt_template,\n            name=\"template\",\n            custom_fields=custom_fields,\n            frontend_node_template=frontend_node_template,\n        )\n        return frontend_node\n\n    def post_code_processing(self, new_frontend_node: dict, current_frontend_node: dict):\n        \"\"\"This function is called after the code validation is done.\"\"\"\n        frontend_node = super().post_code_processing(new_frontend_node, current_frontend_node)\n        template = frontend_node[\"template\"][\"template\"][\"value\"]\n        # Kept it duplicated for backwards compatibility\n        _ = process_prompt_template(\n            template=template,\n            name=\"template\",\n            custom_fields=frontend_node[\"custom_fields\"],\n            frontend_node_template=frontend_node[\"template\"],\n        )\n        # Now that template is updated, we need to grab any values that were set in the current_frontend_node\n        # and update the frontend_node with those values\n        update_template_values(new_template=frontend_node, previous_template=current_frontend_node[\"template\"])\n        return frontend_node\n\n    def _get_fallback_input(self, **kwargs):\n        return DefaultPromptField(**kwargs)\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "template": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "template",
+                "value": "You are an agent designed to interact with a SQL database.\nGiven an input question, create a syntactically correct {dialect} query to run, then look at the results of the query and return the answer.\nUnless the user specifies a specific number of examples they wish to obtain, always limit your query to at most 10 results.\nYou can order the results by a relevant column to return the most interesting examples in the database.\nNever query for all the columns from a specific table, only ask for the relevant columns given the question.\nYou have access to tools for interacting with the database.\nOnly use the below tools. Only use the information returned by the below tools to construct your final answer.\nYou MUST double check your query before executing it. If you get an error while executing a query, rewrite the query and try again.\n\nDO NOT make any DML statements (INSERT, UPDATE, DELETE, DROP etc.) to the database.\n\nIf the question does not seem related to the database, just return \"I don\\'t know\" as the answer.\n\n\nsql_db_query - Input to this tool is a detailed and correct SQL query, output is a result from the database. If the query is not correct, an error message will be returned. If an error is returned, rewrite the query, check the query, and try again. If you encounter an issue with Unknown column \\'xxxx\\' in \\'field list\\', use sql_db_schema to query the correct table fields.\nsql_db_schema - Input to this tool is a comma-separated list of tables, output is the schema and sample rows for those tables. Be sure that the tables actually exist by calling sql_db_list_tables first! Example Input: table1, table2, table3\nsql_db_list_tables - Input is an empty string, output is a comma-separated list of tables in the database.\nsql_db_query_checker - Use this tool to double check if your query is correct before executing it. Always use this tool before executing a query with sql_db_query!\n\nUse the following format:\n\nQuestion: the input question you must answer\nThought: you should always think about what to do\nAction: the action to take, should be one of [sql_db_query, sql_db_schema, sql_db_list_tables, sql_db_query_checker]\nAction Input: the input to the action\nObservation: the result of the action\n... (this Thought/Action/Action Input/Observation can repeat N times)\nThought: I now know the final answer\nFinal Answer: the final answer to the original input question\n\nBegin!\n\nQuestion:  {input}\nThought: I should look at the tables in the database to see what I can query.  Then I should query the schema of the most relevant tables.\n",
+                "display_name": "Template",
+                "advanced": false,
+                "dynamic": false,
+                "info": "",
+                "title_case": false,
+                "type": "prompt",
+                "_input_type": "PromptInput",
+                "load_from_db": false
+              },
+              "dialect": {
+                "field_type": "str",
+                "required": false,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "h2",
+                "fileTypes": [],
+                "file_path": "",
+                "name": "dialect",
+                "display_name": "dialect",
+                "advanced": false,
+                "input_types": [
+                  "Message",
+                  "Text"
+                ],
+                "dynamic": false,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false,
+                "type": "str"
+              },
+              "input": {
+                "field_type": "str",
+                "required": false,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "",
+                "fileTypes": [],
+                "file_path": "",
+                "name": "input",
+                "display_name": "input",
+                "advanced": false,
+                "input_types": [
+                  "Message",
+                  "Text"
+                ],
+                "dynamic": false,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false,
+                "type": "str"
+              }
+            },
+            "description": "Create a prompt template with dynamic variables.",
+            "icon": "prompts",
+            "base_classes": [
+              "Message"
+            ],
+            "display_name": "Prompt",
+            "documentation": "",
+            "custom_fields": {
+              "template": [
+                "dialect",
+                "input"
+              ]
+            },
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Message"
+                ],
+                "selected": "Message",
+                "name": "prompt",
+                "display_name": "Prompt Message",
+                "method": "build_prompt",
+                "value": "__UNDEFINED__",
+                "cache": true
+              }
+            ],
+            "field_order": [
+              "template"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false,
+            "lf_version": "1.0.14"
+          },
+          "id": "Prompt-7b2Ep",
+          "description": "Create a prompt template with dynamic variables.",
+          "display_name": "Prompt"
+        },
+        "selected": false,
+        "width": 320,
+        "height": 432,
+        "positionAbsolute": {
+          "x": 133.11053933198798,
+          "y": 1096.122948539322
+        },
+        "dragging": false
+      },
+      {
+        "id": "SQLGenerator-EEBoI",
+        "type": "genericNode",
+        "position": {
+          "x": 1350.4301233835142,
+          "y": 1301.3096275893597
+        },
+        "data": {
+          "type": "SQLGenerator",
+          "node": {
+            "template": {
+              "_type": "Component",
+              "db": {
+                "trace_as_metadata": true,
+                "list": false,
+                "required": true,
+                "placeholder": "",
+                "show": true,
+                "value": "",
+                "name": "db",
+                "display_name": "SQLDatabase",
+                "advanced": false,
+                "input_types": [
+                  "SQLDatabase"
+                ],
+                "dynamic": false,
+                "info": "",
+                "title_case": false,
+                "type": "other",
+                "_input_type": "HandleInput"
+              },
+              "llm": {
+                "trace_as_metadata": true,
+                "list": false,
+                "required": true,
+                "placeholder": "",
+                "show": true,
+                "value": "",
+                "name": "llm",
+                "display_name": "Language Model",
+                "advanced": false,
+                "input_types": [
+                  "LanguageModel"
+                ],
+                "dynamic": false,
+                "info": "",
+                "title_case": false,
+                "type": "other",
+                "_input_type": "HandleInput"
+              },
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from langchain.chains import create_sql_query_chain\nfrom langchain_core.prompts import PromptTemplate\nfrom langchain_core.runnables import Runnable\nfrom langflow.base.chains.model import LCChainComponent\nfrom langflow.field_typing import Message\nfrom langflow.inputs import MultilineInput, HandleInput, IntInput\nfrom langflow.template import Output\n\n\nclass SQLGeneratorComponent(LCChainComponent):\n    display_name = \"Natural Language to SQL\"\n    description = \"Generate SQL from natural language.\"\n    name = \"SQLGenerator\"\n\n    inputs = [\n        MultilineInput(\n            name=\"input_value\", display_name=\"Input\", info=\"The input value to pass to the chain.\", required=True\n        ),\n        HandleInput(name=\"llm\", display_name=\"Language Model\", input_types=[\"LanguageModel\"], required=True),\n        HandleInput(name=\"db\", display_name=\"SQLDatabase\", input_types=[\"SQLDatabase\"], required=True),\n        IntInput(\n            name=\"top_k\", display_name=\"Top K\", info=\"The number of results per select statement to return.\", value=5\n        ),\n        MultilineInput(name=\"prompt\", display_name=\"Prompt\", info=\"The prompt must contain `{question}`.\"),\n    ]\n\n    outputs = [Output(display_name=\"Text\", name=\"text\", method=\"invoke_chain\")]\n\n    def invoke_chain(self) -> Message:\n        if self.prompt:\n            prompt_template = PromptTemplate.from_template(template=self.prompt)\n        else:\n            prompt_template = None\n\n        if self.top_k < 1:\n            raise ValueError(\"Top K must be greater than 0.\")\n\n        if not prompt_template:\n            sql_query_chain = create_sql_query_chain(llm=self.llm, db=self.db, k=self.top_k)\n        else:\n            # Check if {question} is in the prompt\n            if \"{input}\" not in prompt_template.template or \"input\" not in prompt_template.input_variables:\n                raise ValueError(\"Prompt must contain `{question}` to be used with Natural Language to SQL.\")\n            sql_query_chain = create_sql_query_chain(llm=self.llm, db=self.db, prompt=prompt_template, k=self.top_k)\n        query_writer: Runnable = sql_query_chain | {\"query\": lambda x: x.replace(\"SQLQuery:\", \"\").strip()}\n        response = query_writer.invoke(\n            {\"question\": self.input_value}, config={\"callbacks\": self.get_langchain_callbacks()}\n        )\n        query = response.get(\"query\")\n        self.status = query\n        return query\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "input_value": {
+                "trace_as_input": true,
+                "multiline": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": true,
+                "placeholder": "",
+                "show": true,
+                "value": "",
+                "name": "input_value",
+                "display_name": "Input",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The input value to pass to the chain.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MultilineInput"
+              },
+              "prompt": {
+                "trace_as_input": true,
+                "multiline": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "value": "",
+                "name": "prompt",
+                "display_name": "Prompt",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The prompt must contain `{question}`.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MultilineInput"
+              },
+              "top_k": {
+                "trace_as_metadata": true,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "value": "5",
+                "name": "top_k",
+                "display_name": "Top K",
+                "advanced": false,
+                "dynamic": false,
+                "info": "The number of results per select statement to return.",
+                "title_case": false,
+                "type": "int",
+                "_input_type": "IntInput",
+                "load_from_db": false
+              }
+            },
+            "description": "Generate SQL from natural language.",
+            "base_classes": [
+              "Message"
+            ],
+            "display_name": "Natural Language to SQL",
+            "documentation": "",
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Message"
+                ],
+                "selected": "Message",
+                "name": "text",
+                "display_name": "Text",
+                "method": "invoke_chain",
+                "value": "__UNDEFINED__",
+                "cache": true
+              }
+            ],
+            "field_order": [
+              "input_value",
+              "llm",
+              "db",
+              "top_k",
+              "prompt"
+            ],
+            "beta": false,
+            "edited": true,
+            "lf_version": "1.0.14"
+          },
+          "id": "SQLGenerator-EEBoI"
+        },
+        "selected": false,
+        "width": 320,
+        "height": 504,
+        "positionAbsolute": {
+          "x": 1350.4301233835142,
+          "y": 1301.3096275893597
+        },
+        "dragging": false
+      },
+      {
+        "id": "DeepseekLLM-Vessh",
+        "type": "genericNode",
+        "position": {
+          "x": 183.878539273417,
+          "y": 304.1146731460217
+        },
+        "data": {
+          "type": "DeepseekLLM",
+          "node": {
+            "template": {
+              "_type": "Component",
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "import operator\nfrom functools import reduce\n\nfrom langchain_openai import ChatOpenAI\nfrom pydantic.v1 import SecretStr\n\nfrom langflow.base.constants import STREAM_INFO_TEXT\nfrom langflow.base.models.model import LCModelComponent\nfrom langflow.field_typing import LanguageModel\nfrom langflow.inputs import (\n    BoolInput,\n    DictInput,\n    DropdownInput,\n    FloatInput,\n    IntInput,\n    MessageInput,\n    SecretStrInput,\n    StrInput,\n)\n\n\nclass DeepseekChatEndpointComponent(LCModelComponent):\n    name = \"DeepseekLLM\"\n    display_name: str = \"Deepseek LLM\"\n    description: str = \"Generate text using Deepseek LLMs.\"\n    documentation: str = \"https://chat.deepseek.com/\"\n    icon = \"OpenAI\"\n\n    DEEPSEEK_MODELS = [\n        \"deepseek-chat\",\n        \"deepseek-coder\",\n    ]\n\n    inputs = [\n        MessageInput(name=\"input_value\", display_name=\"Input\"),\n        IntInput(\n            name=\"max_tokens\",\n            display_name=\"Max Tokens\",\n            advanced=True,\n            info=\"The maximum number of tokens to generate. Set to 0 for unlimited tokens.\",\n        ),\n        DictInput(name=\"model_kwargs\", display_name=\"Model Kwargs\", advanced=True),\n        BoolInput(\n            name=\"json_mode\",\n            display_name=\"JSON Mode\",\n            advanced=True,\n            info=\"If True, it will output JSON regardless of passing a schema.\",\n        ),\n        DictInput(\n            name=\"output_schema\",\n            is_list=True,\n            display_name=\"Schema\",\n            advanced=True,\n            info=\"The schema for the Output of the model. You must pass the word JSON in the prompt. If left blank, JSON mode will be disabled.\",\n        ),\n        DropdownInput(\n            name=\"model_name\", display_name=\"Model Name\", advanced=False, options=DEEPSEEK_MODELS, value=DEEPSEEK_MODELS[0]\n        ),\n        StrInput(\n            name=\"openai_api_base\",\n            display_name=\"OpenAI API Base\",\n            advanced=True,\n            info=\"The base URL of the OpenAI API. Defaults to https://api.deepseek.com. You can change this to use other APIs like JinaChat, LocalAI and Prem.\",\n        ),\n        SecretStrInput(\n            name=\"openai_api_key\",\n            display_name=\"OpenAI API Key\",\n            info=\"The OpenAI API Key to use for the OpenAI model.\",\n            advanced=False,\n            value=\"DEEPSEEK_API_KEY\",\n        ),\n        FloatInput(name=\"temperature\", display_name=\"Temperature\", value=0.6),\n        BoolInput(name=\"stream\", display_name=\"Stream\", info=STREAM_INFO_TEXT, advanced=True),\n        StrInput(\n            name=\"system_message\",\n            display_name=\"System Message\",\n            info=\"System message to pass to the model.\",\n            advanced=True,\n        ),\n        IntInput(\n            name=\"seed\",\n            display_name=\"Seed\",\n            info=\"The seed controls the reproducibility of the job.\",\n            advanced=True,\n            value=1,\n        ),\n    ]\n\n    def build_model(self) -> LanguageModel:\n        # self.output_schea is a list of dictionaries\n        # let's convert it to a dictionary\n        output_schema_dict: dict[str, str] = reduce(operator.ior, self.output_schema or {}, {})\n        openai_api_key = self.openai_api_key\n        temperature = self.temperature\n        model_name: str = self.model_name\n        max_tokens = self.max_tokens\n        model_kwargs = self.model_kwargs or {}\n        openai_api_base = self.openai_api_base or \"https://api.deepseek.com\"\n        json_mode = bool(output_schema_dict) or self.json_mode\n        seed = self.seed\n\n        if openai_api_key:\n            api_key = SecretStr(openai_api_key)\n        else:\n            api_key = None\n        output = ChatOpenAI(\n            max_tokens=max_tokens or None,\n            model_kwargs=model_kwargs,\n            model=model_name,\n            base_url=openai_api_base,\n            api_key=api_key,\n            temperature=temperature or 0.1,\n            seed=seed,\n        )\n        if json_mode:\n            if output_schema_dict:\n                output = output.with_structured_output(schema=output_schema_dict, method=\"json_mode\")  # type: ignore\n            else:\n                output = output.bind(response_format={\"type\": \"json_object\"})  # type: ignore\n\n        return output\n\n    def _get_exception_message(self, e: Exception):\n        \"\"\"\n        Get a message from an OpenAI exception.\n\n        Args:\n            exception (Exception): The exception to get the message from.\n\n        Returns:\n            str: The message from the exception.\n        \"\"\"\n\n        try:\n            from openai import BadRequestError\n        except ImportError:\n            return\n        if isinstance(e, BadRequestError):\n            message = e.body.get(\"message\")  # type: ignore\n            if message:\n                return message\n        return\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "input_value": {
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "input_value",
+                "value": "",
+                "display_name": "Input",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageInput"
+              },
+              "json_mode": {
+                "trace_as_metadata": true,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "json_mode",
+                "value": false,
+                "display_name": "JSON Mode",
+                "advanced": true,
+                "dynamic": false,
+                "info": "If True, it will output JSON regardless of passing a schema.",
+                "title_case": false,
+                "type": "bool",
+                "_input_type": "BoolInput"
+              },
+              "max_tokens": {
+                "trace_as_metadata": true,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "max_tokens",
+                "value": "",
+                "display_name": "Max Tokens",
+                "advanced": true,
+                "dynamic": false,
+                "info": "The maximum number of tokens to generate. Set to 0 for unlimited tokens.",
+                "title_case": false,
+                "type": "int",
+                "_input_type": "IntInput"
+              },
+              "model_kwargs": {
+                "trace_as_input": true,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "model_kwargs",
+                "value": {},
+                "display_name": "Model Kwargs",
+                "advanced": true,
+                "dynamic": false,
+                "info": "",
+                "title_case": false,
+                "type": "dict",
+                "_input_type": "DictInput"
+              },
+              "model_name": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "options": [
+                  "deepseek-chat",
+                  "deepseek-coder"
+                ],
+                "combobox": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "model_name",
+                "value": "deepseek-chat",
+                "display_name": "Model Name",
+                "advanced": false,
+                "dynamic": false,
+                "info": "",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "DropdownInput"
+              },
+              "openai_api_base": {
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "openai_api_base",
+                "value": "",
+                "display_name": "OpenAI API Base",
+                "advanced": true,
+                "dynamic": false,
+                "info": "The base URL of the OpenAI API. Defaults to https://api.deepseek.com. You can change this to use other APIs like JinaChat, LocalAI and Prem.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "StrInput"
+              },
+              "openai_api_key": {
+                "load_from_db": true,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "openai_api_key",
+                "value": "DEEPSEEK_API_KEY",
+                "display_name": "OpenAI API Key",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The OpenAI API Key to use for the OpenAI model.",
+                "title_case": false,
+                "password": true,
+                "type": "str",
+                "_input_type": "SecretStrInput"
+              },
+              "output_schema": {
+                "trace_as_input": true,
+                "list": true,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "output_schema",
+                "value": {},
+                "display_name": "Schema",
+                "advanced": true,
+                "dynamic": false,
+                "info": "The schema for the Output of the model. You must pass the word JSON in the prompt. If left blank, JSON mode will be disabled.",
+                "title_case": false,
+                "type": "dict",
+                "_input_type": "DictInput"
+              },
+              "seed": {
+                "trace_as_metadata": true,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "seed",
+                "value": 1,
+                "display_name": "Seed",
+                "advanced": true,
+                "dynamic": false,
+                "info": "The seed controls the reproducibility of the job.",
+                "title_case": false,
+                "type": "int",
+                "_input_type": "IntInput"
+              },
+              "stream": {
+                "trace_as_metadata": true,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "stream",
+                "value": false,
+                "display_name": "Stream",
+                "advanced": true,
+                "dynamic": false,
+                "info": "Stream the response from the model. Streaming works only in Chat.",
+                "title_case": false,
+                "type": "bool",
+                "_input_type": "BoolInput"
+              },
+              "system_message": {
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "system_message",
+                "value": "",
+                "display_name": "System Message",
+                "advanced": true,
+                "dynamic": false,
+                "info": "System message to pass to the model.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "StrInput"
+              },
+              "temperature": {
+                "trace_as_metadata": true,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "temperature",
+                "value": 0.6,
+                "display_name": "Temperature",
+                "advanced": false,
+                "dynamic": false,
+                "info": "",
+                "title_case": false,
+                "type": "float",
+                "_input_type": "FloatInput"
+              }
+            },
+            "description": "Generate text using Deepseek LLMs.",
+            "icon": "OpenAI",
+            "base_classes": [
+              "LanguageModel",
+              "Message"
+            ],
+            "display_name": "Deepseek LLM",
+            "documentation": "https://chat.deepseek.com/",
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Message"
+                ],
+                "selected": "Message",
+                "name": "text_output",
+                "display_name": "Text",
+                "method": "text_response",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "required_inputs": []
+              },
+              {
+                "types": [
+                  "LanguageModel"
+                ],
+                "selected": "LanguageModel",
+                "name": "model_output",
+                "display_name": "Language Model",
+                "method": "build_model",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "required_inputs": []
+              }
+            ],
+            "field_order": [
+              "input_value",
+              "max_tokens",
+              "model_kwargs",
+              "json_mode",
+              "output_schema",
+              "model_name",
+              "openai_api_base",
+              "openai_api_key",
+              "temperature",
+              "stream",
+              "system_message",
+              "seed"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false,
+            "lf_version": "1.0.14"
+          },
+          "id": "DeepseekLLM-Vessh",
+          "description": "Generate text using Deepseek LLMs.",
+          "display_name": "Deepseek LLM"
+        },
+        "selected": false,
+        "width": 320,
+        "height": 542,
+        "positionAbsolute": {
+          "x": 183.878539273417,
+          "y": 304.1146731460217
+        },
+        "dragging": false
+      },
+      {
+        "id": "ChatInput-Vb5x9",
+        "type": "genericNode",
+        "position": {
+          "x": -736.7412903458983,
+          "y": 1034.8636619086967
+        },
+        "data": {
+          "type": "ChatInput",
+          "node": {
+            "template": {
+              "_type": "Component",
+              "files": {
+                "trace_as_metadata": true,
+                "file_path": "",
+                "fileTypes": [
+                  "txt",
+                  "md",
+                  "mdx",
+                  "csv",
+                  "json",
+                  "yaml",
+                  "yml",
+                  "xml",
+                  "html",
+                  "htm",
+                  "pdf",
+                  "docx",
+                  "py",
+                  "sh",
+                  "sql",
+                  "js",
+                  "ts",
+                  "tsx",
+                  "jpg",
+                  "jpeg",
+                  "png",
+                  "bmp",
+                  "image"
+                ],
+                "list": true,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "files",
+                "value": "",
+                "display_name": "Files",
+                "advanced": true,
+                "dynamic": false,
+                "info": "Files to be sent with the message.",
+                "title_case": false,
+                "type": "file",
+                "_input_type": "FileInput"
+              },
+              "background_color": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "background_color",
+                "value": "",
+                "display_name": "Background Color",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The background color of the icon.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "chat_icon": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "chat_icon",
+                "value": "",
+                "display_name": "Icon",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The icon of the message.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from langflow.base.data.utils import IMG_FILE_TYPES, TEXT_FILE_TYPES\nfrom langflow.base.io.chat import ChatComponent\nfrom langflow.inputs import BoolInput\nfrom langflow.io import DropdownInput, FileInput, MessageTextInput, MultilineInput, Output\nfrom langflow.schema.message import Message\nfrom langflow.utils.constants import MESSAGE_SENDER_AI, MESSAGE_SENDER_NAME_USER, MESSAGE_SENDER_USER\n\n\nclass ChatInput(ChatComponent):\n    display_name = \"Chat Input\"\n    description = \"Get chat inputs from the Playground.\"\n    icon = \"MessagesSquare\"\n    name = \"ChatInput\"\n\n    inputs = [\n        MultilineInput(\n            name=\"input_value\",\n            display_name=\"Text\",\n            value=\"\",\n            info=\"Message to be passed as input.\",\n        ),\n        BoolInput(\n            name=\"should_store_message\",\n            display_name=\"Store Messages\",\n            info=\"Store the message in the history.\",\n            value=True,\n            advanced=True,\n        ),\n        DropdownInput(\n            name=\"sender\",\n            display_name=\"Sender Type\",\n            options=[MESSAGE_SENDER_AI, MESSAGE_SENDER_USER],\n            value=MESSAGE_SENDER_USER,\n            info=\"Type of sender.\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"sender_name\",\n            display_name=\"Sender Name\",\n            info=\"Name of the sender.\",\n            value=MESSAGE_SENDER_NAME_USER,\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"session_id\",\n            display_name=\"Session ID\",\n            info=\"The session ID of the chat. If empty, the current session ID parameter will be used.\",\n            advanced=True,\n        ),\n        FileInput(\n            name=\"files\",\n            display_name=\"Files\",\n            file_types=TEXT_FILE_TYPES + IMG_FILE_TYPES,\n            info=\"Files to be sent with the message.\",\n            advanced=True,\n            is_list=True,\n        ),\n        MessageTextInput(\n            name=\"background_color\",\n            display_name=\"Background Color\",\n            info=\"The background color of the icon.\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"chat_icon\",\n            display_name=\"Icon\",\n            info=\"The icon of the message.\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"text_color\",\n            display_name=\"Text Color\",\n            info=\"The text color of the name\",\n            advanced=True,\n        ),\n    ]\n    outputs = [\n        Output(display_name=\"Message\", name=\"message\", method=\"message_response\"),\n    ]\n\n    def message_response(self) -> Message:\n        _background_color = self.background_color\n        _text_color = self.text_color\n        _icon = self.chat_icon\n        message = Message(\n            text=self.input_value,\n            sender=self.sender,\n            sender_name=self.sender_name,\n            session_id=self.session_id,\n            files=self.files,\n            properties={\"background_color\": _background_color, \"text_color\": _text_color, \"icon\": _icon},\n        )\n        if self.session_id and isinstance(message, Message) and self.should_store_message:\n            stored_message = self.send_message(\n                message,\n            )\n            self.message.value = stored_message\n            message = stored_message\n\n        self.status = message\n        return message\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "input_value": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "multiline": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "input_value",
+                "value": "患者号为\"008\"的主治医生和所患疾病是什么？",
+                "display_name": "Text",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "Message to be passed as input.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MultilineInput"
+              },
+              "sender": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "options": [
+                  "Machine",
+                  "User"
+                ],
+                "combobox": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "sender",
+                "value": "User",
+                "display_name": "Sender Type",
+                "advanced": true,
+                "dynamic": false,
+                "info": "Type of sender.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "DropdownInput"
+              },
+              "sender_name": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "sender_name",
+                "value": "User",
+                "display_name": "Sender Name",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "Name of the sender.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "session_id": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "session_id",
+                "value": "",
+                "display_name": "Session ID",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The session ID of the chat. If empty, the current session ID parameter will be used.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "should_store_message": {
+                "trace_as_metadata": true,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "should_store_message",
+                "value": true,
+                "display_name": "Store Messages",
+                "advanced": true,
+                "dynamic": false,
+                "info": "Store the message in the history.",
+                "title_case": false,
+                "type": "bool",
+                "_input_type": "BoolInput"
+              },
+              "text_color": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "text_color",
+                "value": "",
+                "display_name": "Text Color",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The text color of the name",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              }
+            },
+            "description": "Get chat inputs from the Playground.",
+            "icon": "MessagesSquare",
+            "base_classes": [
+              "Message"
+            ],
+            "display_name": "Chat Input",
+            "documentation": "",
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Message"
+                ],
+                "selected": "Message",
+                "name": "message",
+                "display_name": "Message",
+                "method": "message_response",
+                "value": "__UNDEFINED__",
+                "cache": true
+              }
+            ],
+            "field_order": [
+              "input_value",
+              "should_store_message",
+              "sender",
+              "sender_name",
+              "session_id",
+              "files",
+              "background_color",
+              "chat_icon",
+              "text_color"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false,
+            "lf_version": "1.0.14"
+          },
+          "id": "ChatInput-Vb5x9",
+          "description": "Get chat inputs from the Playground.",
+          "display_name": "Chat Input"
+        },
+        "selected": false,
+        "width": 320,
+        "height": 233,
+        "positionAbsolute": {
+          "x": -736.7412903458983,
+          "y": 1034.8636619086967
+        },
+        "dragging": false
+      },
+      {
+        "id": "TextInput-r17CB",
+        "type": "genericNode",
+        "position": {
+          "x": -697.8338723562139,
+          "y": 1618.0572432678268
+        },
+        "data": {
+          "type": "TextInput",
+          "node": {
+            "template": {
+              "_type": "Component",
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from langflow.base.io.text import TextComponent\nfrom langflow.io import MultilineInput, Output\nfrom langflow.schema.message import Message\n\n\nclass TextInputComponent(TextComponent):\n    display_name = \"Text Input\"\n    description = \"Get text inputs from the Playground.\"\n    icon = \"type\"\n    name = \"TextInput\"\n\n    inputs = [\n        MultilineInput(\n            name=\"input_value\",\n            display_name=\"Text\",\n            info=\"Text to be passed as input.\",\n        ),\n    ]\n    outputs = [\n        Output(display_name=\"Text\", name=\"text\", method=\"text_response\"),\n    ]\n\n    def text_response(self) -> Message:\n        return Message(\n            text=self.input_value,\n        )\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "input_value": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "multiline": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "input_value",
+                "value": "以下是表名称和表注释，以及该表包含的字段名称、字段类型和字段注释\ncreate table TMdmPharm( // 药物 \n  id Integer primary key // 主键\n  sphmInx String // 药物SBR索引号\n  pharmName String // 药物名称\n  fundamentalFactorFlag String // 药物名称主因子标志\n  pharmNameEn String // 药物英文名称\n  pharmNameEnShort String // 药物英文名称简称\n  pharmOtherName String // 药物别名\n  pharmTrait String // 药物性状\n  pharmacologyDesc String // 药理及应用\n  drugUseMethod String // 药物用法描述\n  drugInteractionDesc String // 药物相互作用\n  attentionPoint String // 注意事项\n  drugFormCode String // 药物剂型代码\n  drugFormName String // 药物剂型名称\n  drugSpec String // 药物规格\n  versionDesc String // 版本信息\n  note String // 备注\n  dataValidityFlag String // 数据有效标志\n  dataCreateTime Timestamp // 数据创建时间\n  dataModifyTime Timestamp // 数据修改时间\n  chemicalFormulaUrl String // 药物化学式\n)",
+                "display_name": "Text",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "Text to be passed as input.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MultilineInput"
+              }
+            },
+            "description": "Get text inputs from the Playground.",
+            "icon": "type",
+            "base_classes": [
+              "Message"
+            ],
+            "display_name": "Text Input",
+            "documentation": "",
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Message"
+                ],
+                "selected": "Message",
+                "name": "text",
+                "display_name": "Text",
+                "method": "text_response",
+                "value": "__UNDEFINED__",
+                "cache": true
+              }
+            ],
+            "field_order": [
+              "input_value"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false
+          },
+          "id": "TextInput-r17CB",
+          "description": "Get text inputs from the Playground.",
+          "display_name": "Text Input"
+        },
+        "selected": false,
+        "width": 320,
+        "height": 233,
+        "positionAbsolute": {
+          "x": -697.8338723562139,
+          "y": 1618.0572432678268
+        },
+        "dragging": false
+      },
+      {
+        "id": "ChatOutput-lwU8m",
+        "type": "genericNode",
+        "position": {
+          "x": 2700.4624233780346,
+          "y": 1521.0059452918142
+        },
+        "data": {
+          "type": "ChatOutput",
+          "node": {
+            "template": {
+              "_type": "Component",
+              "background_color": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "background_color",
+                "value": "",
+                "display_name": "Background Color",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The background color of the icon.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "chat_icon": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "chat_icon",
+                "value": "",
+                "display_name": "Icon",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The icon of the message.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from langflow.base.io.chat import ChatComponent\nfrom langflow.inputs import BoolInput\nfrom langflow.io import DropdownInput, MessageInput, MessageTextInput, Output\nfrom langflow.schema.message import Message\nfrom langflow.schema.properties import Source\nfrom langflow.utils.constants import MESSAGE_SENDER_AI, MESSAGE_SENDER_NAME_AI, MESSAGE_SENDER_USER\n\n\nclass ChatOutput(ChatComponent):\n    display_name = \"Chat Output\"\n    description = \"Display a chat message in the Playground.\"\n    icon = \"MessagesSquare\"\n    name = \"ChatOutput\"\n\n    inputs = [\n        MessageInput(\n            name=\"input_value\",\n            display_name=\"Text\",\n            info=\"Message to be passed as output.\",\n        ),\n        BoolInput(\n            name=\"should_store_message\",\n            display_name=\"Store Messages\",\n            info=\"Store the message in the history.\",\n            value=True,\n            advanced=True,\n        ),\n        DropdownInput(\n            name=\"sender\",\n            display_name=\"Sender Type\",\n            options=[MESSAGE_SENDER_AI, MESSAGE_SENDER_USER],\n            value=MESSAGE_SENDER_AI,\n            advanced=True,\n            info=\"Type of sender.\",\n        ),\n        MessageTextInput(\n            name=\"sender_name\",\n            display_name=\"Sender Name\",\n            info=\"Name of the sender.\",\n            value=MESSAGE_SENDER_NAME_AI,\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"session_id\",\n            display_name=\"Session ID\",\n            info=\"The session ID of the chat. If empty, the current session ID parameter will be used.\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"data_template\",\n            display_name=\"Data Template\",\n            value=\"{text}\",\n            advanced=True,\n            info=\"Template to convert Data to Text. If left empty, it will be dynamically set to the Data's text key.\",\n        ),\n        MessageTextInput(\n            name=\"background_color\",\n            display_name=\"Background Color\",\n            info=\"The background color of the icon.\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"chat_icon\",\n            display_name=\"Icon\",\n            info=\"The icon of the message.\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"text_color\",\n            display_name=\"Text Color\",\n            info=\"The text color of the name\",\n            advanced=True,\n        ),\n    ]\n    outputs = [\n        Output(\n            display_name=\"Message\",\n            name=\"message\",\n            method=\"message_response\",\n        ),\n    ]\n\n    def _build_source(self, _id: str | None, display_name: str | None, source: str | None) -> Source:\n        source_dict = {}\n        if _id:\n            source_dict[\"id\"] = _id\n        if display_name:\n            source_dict[\"display_name\"] = display_name\n        if source:\n            source_dict[\"source\"] = source\n        return Source(**source_dict)\n\n    def message_response(self) -> Message:\n        _source, _icon, _display_name, _source_id = self.get_properties_from_source_component()\n        _background_color = self.background_color\n        _text_color = self.text_color\n        if self.chat_icon:\n            _icon = self.chat_icon\n        message = self.input_value if isinstance(self.input_value, Message) else Message(text=self.input_value)\n        message.sender = self.sender\n        message.sender_name = self.sender_name\n        message.session_id = self.session_id\n        message.flow_id = self.graph.flow_id if hasattr(self, \"graph\") else None\n        message.properties.source = self._build_source(_source_id, _display_name, _source)\n        message.properties.icon = _icon\n        message.properties.background_color = _background_color\n        message.properties.text_color = _text_color\n        if self.session_id and isinstance(message, Message) and self.should_store_message:\n            stored_message = self.send_message(\n                message,\n            )\n            self.message.value = stored_message\n            message = stored_message\n\n        self.status = message\n        return message\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "data_template": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "data_template",
+                "value": "{text}",
+                "display_name": "Data Template",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "Template to convert Data to Text. If left empty, it will be dynamically set to the Data's text key.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "input_value": {
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "input_value",
+                "value": "",
+                "display_name": "Text",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "Message to be passed as output.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageInput"
+              },
+              "sender": {
+                "tool_mode": false,
+                "trace_as_metadata": true,
+                "options": [
+                  "Machine",
+                  "User"
+                ],
+                "combobox": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "sender",
+                "value": "Machine",
+                "display_name": "Sender Type",
+                "advanced": true,
+                "dynamic": false,
+                "info": "Type of sender.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "DropdownInput"
+              },
+              "sender_name": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "sender_name",
+                "value": "AI",
+                "display_name": "Sender Name",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "Name of the sender.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "session_id": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "session_id",
+                "value": "",
+                "display_name": "Session ID",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The session ID of the chat. If empty, the current session ID parameter will be used.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "should_store_message": {
+                "trace_as_metadata": true,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "should_store_message",
+                "value": true,
+                "display_name": "Store Messages",
+                "advanced": true,
+                "dynamic": false,
+                "info": "Store the message in the history.",
+                "title_case": false,
+                "type": "bool",
+                "_input_type": "BoolInput"
+              },
+              "text_color": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "text_color",
+                "value": "",
+                "display_name": "Text Color",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The text color of the name",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              }
+            },
+            "description": "Display a chat message in the Playground.",
+            "icon": "MessagesSquare",
+            "base_classes": [
+              "Message"
+            ],
+            "display_name": "Chat Output",
+            "documentation": "",
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Message"
+                ],
+                "selected": "Message",
+                "name": "message",
+                "display_name": "Message",
+                "method": "message_response",
+                "value": "__UNDEFINED__",
+                "cache": true
+              }
+            ],
+            "field_order": [
+              "input_value",
+              "should_store_message",
+              "sender",
+              "sender_name",
+              "session_id",
+              "data_template",
+              "background_color",
+              "chat_icon",
+              "text_color"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false
+          },
+          "id": "ChatOutput-lwU8m",
+          "description": "Display a chat message in the Playground.",
+          "display_name": "Chat Output"
+        },
+        "selected": false,
+        "width": 320,
+        "height": 233,
+        "positionAbsolute": {
+          "x": 2700.4624233780346,
+          "y": 1521.0059452918142
+        },
+        "dragging": false
+      },
+      {
+        "id": "IgniteDatabase-awZAo",
+        "type": "genericNode",
+        "position": {
+          "x": 498.17386212910753,
+          "y": 1634.462142974178
+        },
+        "data": {
+          "node": {
+            "template": {
+              "_type": "CustomComponent",
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from langchain_community.utilities.sql_database import SQLDatabase\nfrom langflow.custom import CustomComponent\nfrom ohflow.interface.db.ignite_database import IgniteDatabase\n\n\nclass IgniteDatabaseComponent(CustomComponent):\n    name = \"IgniteDatabase\"\n    display_name = \"Ignite Database\"\n    description = \"SQL Database use Ignite\"\n\n    def build_config(self):\n        return {\n            \"uri\": {\"display_name\": \"URI\", \"info\": \"URI to the ignite database.\"},\n            \"host\": {\"display_name\": \"Ignite Host\", \"info\": \"IP to the ignite database.\"},\n            \"port\": {\"display_name\": \"Ignite Port\", \"info\": \"Port to the ignite database.\"},\n            \"user\": {\"display_name\": \"Ignite User\", \"info\": \"User to the ignite database.\",\"required\": False,\"advanced\": True},\n            \"password\": {\"display_name\": \"Ignite Password\", \"info\": \"Password to the ignite database.\",\"required\": False,\"advanced\": True},\n            \"schema\": {\"display_name\": \"Ignite schema\", \"info\": \"schema to the ignite database.\"},\n            \"sample_rows_in_table_info\": {\"display_name\": \"sample_rows_in_table_info\", \"info\": \"sample_rows_in_table_info default 3\",\"required\": False,\"advanced\": True},\n            \"include_tables\": {\"display_name\": \"include_tables\", \"info\": \"tables include to the ignite database.\",\"required\": False,\"advanced\": True},\n            \"meta_server_url\": {\"display_name\": \"meta_server_url\", \"info\": \"Cluster meta server URL to the ignite database.\",\"required\": False,\"advanced\": True},\n            \"meta_access_token\": {\"display_name\": \"meta_access_token\", \"info\": \"Cluster access token include to the ignite database.\",\"required\": False,\"advanced\": True},\n            \"comment_as_identifier\": {\"display_name\": \"comment_as_identifier\", \"info\": \"Comment as identifier default false\",\"required\": False,\"advanced\": True},\n        }\n\n    def clean_up_uri(self, uri: str) -> str:\n        return uri.strip()\n\n    def build(self, uri: str='',\n        host: str=None,\n        port: int=10801,\n        user: str = \"ignite\",\n        password: str = \"ignite\",\n        schema: str = 'PUBLIC',\n        sample_rows_in_table_info: int = 0,\n        include_tables: str = None,\n        meta_server_url: str = None,\n        meta_access_token: str = None,\n        comment_as_identifier: bool = False\n        ) -> SQLDatabase:\n        if uri:\n            print(\"conncect ignite to {uri}\")\n            uri = self.clean_up_uri(uri)\n            return IgniteDatabase.from_uri(f\"{uri}?metaServerURL={meta_server_url}&metaAccessToken={meta_access_token}\",\n                                           schema=schema,\n                                           include_tables=include_tables,\n                                           sample_rows_in_table_info=sample_rows_in_table_info,\n                                           comment_as_identifier=comment_as_identifier\n                                           )\n        else:\n            print(\"conncect ignite to {host}:{port}\")\n            return IgniteDatabase.from_pyignite(host, port=port,user=user,password=password,\n                                            schema=schema,\n                                            include_tables=include_tables,\n                                            sample_rows_in_table_info=sample_rows_in_table_info,\n                                            meta_server_url=meta_server_url,\n                                            meta_access_token=meta_access_token,\n                                            comment_as_identifier=comment_as_identifier\n                                            )\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "comment_as_identifier": {
+                "type": "bool",
+                "required": false,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": false,
+                "value": false,
+                "fileTypes": [],
+                "file_path": "",
+                "name": "comment_as_identifier",
+                "display_name": "comment_as_identifier",
+                "advanced": true,
+                "dynamic": false,
+                "info": "Comment as identifier default false",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "host": {
+                "type": "str",
+                "required": false,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": false,
+                "fileTypes": [],
+                "file_path": "",
+                "name": "host",
+                "display_name": "Ignite Host",
+                "advanced": false,
+                "dynamic": false,
+                "info": "IP to the ignite database.",
+                "load_from_db": false,
+                "title_case": false,
+                "input_types": [
+                  "Text"
+                ],
+                "value": "127.0.0.1"
+              },
+              "include_tables": {
+                "type": "str",
+                "required": false,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": false,
+                "fileTypes": [],
+                "file_path": "",
+                "name": "include_tables",
+                "display_name": "include_tables",
+                "advanced": true,
+                "dynamic": false,
+                "info": "tables include to the ignite database.",
+                "load_from_db": false,
+                "title_case": false,
+                "input_types": [
+                  "Text"
+                ],
+                "value": ""
+              },
+              "meta_access_token": {
+                "type": "str",
+                "required": false,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": false,
+                "fileTypes": [],
+                "file_path": "",
+                "name": "meta_access_token",
+                "display_name": "meta_access_token",
+                "advanced": true,
+                "dynamic": false,
+                "info": "Cluster access token include to the ignite database.",
+                "load_from_db": false,
+                "title_case": false,
+                "input_types": [
+                  "Text"
+                ],
+                "value": "7ed238d0-601c-467a-a798-e4fe08ac0b39"
+              },
+              "meta_server_url": {
+                "type": "str",
+                "required": false,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": false,
+                "fileTypes": [],
+                "file_path": "",
+                "name": "meta_server_url",
+                "display_name": "meta_server_url",
+                "advanced": true,
+                "dynamic": false,
+                "info": "Cluster meta server URL to the ignite database.",
+                "load_from_db": false,
+                "title_case": false,
+                "input_types": [
+                  "Text"
+                ],
+                "value": "http://127.0.0.1:3000/api/v1/configuration/clusters/d65ea122-56f4-4bbe-8598-0188121d494b"
+              },
+              "password": {
+                "type": "str",
+                "required": false,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": false,
+                "value": "ignite",
+                "fileTypes": [],
+                "file_path": "",
+                "name": "password",
+                "display_name": "Ignite Password",
+                "advanced": true,
+                "dynamic": false,
+                "info": "Password to the ignite database.",
+                "load_from_db": false,
+                "title_case": false,
+                "input_types": [
+                  "Text"
+                ]
+              },
+              "port": {
+                "type": "int",
+                "required": false,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": false,
+                "value": 10801,
+                "fileTypes": [],
+                "file_path": "",
+                "name": "port",
+                "display_name": "Ignite Port",
+                "advanced": false,
+                "dynamic": false,
+                "info": "Port to the ignite database.",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "sample_rows_in_table_info": {
+                "type": "int",
+                "required": false,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": false,
+                "value": 0,
+                "fileTypes": [],
+                "file_path": "",
+                "name": "sample_rows_in_table_info",
+                "display_name": "sample_rows_in_table_info",
+                "advanced": true,
+                "dynamic": false,
+                "info": "sample_rows_in_table_info default 3",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "schema": {
+                "type": "str",
+                "required": false,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": false,
+                "value": "PUBLIC",
+                "fileTypes": [],
+                "file_path": "",
+                "name": "schema",
+                "display_name": "Ignite schema",
+                "advanced": false,
+                "dynamic": false,
+                "info": "schema to the ignite database.",
+                "load_from_db": false,
+                "title_case": false,
+                "input_types": [
+                  "Text"
+                ]
+              },
+              "uri": {
+                "type": "str",
+                "required": false,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": false,
+                "value": "",
+                "fileTypes": [],
+                "file_path": "",
+                "name": "uri",
+                "display_name": "URI",
+                "advanced": false,
+                "dynamic": false,
+                "info": "URI to the ignite database.",
+                "load_from_db": false,
+                "title_case": false,
+                "input_types": [
+                  "Text"
+                ]
+              },
+              "user": {
+                "type": "str",
+                "required": false,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": false,
+                "value": "ignite",
+                "fileTypes": [],
+                "file_path": "",
+                "name": "user",
+                "display_name": "Ignite User",
+                "advanced": true,
+                "dynamic": false,
+                "info": "User to the ignite database.",
+                "load_from_db": false,
+                "title_case": false,
+                "input_types": [
+                  "Text"
+                ]
+              }
+            },
+            "description": "SQL Database use Ignite",
+            "base_classes": [
+              "object",
+              "SQLDatabase"
+            ],
+            "display_name": "Ignite Database",
+            "documentation": "",
+            "custom_fields": {
+              "uri": null,
+              "host": null,
+              "port": null,
+              "user": null,
+              "password": null,
+              "schema": null,
+              "sample_rows_in_table_info": null,
+              "include_tables": null,
+              "meta_server_url": null,
+              "meta_access_token": null,
+              "comment_as_identifier": null
+            },
+            "output_types": [
+              "SQLDatabase"
+            ],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "SQLDatabase"
+                ],
+                "selected": "SQLDatabase",
+                "name": "sqldatabase",
+                "hidden": null,
+                "display_name": "SQLDatabase",
+                "method": null,
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "required_inputs": null
+              }
+            ],
+            "field_order": [],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false
+          },
+          "type": "IgniteDatabase",
+          "id": "IgniteDatabase-awZAo"
+        },
+        "selected": false,
+        "width": 320,
+        "height": 493,
+        "positionAbsolute": {
+          "x": 498.17386212910753,
+          "y": 1634.462142974178
+        },
+        "dragging": false
+      },
+      {
+        "id": "StoreMessage-BTNey",
+        "type": "genericNode",
+        "position": {
+          "x": -105.57688599776215,
+          "y": 1763.4294745815755
+        },
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "memory": {
+                "trace_as_metadata": true,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "memory",
+                "value": "",
+                "display_name": "External Memory",
+                "advanced": false,
+                "input_types": [
+                  "BaseChatMessageHistory"
+                ],
+                "dynamic": false,
+                "info": "The external memory to store the message. If empty, it will use the Langflow tables.",
+                "title_case": false,
+                "type": "other",
+                "_input_type": "HandleInput"
+              },
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from langflow.custom import Component\nfrom langflow.inputs import HandleInput, MessageInput\nfrom langflow.inputs.inputs import MessageTextInput\nfrom langflow.memory import get_messages, store_message\nfrom langflow.schema.message import Message\nfrom langflow.template import Output\nfrom langflow.utils.constants import MESSAGE_SENDER_AI, MESSAGE_SENDER_NAME_AI\n\n\nclass StoreMessageComponent(Component):\n    display_name = \"Store Message\"\n    description = \"Stores a chat message or text into Langflow tables or an external memory.\"\n    icon = \"save\"\n    name = \"StoreMessage\"\n\n    inputs = [\n        MessageInput(name=\"message\", display_name=\"Message\", info=\"The chat message to be stored.\", required=True),\n        HandleInput(\n            name=\"memory\",\n            display_name=\"External Memory\",\n            input_types=[\"BaseChatMessageHistory\"],\n            info=\"The external memory to store the message. If empty, it will use the Langflow tables.\",\n        ),\n        MessageTextInput(\n            name=\"sender\",\n            display_name=\"Sender\",\n            info=\"The sender of the message. Might be Machine or User. \"\n            \"If empty, the current sender parameter will be used.\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"sender_name\",\n            display_name=\"Sender Name\",\n            info=\"The name of the sender. Might be AI or User. If empty, the current sender parameter will be used.\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"session_id\",\n            display_name=\"Session ID\",\n            info=\"The session ID of the chat. If empty, the current session ID parameter will be used.\",\n            value=\"\",\n            advanced=True,\n        ),\n    ]\n\n    outputs = [\n        Output(display_name=\"Stored Messages\", name=\"stored_messages\", method=\"store_message\"),\n    ]\n\n    def store_message(self) -> Message:\n        message = self.message\n\n        message.session_id = self.session_id or message.session_id\n        message.sender = self.sender or message.sender or MESSAGE_SENDER_AI\n        message.sender_name = self.sender_name or message.sender_name or MESSAGE_SENDER_NAME_AI\n\n        if self.memory:\n            # override session_id\n            self.memory.session_id = message.session_id\n            lc_message = message.to_lc_message()\n            self.memory.add_messages([lc_message])\n            stored = self.memory.messages\n            stored = [Message.from_lc_message(m) for m in stored]\n            if message.sender:\n                stored = [m for m in stored if m.sender == message.sender]\n        else:\n            store_message(message, flow_id=self.graph.flow_id)\n            stored = get_messages(session_id=message.session_id, sender_name=message.sender_name, sender=message.sender)\n        self.status = stored\n        return stored\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "message": {
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": true,
+                "placeholder": "",
+                "show": true,
+                "name": "message",
+                "value": "",
+                "display_name": "Message",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The chat message to be stored.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageInput"
+              },
+              "sender": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "sender",
+                "value": "",
+                "display_name": "Sender",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The sender of the message. Might be Machine or User. If empty, the current sender parameter will be used.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "sender_name": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "sender_name",
+                "value": "",
+                "display_name": "Sender Name",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The name of the sender. Might be AI or User. If empty, the current sender parameter will be used.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "session_id": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "session_id",
+                "value": "",
+                "display_name": "Session ID",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The session ID of the chat. If empty, the current session ID parameter will be used.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              }
+            },
+            "description": "Stores a chat message or text into Langflow tables or an external memory.",
+            "icon": "save",
+            "base_classes": [
+              "Message"
+            ],
+            "display_name": "Store Message",
+            "documentation": "",
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Message"
+                ],
+                "selected": "Message",
+                "name": "stored_messages",
+                "display_name": "Stored Messages",
+                "method": "store_message",
+                "value": "__UNDEFINED__",
+                "cache": true
+              }
+            ],
+            "field_order": [
+              "message",
+              "memory",
+              "sender",
+              "sender_name",
+              "session_id"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false,
+            "category": "helpers",
+            "key": "StoreMessage",
+            "score": 8.569061098350962e-12
+          },
+          "type": "StoreMessage",
+          "id": "StoreMessage-BTNey"
+        },
+        "selected": false,
+        "width": 320,
+        "height": 302
+      },
+      {
+        "id": "RedisChatMemory-jdNjn",
+        "type": "genericNode",
+        "position": {
+          "x": -608.0822889424968,
+          "y": 1920.4769102453795
+        },
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from urllib import parse\n\nfrom langchain_community.chat_message_histories.redis import RedisChatMessageHistory\n\nfrom langflow.base.memory.model import LCChatMemoryComponent\nfrom langflow.field_typing import BaseChatMessageHistory\nfrom langflow.inputs import IntInput, MessageTextInput, SecretStrInput, StrInput\n\n\nclass RedisIndexChatMemory(LCChatMemoryComponent):\n    display_name = \"Redis Chat Memory\"\n    description = \"Retrieves and store chat messages from Redis.\"\n    name = \"RedisChatMemory\"\n    icon = \"Redis\"\n\n    inputs = [\n        StrInput(\n            name=\"host\", display_name=\"hostname\", required=True, value=\"localhost\", info=\"IP address or hostname.\"\n        ),\n        IntInput(name=\"port\", display_name=\"port\", required=True, value=6379, info=\"Redis Port Number.\"),\n        StrInput(name=\"database\", display_name=\"database\", required=True, value=\"0\", info=\"Redis database.\"),\n        MessageTextInput(\n            name=\"username\", display_name=\"Username\", value=\"\", info=\"The Redis user name.\", advanced=True\n        ),\n        SecretStrInput(\n            name=\"password\", display_name=\"Password\", value=\"\", info=\"The password for username.\", advanced=True\n        ),\n        StrInput(name=\"key_prefix\", display_name=\"Key prefix\", info=\"Key prefix.\", advanced=True),\n        MessageTextInput(\n            name=\"session_id\", display_name=\"Session ID\", info=\"Session ID for the message.\", advanced=True\n        ),\n    ]\n\n    def build_message_history(self) -> BaseChatMessageHistory:\n        kwargs = {}\n        password: str | None = self.password\n        if self.key_prefix:\n            kwargs[\"key_prefix\"] = self.key_prefix\n        if password:\n            password = parse.quote_plus(password)\n\n        url = f\"redis://{self.username}:{self.password}@{self.host}:{self.port}/{self.database}\"\n        return RedisChatMessageHistory(session_id=self.session_id, url=url, **kwargs)\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "database": {
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": true,
+                "placeholder": "",
+                "show": true,
+                "name": "database",
+                "value": "0",
+                "display_name": "database",
+                "advanced": false,
+                "dynamic": false,
+                "info": "Redis database.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "StrInput"
+              },
+              "host": {
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": true,
+                "placeholder": "",
+                "show": true,
+                "name": "host",
+                "value": "localhost",
+                "display_name": "hostname",
+                "advanced": false,
+                "dynamic": false,
+                "info": "IP address or hostname.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "StrInput"
+              },
+              "key_prefix": {
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "key_prefix",
+                "value": "",
+                "display_name": "Key prefix",
+                "advanced": true,
+                "dynamic": false,
+                "info": "Key prefix.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "StrInput"
+              },
+              "password": {
+                "load_from_db": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "password",
+                "value": "",
+                "display_name": "Password",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The password for username.",
+                "title_case": false,
+                "password": true,
+                "type": "str",
+                "_input_type": "SecretStrInput"
+              },
+              "port": {
+                "trace_as_metadata": true,
+                "list": false,
+                "required": true,
+                "placeholder": "",
+                "show": true,
+                "name": "port",
+                "value": 11212,
+                "display_name": "port",
+                "advanced": false,
+                "dynamic": false,
+                "info": "Redis Port Number.",
+                "title_case": false,
+                "type": "int",
+                "_input_type": "IntInput"
+              },
+              "session_id": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "session_id",
+                "value": "",
+                "display_name": "Session ID",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "Session ID for the message.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              },
+              "username": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "username",
+                "value": "",
+                "display_name": "Username",
+                "advanced": true,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "The Redis user name.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MessageTextInput"
+              }
+            },
+            "description": "Retrieves and store chat messages from Redis.",
+            "icon": "Redis",
+            "base_classes": [
+              "BaseChatMessageHistory"
+            ],
+            "display_name": "Redis Chat Memory",
+            "documentation": "",
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "BaseChatMessageHistory"
+                ],
+                "selected": "BaseChatMessageHistory",
+                "name": "memory",
+                "display_name": "Memory",
+                "method": "build_message_history",
+                "value": "__UNDEFINED__",
+                "cache": true,
+                "required_inputs": [
+                  "database",
+                  "host",
+                  "port"
+                ]
+              }
+            ],
+            "field_order": [
+              "host",
+              "port",
+              "database",
+              "username",
+              "password",
+              "key_prefix",
+              "session_id"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false
+          },
+          "type": "RedisChatMemory",
+          "id": "RedisChatMemory-jdNjn"
+        },
+        "selected": false,
+        "width": 320,
+        "height": 427
+      },
+      {
+        "id": "TextOutput-ikGYp",
+        "type": "genericNode",
+        "position": {
+          "x": 1033.2910596389074,
+          "y": 2549.8838108216332
+        },
+        "data": {
+          "node": {
+            "template": {
+              "_type": "Component",
+              "code": {
+                "type": "code",
+                "required": true,
+                "placeholder": "",
+                "list": false,
+                "show": true,
+                "multiline": true,
+                "value": "from langflow.base.io.text import TextComponent\nfrom langflow.io import MultilineInput, Output\nfrom langflow.schema.message import Message\n\n\nclass TextOutputComponent(TextComponent):\n    display_name = \"Text Output\"\n    description = \"Display a text output in the Playground.\"\n    icon = \"type\"\n    name = \"TextOutput\"\n\n    inputs = [\n        MultilineInput(\n            name=\"input_value\",\n            display_name=\"Text\",\n            info=\"Text to be passed as output.\",\n        ),\n    ]\n    outputs = [\n        Output(display_name=\"Text\", name=\"text\", method=\"text_response\"),\n    ]\n\n    def text_response(self) -> Message:\n        message = Message(\n            text=self.input_value,\n        )\n        self.status = self.input_value\n        return message\n",
+                "fileTypes": [],
+                "file_path": "",
+                "password": false,
+                "name": "code",
+                "advanced": true,
+                "dynamic": true,
+                "info": "",
+                "load_from_db": false,
+                "title_case": false
+              },
+              "input_value": {
+                "tool_mode": false,
+                "trace_as_input": true,
+                "multiline": true,
+                "trace_as_metadata": true,
+                "load_from_db": false,
+                "list": false,
+                "required": false,
+                "placeholder": "",
+                "show": true,
+                "name": "input_value",
+                "value": "",
+                "display_name": "Text",
+                "advanced": false,
+                "input_types": [
+                  "Message"
+                ],
+                "dynamic": false,
+                "info": "Text to be passed as output.",
+                "title_case": false,
+                "type": "str",
+                "_input_type": "MultilineInput"
+              }
+            },
+            "description": "Display a text output in the Playground.",
+            "icon": "type",
+            "base_classes": [
+              "Message"
+            ],
+            "display_name": "Text Output",
+            "documentation": "",
+            "custom_fields": {},
+            "output_types": [],
+            "pinned": false,
+            "conditional_paths": [],
+            "frozen": false,
+            "outputs": [
+              {
+                "types": [
+                  "Message"
+                ],
+                "selected": "Message",
+                "name": "text",
+                "display_name": "Text",
+                "method": "text_response",
+                "value": "__UNDEFINED__",
+                "cache": true
+              }
+            ],
+            "field_order": [
+              "input_value"
+            ],
+            "beta": false,
+            "legacy": false,
+            "edited": false,
+            "metadata": {},
+            "tool_mode": false
+          },
+          "type": "TextOutput",
+          "id": "TextOutput-ikGYp"
+        },
+        "selected": false,
+        "width": 320,
+        "height": 233
+      }
+    ],
+    "edges": [
+      {
+        "source": "DeepseekLLM-Vessh",
+        "sourceHandle": "{œdataTypeœ:œDeepseekLLMœ,œidœ:œDeepseekLLM-Vesshœ,œnameœ:œmodel_outputœ,œoutput_typesœ:[œLanguageModelœ]}",
+        "target": "SQLGenerator-EEBoI",
+        "targetHandle": "{œfieldNameœ:œllmœ,œidœ:œSQLGenerator-EEBoIœ,œinputTypesœ:[œLanguageModelœ],œtypeœ:œotherœ}",
+        "data": {
+          "targetHandle": {
+            "fieldName": "llm",
+            "id": "SQLGenerator-EEBoI",
+            "inputTypes": [
+              "LanguageModel"
+            ],
+            "type": "other"
+          },
+          "sourceHandle": {
+            "dataType": "DeepseekLLM",
+            "id": "DeepseekLLM-Vessh",
+            "name": "model_output",
+            "output_types": [
+              "LanguageModel"
+            ]
+          }
+        },
+        "id": "reactflow__edge-DeepseekLLM-Vessh{œdataTypeœ:œDeepseekLLMœ,œidœ:œDeepseekLLM-Vesshœ,œnameœ:œmodel_outputœ,œoutput_typesœ:[œLanguageModelœ]}-SQLGenerator-EEBoI{œfieldNameœ:œllmœ,œidœ:œSQLGenerator-EEBoIœ,œinputTypesœ:[œLanguageModelœ],œtypeœ:œotherœ}",
+        "className": "",
+        "animated": false,
+        "selected": false
+      },
+      {
+        "source": "ChatInput-Vb5x9",
+        "sourceHandle": "{œdataTypeœ:œChatInputœ,œidœ:œChatInput-Vb5x9œ,œnameœ:œmessageœ,œoutput_typesœ:[œMessageœ]}",
+        "target": "Prompt-7b2Ep",
+        "targetHandle": "{œfieldNameœ:œinputœ,œidœ:œPrompt-7b2Epœ,œinputTypesœ:[œMessageœ,œTextœ],œtypeœ:œstrœ}",
+        "data": {
+          "targetHandle": {
+            "fieldName": "input",
+            "id": "Prompt-7b2Ep",
+            "inputTypes": [
+              "Message",
+              "Text"
+            ],
+            "type": "str"
+          },
+          "sourceHandle": {
+            "dataType": "ChatInput",
+            "id": "ChatInput-Vb5x9",
+            "name": "message",
+            "output_types": [
+              "Message"
+            ]
+          }
+        },
+        "id": "reactflow__edge-ChatInput-Vb5x9{œdataTypeœ:œChatInputœ,œidœ:œChatInput-Vb5x9œ,œnameœ:œmessageœ,œoutput_typesœ:[œMessageœ]}-Prompt-7b2Ep{œfieldNameœ:œinputœ,œidœ:œPrompt-7b2Epœ,œinputTypesœ:[œMessageœ,œTextœ],œtypeœ:œstrœ}",
+        "className": "",
+        "animated": false,
+        "selected": false
+      },
+      {
+        "source": "Prompt-7b2Ep",
+        "sourceHandle": "{œdataTypeœ:œPromptœ,œidœ:œPrompt-7b2Epœ,œnameœ:œpromptœ,œoutput_typesœ:[œMessageœ]}",
+        "target": "SQLGenerator-EEBoI",
+        "targetHandle": "{œfieldNameœ:œinput_valueœ,œidœ:œSQLGenerator-EEBoIœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+        "data": {
+          "targetHandle": {
+            "fieldName": "input_value",
+            "id": "SQLGenerator-EEBoI",
+            "inputTypes": [
+              "Message"
+            ],
+            "type": "str"
+          },
+          "sourceHandle": {
+            "dataType": "Prompt",
+            "id": "Prompt-7b2Ep",
+            "name": "prompt",
+            "output_types": [
+              "Message"
+            ]
+          }
+        },
+        "id": "reactflow__edge-Prompt-7b2Ep{œdataTypeœ:œPromptœ,œidœ:œPrompt-7b2Epœ,œnameœ:œpromptœ,œoutput_typesœ:[œMessageœ]}-SQLGenerator-EEBoI{œfieldNameœ:œinput_valueœ,œidœ:œSQLGenerator-EEBoIœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+        "animated": false,
+        "className": "",
+        "selected": false
+      },
+      {
+        "source": "IgniteDatabase-awZAo",
+        "sourceHandle": "{œdataTypeœ:œIgniteDatabaseœ,œidœ:œIgniteDatabase-awZAoœ,œnameœ:œsqldatabaseœ,œoutput_typesœ:[œSQLDatabaseœ]}",
+        "target": "SQLGenerator-EEBoI",
+        "targetHandle": "{œfieldNameœ:œdbœ,œidœ:œSQLGenerator-EEBoIœ,œinputTypesœ:[œSQLDatabaseœ],œtypeœ:œotherœ}",
+        "data": {
+          "targetHandle": {
+            "fieldName": "db",
+            "id": "SQLGenerator-EEBoI",
+            "inputTypes": [
+              "SQLDatabase"
+            ],
+            "type": "other"
+          },
+          "sourceHandle": {
+            "dataType": "IgniteDatabase",
+            "id": "IgniteDatabase-awZAo",
+            "name": "sqldatabase",
+            "output_types": [
+              "SQLDatabase"
+            ]
+          }
+        },
+        "id": "reactflow__edge-IgniteDatabase-awZAo{œdataTypeœ:œIgniteDatabaseœ,œidœ:œIgniteDatabase-awZAoœ,œnameœ:œsqldatabaseœ,œoutput_typesœ:[œSQLDatabaseœ]}-SQLGenerator-EEBoI{œfieldNameœ:œdbœ,œidœ:œSQLGenerator-EEBoIœ,œinputTypesœ:[œSQLDatabaseœ],œtypeœ:œotherœ}",
+        "className": "",
+        "selected": false
+      },
+      {
+        "source": "TextInput-r17CB",
+        "sourceHandle": "{œdataTypeœ:œTextInputœ,œidœ:œTextInput-r17CBœ,œnameœ:œtextœ,œoutput_typesœ:[œMessageœ]}",
+        "target": "StoreMessage-BTNey",
+        "targetHandle": "{œfieldNameœ:œmessageœ,œidœ:œStoreMessage-BTNeyœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+        "data": {
+          "targetHandle": {
+            "fieldName": "message",
+            "id": "StoreMessage-BTNey",
+            "inputTypes": [
+              "Message"
+            ],
+            "type": "str"
+          },
+          "sourceHandle": {
+            "dataType": "TextInput",
+            "id": "TextInput-r17CB",
+            "name": "text",
+            "output_types": [
+              "Message"
+            ]
+          }
+        },
+        "id": "reactflow__edge-TextInput-r17CB{œdataTypeœ:œTextInputœ,œidœ:œTextInput-r17CBœ,œnameœ:œtextœ,œoutput_typesœ:[œMessageœ]}-StoreMessage-BTNey{œfieldNameœ:œmessageœ,œidœ:œStoreMessage-BTNeyœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+        "className": "",
+        "selected": false
+      },
+      {
+        "source": "RedisChatMemory-jdNjn",
+        "sourceHandle": "{œdataTypeœ:œRedisChatMemoryœ,œidœ:œRedisChatMemory-jdNjnœ,œnameœ:œmemoryœ,œoutput_typesœ:[œBaseChatMessageHistoryœ]}",
+        "target": "StoreMessage-BTNey",
+        "targetHandle": "{œfieldNameœ:œmemoryœ,œidœ:œStoreMessage-BTNeyœ,œinputTypesœ:[œBaseChatMessageHistoryœ],œtypeœ:œotherœ}",
+        "data": {
+          "targetHandle": {
+            "fieldName": "memory",
+            "id": "StoreMessage-BTNey",
+            "inputTypes": [
+              "BaseChatMessageHistory"
+            ],
+            "type": "other"
+          },
+          "sourceHandle": {
+            "dataType": "RedisChatMemory",
+            "id": "RedisChatMemory-jdNjn",
+            "name": "memory",
+            "output_types": [
+              "BaseChatMessageHistory"
+            ]
+          }
+        },
+        "id": "reactflow__edge-RedisChatMemory-jdNjn{œdataTypeœ:œRedisChatMemoryœ,œidœ:œRedisChatMemory-jdNjnœ,œnameœ:œmemoryœ,œoutput_typesœ:[œBaseChatMessageHistoryœ]}-StoreMessage-BTNey{œfieldNameœ:œmemoryœ,œidœ:œStoreMessage-BTNeyœ,œinputTypesœ:[œBaseChatMessageHistoryœ],œtypeœ:œotherœ}",
+        "className": "",
+        "selected": false
+      },
+      {
+        "source": "SQLGenerator-EEBoI",
+        "sourceHandle": "{œdataTypeœ:œSQLGeneratorœ,œidœ:œSQLGenerator-EEBoIœ,œnameœ:œtextœ,œoutput_typesœ:[œMessageœ]}",
+        "target": "ChatOutput-lwU8m",
+        "targetHandle": "{œfieldNameœ:œinput_valueœ,œidœ:œChatOutput-lwU8mœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+        "data": {
+          "targetHandle": {
+            "fieldName": "input_value",
+            "id": "ChatOutput-lwU8m",
+            "inputTypes": [
+              "Message"
+            ],
+            "type": "str"
+          },
+          "sourceHandle": {
+            "dataType": "SQLGenerator",
+            "id": "SQLGenerator-EEBoI",
+            "name": "text",
+            "output_types": [
+              "Message"
+            ]
+          }
+        },
+        "id": "reactflow__edge-SQLGenerator-EEBoI{œdataTypeœ:œSQLGeneratorœ,œidœ:œSQLGenerator-EEBoIœ,œnameœ:œtextœ,œoutput_typesœ:[œMessageœ]}-ChatOutput-lwU8m{œfieldNameœ:œinput_valueœ,œidœ:œChatOutput-lwU8mœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+        "className": "",
+        "selected": false
+      },
+      {
+        "source": "StoreMessage-BTNey",
+        "sourceHandle": "{œdataTypeœ:œStoreMessageœ,œidœ:œStoreMessage-BTNeyœ,œnameœ:œstored_messagesœ,œoutput_typesœ:[œMessageœ]}",
+        "target": "TextOutput-ikGYp",
+        "targetHandle": "{œfieldNameœ:œinput_valueœ,œidœ:œTextOutput-ikGYpœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+        "data": {
+          "targetHandle": {
+            "fieldName": "input_value",
+            "id": "TextOutput-ikGYp",
+            "inputTypes": [
+              "Message"
+            ],
+            "type": "str"
+          },
+          "sourceHandle": {
+            "dataType": "StoreMessage",
+            "id": "StoreMessage-BTNey",
+            "name": "stored_messages",
+            "output_types": [
+              "Message"
+            ]
+          }
+        },
+        "id": "reactflow__edge-StoreMessage-BTNey{œdataTypeœ:œStoreMessageœ,œidœ:œStoreMessage-BTNeyœ,œnameœ:œstored_messagesœ,œoutput_typesœ:[œMessageœ]}-TextOutput-ikGYp{œfieldNameœ:œinput_valueœ,œidœ:œTextOutput-ikGYpœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+        "className": "",
+        "selected": false
+      }
+    ],
+    "viewport": {
+      "x": 640.7681953998481,
+      "y": -901.1921694422401,
+      "zoom": 0.5527139287476734
+    }
+  },
+  "description": "使用自然语言检索关系数据库，病案首页，标化库",
+  "name": " Database全民健康数据智能检索 ",
+  "last_tested_version": "1.0.14",
+  "endpoint_name": null,
+  "is_component": false
+}

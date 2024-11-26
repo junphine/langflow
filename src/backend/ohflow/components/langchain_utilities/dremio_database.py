@@ -21,12 +21,14 @@ class DremioDatabaseComponent(CustomComponent):
     def clean_up_uri(self, uri: str) -> str:
         return uri.strip()
 
-    def build(self, uri: str='',
-          host: str=None,
-          port: int=32010,
-          user: str = "root",
-          password: str = "",
-          schema: str='public') -> SQLDatabase:
+    def build(self,
+        uri: str='',
+        host: str=None,
+        port: int=32010,
+        user: str = "root",
+        password: str = "",
+        schema: str='public',
+        **kwargs) -> SQLDatabase:
         if uri:
             uri = self.clean_up_uri(uri)
             return DremioDatabase.from_uri(uri)

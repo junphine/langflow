@@ -160,6 +160,8 @@ async def build_custom_component(params: dict, custom_component: CustomComponent
     # the methods don't require any params because they are already set in the custom_component
     # so we can just call them
 
+    # add@byron
+    code = params.pop('code')
     if is_async:
         # Await the build method directly if it's async
         build_result = await custom_component.build(**params)

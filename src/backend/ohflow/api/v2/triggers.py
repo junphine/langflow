@@ -11,7 +11,7 @@ from ohflow.database.models.trigger import (
     TriggerRead,
     TriggerUpdate,
 )
-from langflow.services.utils import get_session
+from langflow.services.deps import get_session
 from sqlmodel import Session, select
 from fastapi import APIRouter, Depends, HTTPException, Body
 from fastapi.encoders import jsonable_encoder

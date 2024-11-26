@@ -36,7 +36,8 @@ class IgniteDatabaseComponent(CustomComponent):
         include_tables: str = None,
         meta_server_url: str = None,
         meta_access_token: str = None,
-        comment_as_identifier: bool = False
+        comment_as_identifier: bool = False,
+        **kwargs,
         ) -> SQLDatabase:
         if uri:
             print("conncect ignite to {uri}")

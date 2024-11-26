@@ -15,6 +15,7 @@ from langflow.utils.util import update_settings
 def load_flow_from_json(
     flow: Path | str | dict,
     *,
+    user_id: str | None = None,
     tweaks: dict | None = None,
     log_level: str | None = None,
     log_file: str | None = None,
@@ -67,13 +68,14 @@ def load_flow_from_json(
     if tweaks is not None:
         graph_data = process_tweaks(graph_data, tweaks)
 
-    return Graph.from_payload(graph_data)
+    return Graph.from_payload(graph_data, user_id=user_id)
 
 
 async def arun_flow_from_json(
     flow: Path | str | dict,
     input_value: str,
     *,
+    user_id: str | None = None,
     session_id: str | None = None,
     tweaks: dict | None = None,
     input_type: str = "chat",
@@ -113,6 +115,7 @@ async def arun_flow_from_json(
     graph = await asyncio.to_thread(
         load_flow_from_json,
         flow=flow,
+        user_id=user_id,
         tweaks=tweaks,
         log_level=log_level,
         log_file=log_file,
@@ -137,6 +140,7 @@ def run_flow_from_json(
     flow: Path | str | dict,
     input_value: str,
     *,
+    user_id: str | None = None,
     session_id: str | None = None,
     tweaks: dict | None = None,
     input_type: str = "chat",
@@ -152,6 +156,7 @@ def run_flow_from_json(
     coro = arun_flow_from_json(
         flow,
         input_value,
+        user_id = user_id,
         session_id=session_id,
         tweaks=tweaks,
         input_type=input_type,

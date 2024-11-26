@@ -100,7 +100,7 @@ class DeepseekChatEndpointComponent(LCModelComponent):
         seed = self.seed
 
         if openai_api_key:
-            api_key = SecretStr(openai_api_key)
+            api_key = SecretStr(openai_api_key).get_secret_value()
         else:
             api_key = None
         output = ChatOpenAI(

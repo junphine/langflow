@@ -148,7 +148,13 @@ export const MenuBar = ({}: {}): JSX.Element => {
               />
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-44 bg-white dark:bg-background">
+          <DropdownMenuContent className="w-44 bg-white dark:bg-background"
+            onCloseAutoFocus={() => {
+                                setTimeout(() => {
+                                  document.getElementById("body")?.style.removeProperty('pointer-events');
+                                }, 2000);
+                              }
+                            }>
             <DropdownMenuLabel>Options</DropdownMenuLabel>
             <DropdownMenuItem
               onClick={() => {

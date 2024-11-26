@@ -8,4 +8,4 @@ class ChatServiceFactory(ServiceFactory):
 
     def create(self,settings_service: "SettingsService"):
         # Here you would have logic to create and configure a ChatService
-        return ChatService(settings_service)
+        return ChatService()

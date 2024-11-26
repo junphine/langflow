@@ -14,7 +14,7 @@ from ohflow.database.models.job import (
     JobRead,
     JobUpdate,
 )
-from langflow.services.utils import get_session
+from langflow.services.deps import get_session
 from sqlmodel import Session, select
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.encoders import jsonable_encoder

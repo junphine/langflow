@@ -33,6 +33,8 @@ from langchain_community.tools.sql_database.tool import (
     ListSQLDatabaseTool,
 )
 
+from ohflow.interface.toolkits.sqltookits import DremioSQLDatabaseToolkit
+
 if TYPE_CHECKING:
     from langchain.agents.agent import AgentExecutor
     from langchain.agents.agent_types import AgentType
@@ -45,7 +47,7 @@ if TYPE_CHECKING:
 
 def create_dremio_sql_agent(
         llm: BaseLanguageModel,
-        toolkit: Optional[SQLDatabaseToolkit] = None,
+        toolkit: Optional[SQLDatabaseToolkit|DremioSQLDatabaseToolkit] = None,
         agent_type: Optional[
             Union[AgentType, Literal["openai-tools", "tool-calling"]]
         ] = None,

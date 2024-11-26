@@ -63,24 +63,23 @@ router = APIRouter(tags=["Base"])
 @router.get("/all", dependencies=[Depends(get_current_active_user)])
 async def get_all():
     from langflow.interface.types import get_and_cache_all_types_dict
-
+    settings_service = get_settings_service()
     try:
-        async with Lock() as lock:
-            configed_type_dict = {}
-            all_types_dict = await get_and_cache_all_types_dict(
-                settings_service=settings_service, cache_service=cache_service, force_refresh=force_refresh, lock=lock
-            )
-            for key,category in all_types_dict.items():
-                components = {}
-                for componet_name,component in category.items():
-                    if not settings_service.has_category(key) or settings_service.component_is_enable(componet_name):
-                        components[componet_name] = component
-                        comp_setting = settings_service.component_settings(componet_name)
-                        for field,value in comp_setting.items():
-                            if value!='' and field in component['template']:
-                                component['template'][field]['value'] = value
-                configed_type_dict[key] = components
-            return configed_type_dict
+        configed_type_dict = {}
+        all_types_dict = await get_and_cache_all_types_dict(
+            settings_service=settings_service
+        )
+        for key,category in all_types_dict.items():
+            components = {}
+            for componet_name,component in category.items():
+                if not settings_service.has_category(key) or settings_service.component_is_enable(componet_name):
+                    components[componet_name] = component
+                    comp_setting = settings_service.component_settings(componet_name)
+                    for field,value in comp_setting.items():
+                        if value!='' and field in component['template']:
+                            component['template'][field]['value'] = value
+            configed_type_dict[key] = components
+        return configed_type_dict
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc)) from exc
 
