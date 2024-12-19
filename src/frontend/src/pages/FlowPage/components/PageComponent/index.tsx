@@ -1,11 +1,12 @@
 import { DefaultEdge } from "@/CustomEdges";
 import NoteNode from "@/CustomNodes/NoteNode";
+
+import ForwardedIconComponent from "@/components/common/genericIconComponent";
+import LoadingComponent from "@/components/common/loadingComponent";
 import CanvasControls, {
   CustomControlButton,
-} from "@/components/canvasControlsComponent";
-import FlowToolbar from "@/components/flowToolbarComponent";
-import ForwardedIconComponent from "@/components/genericIconComponent";
-import LoadingComponent from "@/components/loadingComponent";
+} from "@/components/core/canvasControlsComponent";
+import FlowToolbar from "@/components/core/flowToolbarComponent";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import {
   COLOR_OPTIONS,
@@ -19,6 +20,17 @@ import useUploadFlow from "@/hooks/flows/use-upload-flow";
 import { useAddComponent } from "@/hooks/useAddComponent";
 import { nodeColorsName } from "@/utils/styleUtils";
 import { cn, isSupportedNodeTypes } from "@/utils/utils";
+import {
+  Background,
+  Connection,
+  Edge,
+  OnNodeDrag,
+  OnSelectionChangeParams,
+  Panel,
+  ReactFlow,
+  reconnectEdge,
+  SelectionDragHandler,
+} from "@xyflow/react";
 import _, { cloneDeep } from "lodash";
 import {
   KeyboardEvent,
@@ -29,16 +41,6 @@ import {
   useState,
 } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-import ReactFlow, {
-  Background,
-  Connection,
-  Edge,
-  NodeDragHandler,
-  OnSelectionChangeParams,
-  Panel,
-  SelectionDragHandler,
-  updateEdge,
-} from "reactflow";
 import GenericNode from "../../../../CustomNodes/GenericNode";
 import {
   INVALID_SELECTION_ERROR_ALERT,
@@ -52,7 +54,7 @@ import useFlowsManagerStore from "../../../../stores/flowsManagerStore";
 import { useShortcutsStore } from "../../../../stores/shortcuts";
 import { useTypesStore } from "../../../../stores/typesStore";
 import { APIClassType } from "../../../../types/api";
-import { NodeType } from "../../../../types/flow";
+import { AllNodeType, EdgeType, NoteNodeType } from "../../../../types/flow";
 import {
   generateFlow,
   generateNodeFromFlow,
@@ -64,6 +66,7 @@ import {
 } from "../../../../utils/reactflowUtils";
 import ConnectionLineComponent from "../ConnectionLineComponent";
 import SelectionMenu from "../SelectionMenuComponent";
+import UpdateAllComponents from "../UpdateAllComponents";
 import getRandomName from "./utils/get-random-name";
 import isWrappedWithClass from "./utils/is-wrapped-with-class";
 
@@ -321,14 +324,14 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
     [takeSnapshot, onConnect],
   );
 
-  const onNodeDragStart: NodeDragHandler = useCallback(() => {
+  const onNodeDragStart: OnNodeDrag = useCallback(() => {
     // 👇 make dragging a node undoable
 
     takeSnapshot();
     // 👉 you can place your event handlers here
   }, [takeSnapshot]);
 
-  const onNodeDragStop: NodeDragHandler = useCallback(() => {
+  const onNodeDragStop: OnNodeDrag = useCallback(() => {
     // 👇 make moving the canvas undoable
     autoSaveFlow();
     updateCurrentFlow({ nodes });
@@ -403,12 +406,14 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
   }, []);
 
   const onEdgeUpdate = useCallback(
-    (oldEdge: Edge, newConnection: Connection) => {
+    (oldEdge: EdgeType, newConnection: Connection) => {
       if (isValidConnection(newConnection, nodes, edges)) {
         edgeUpdateSuccessful.current = true;
-        oldEdge.data.targetHandle = scapeJSONParse(newConnection.targetHandle!);
-        oldEdge.data.sourceHandle = scapeJSONParse(newConnection.sourceHandle!);
-        setEdges((els) => updateEdge(oldEdge, newConnection, els));
+        oldEdge.data = {
+          targetHandle: scapeJSONParse(newConnection.targetHandle!),
+          sourceHandle: scapeJSONParse(newConnection.sourceHandle!),
+        };
+        setEdges((els) => reconnectEdge(oldEdge, newConnection, els));
       }
     },
     [setEdges],
@@ -470,7 +475,7 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
         };
         const newId = getNodeId(data.type);
 
-        const newNode: NodeType = {
+        const newNode: NoteNodeType = {
           id: newId,
           type: "noteNode",
           position: position || { x: 0, y: 0 },
@@ -513,11 +518,13 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
     };
   }, [isAddingNote, shadowBoxWidth, shadowBoxHeight]);
 
+  const componentsToUpdate = useFlowStore((state) => state.componentsToUpdate);
+
   return (
     <div className="h-full w-full bg-canvas" ref={reactFlowWrapper}>
       {showCanvas ? (
         <div id="react-flow-id" className="h-full w-full bg-canvas">
-          <ReactFlow
+          <ReactFlow<AllNodeType, EdgeType>
             nodes={nodes}
             edges={edges}
             onNodesChange={onNodesChange}
@@ -526,9 +533,9 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
             disableKeyboardA11y={true}
             onInit={setReactFlowInstance}
             nodeTypes={nodeTypes}
-            onEdgeUpdate={onEdgeUpdate}
-            onEdgeUpdateStart={onEdgeUpdateStart}
-            onEdgeUpdateEnd={onEdgeUpdateEnd}
+            onReconnect={onEdgeUpdate}
+            onReconnectStart={onEdgeUpdateStart}
+            onReconnectEnd={onEdgeUpdateEnd}
             onNodeDragStart={onNodeDragStart}
             onSelectionDragStart={onSelectionDragStart}
             onSelectionEnd={onSelectionEnd}
@@ -591,6 +598,7 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
                 <span className="text-foreground">Components</span>
               </SidebarTrigger>
             </Panel>
+            {componentsToUpdate.length > 0 && <UpdateAllComponents />}
             <SelectionMenu
               lastSelection={lastSelection}
               isVisible={selectionMenuVisible}

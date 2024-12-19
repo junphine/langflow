@@ -4,9 +4,9 @@ import {
   useGetMessagesQuery,
 } from "@/controllers/API/queries/messages";
 import { useUtilityStore } from "@/stores/utilityStore";
-import { useEffect, useState } from "react";
-import IconComponent from "../../components/genericIconComponent";
-import ShadTooltip from "../../components/shadTooltipComponent";
+import { useCallback, useEffect, useState } from "react";
+import IconComponent from "../../components/common/genericIconComponent";
+import ShadTooltip from "../../components/common/shadTooltipComponent";
 import { Button } from "../../components/ui/button";
 import { InputOutput } from "../../constants/enums";
 import useAlertStore from "../../stores/alertStore";
@@ -14,7 +14,6 @@ import useFlowStore from "../../stores/flowStore";
 import useFlowsManagerStore from "../../stores/flowsManagerStore";
 import { useMessagesStore } from "../../stores/messagesStore";
 import { IOModalPropsType } from "../../types/components";
-import { NodeType } from "../../types/flow";
 import { cn } from "../../utils/utils";
 import BaseModal from "../baseModal";
 import IOFieldView from "./components/IOFieldView";
@@ -119,7 +118,6 @@ export default function IOModal({
   const setLockChat = useFlowStore((state) => state.setLockChat);
   const [chatValue, setChatValue] = useState("");
   const isBuilding = useFlowStore((state) => state.isBuilding);
-  const setNode = useFlowStore((state) => state.setNode);
   const messages = useMessagesStore((state) => state.messages);
   const [sessions, setSessions] = useState<string[]>(
     Array.from(
@@ -130,9 +128,8 @@ export default function IOModal({
       ),
     ),
   );
-  const flowPool = useFlowStore((state) => state.flowPool);
   const [sessionId, setSessionId] = useState<string>(currentFlowId);
-  useGetMessagesQuery(
+  const { isFetched: messagesFetched } = useGetMessagesQuery(
     {
       mode: "union",
       id: currentFlowId,
@@ -140,42 +137,44 @@ export default function IOModal({
     { enabled: open },
   );
 
-  async function sendMessage({
-    repeat = 1,
-    files,
-  }: {
-    repeat: number;
-    files?: string[];
-  }): Promise<void> {
-    if (isBuilding) return;
-    setIsBuilding(true);
-    setLockChat(true);
-    setChatValue("");
-    for (let i = 0; i < repeat; i++) {
-      await buildFlow({
-        input_value: chatValue,
-        startNodeId: chatInput?.id,
-        files: files,
-        silent: true,
-        session: sessionId,
-        setLockChat,
-      }).catch((err) => {
-        console.error(err);
-        setLockChat(false);
-      });
-    }
-    // refetch();
-    setLockChat(false);
-    if (chatInput) {
-      setNode(chatInput.id, (node: NodeType) => {
-        const newNode = { ...node };
-        if (newNode.data.node?.template) {
-          newNode.data.node!.template["input_value"].value = chatValue;
-        }
-        return newNode;
-      });
-    }
-  }
+  const sendMessage = useCallback(
+    async ({
+      repeat = 1,
+      files,
+    }: {
+      repeat: number;
+      files?: string[];
+    }): Promise<void> => {
+      if (isBuilding) return;
+      setIsBuilding(true);
+      setLockChat(true);
+      setChatValue("");
+      for (let i = 0; i < repeat; i++) {
+        await buildFlow({
+          input_value: chatValue,
+          startNodeId: chatInput?.id,
+          files: files,
+          silent: true,
+          session: sessionId,
+          setLockChat,
+        }).catch((err) => {
+          console.error(err);
+          setLockChat(false);
+        });
+      }
+      // refetch();
+      setLockChat(false);
+    },
+    [
+      isBuilding,
+      setIsBuilding,
+      setLockChat,
+      chatValue,
+      chatInput?.id,
+      sessionId,
+      buildFlow,
+    ],
+  );
 
   useEffect(() => {
     setSelectedTab(inputs.length > 0 ? 1 : outputs.length > 0 ? 2 : 0);
@@ -252,14 +251,14 @@ export default function IOModal({
       open={open}
       setOpen={setOpen}
       disable={disable}
-      type={isPlayground ? "modal" : undefined}
+      type={isPlayground ? "full-screen" : undefined}
       onSubmit={() => sendMessage({ repeat: 1 })}
       size="x-large"
       className="!rounded-[12px] p-0"
     >
       <BaseModal.Trigger>{children}</BaseModal.Trigger>
       {/* TODO ADAPT TO ALL TYPES OF INPUTS AND OUTPUTS */}
-      <BaseModal.Content overflowHidden>
+      <BaseModal.Content overflowHidden className="h-full">
         <div className="flex-max-width h-full">
           <div
             className={cn(
@@ -440,7 +439,8 @@ export default function IOModal({
                 <div
                   className={cn(
                     sidebarOpen ? "pointer-events-none opacity-0" : "",
-                    "absolute right-12 top-2 flex h-8 items-center justify-center rounded-sm ring-offset-background transition-opacity focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                    "absolute flex h-8 items-center justify-center rounded-sm ring-offset-background transition-opacity focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+                    isPlayground ? "right-2 top-4" : "right-12 top-2",
                   )}
                 >
                   <ShadTooltip
@@ -463,7 +463,7 @@ export default function IOModal({
                       />
                     </Button>
                   </ShadTooltip>
-                  <Separator orientation="vertical" />
+                  {!isPlayground && <Separator orientation="vertical" />}
                 </div>
               </div>
               {haveChat ? (
@@ -475,22 +475,24 @@ export default function IOModal({
                       : "",
                   )}
                 >
-                  <ChatView
-                    focusChat={sessionId}
-                    sendMessage={sendMessage}
-                    chatValue={chatValue}
-                    setChatValue={setChatValue}
-                    lockChat={lockChat}
-                    setLockChat={setLockChat}
-                    visibleSession={visibleSession}
-                    closeChat={
-                      !canvasOpen
-                        ? undefined
-                        : () => {
-                            setOpen(false);
-                          }
-                    }
-                  />
+                  {messagesFetched && (
+                    <ChatView
+                      focusChat={sessionId}
+                      sendMessage={sendMessage}
+                      chatValue={chatValue}
+                      setChatValue={setChatValue}
+                      lockChat={lockChat}
+                      setLockChat={setLockChat}
+                      visibleSession={visibleSession}
+                      closeChat={
+                        !canvasOpen
+                          ? undefined
+                          : () => {
+                              setOpen(false);
+                            }
+                      }
+                    />
+                  )}
                 </div>
               ) : (
                 <span className="flex h-full w-full items-center justify-center font-thin text-muted-foreground">
@@ -501,26 +503,6 @@ export default function IOModal({
           </div>
         </div>
       </BaseModal.Content>
-      {!haveChat ? (
-        <BaseModal.Footer
-          submit={{
-            label: "Run Flow",
-            icon: (
-              <IconComponent
-                name={isBuilding ? "Loader2" : "Zap"}
-                className={cn(
-                  "h-4 w-4",
-                  isBuilding
-                    ? "animate-spin"
-                    : "fill-current text-medium-indigo",
-                )}
-              />
-            ),
-          }}
-        />
-      ) : (
-        <></>
-      )}
     </BaseModal>
   );
 }

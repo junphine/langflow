@@ -1,7 +1,9 @@
-import { ProfileIcon } from "@/components/appHeaderComponent/components/ProfileIcon";
-import { ContentBlockDisplay } from "@/components/chatComponents/ContentBlockDisplay";
+import { ProfileIcon } from "@/components/core/appHeaderComponent/components/ProfileIcon";
+import { ContentBlockDisplay } from "@/components/core/chatComponents/ContentBlockDisplay";
 import { TextShimmer } from "@/components/ui/TextShimmer";
 import { useUpdateMessage } from "@/controllers/API/queries/messages";
+import { CustomProfileIcon } from "@/customization/components/custom-profile-icon";
+import { ENABLE_DATASTAX_LANGFLOW } from "@/customization/feature-flags";
 import useFlowsManagerStore from "@/stores/flowsManagerStore";
 import useFlowStore from "@/stores/flowStore";
 import { useUtilityStore } from "@/stores/utilityStore";
@@ -12,15 +14,16 @@ import Markdown from "react-markdown";
 import rehypeMathjax from "rehype-mathjax";
 import remarkGfm from "remark-gfm";
 import Robot from "../../../../../assets/robot.png";
-import CodeTabsComponent from "../../../../../components/codeTabsComponent/ChatCodeTabComponent";
 import IconComponent, {
   ForwardedIconComponent,
-} from "../../../../../components/genericIconComponent";
-import SanitizedHTMLWrapper from "../../../../../components/sanitizedHTMLWrapper";
+} from "../../../../../components/common/genericIconComponent";
+import SanitizedHTMLWrapper from "../../../../../components/common/sanitizedHTMLWrapper";
+import CodeTabsComponent from "../../../../../components/core/codeTabsComponent/ChatCodeTabComponent";
 import {
   EMPTY_INPUT_SEND_MESSAGE,
   EMPTY_OUTPUT_SEND_MESSAGE,
 } from "../../../../../constants/constants";
+import useTabVisibility from "../../../../../shared/hooks/use-tab-visibility";
 import useAlertStore from "../../../../../stores/alertStore";
 import { chatMessagePropsType } from "../../../../../types/components";
 import { cn } from "../../../../../utils/utils";
@@ -129,9 +132,11 @@ export default function ChatMessage({
     };
   }, []);
 
+  const isTabHidden = useTabVisibility();
+
   useEffect(() => {
     const element = document.getElementById("last-chat-message");
-    if (element) {
+    if (element && isTabHidden) {
       if (playgroundScrollBehaves === "instant") {
         element.scrollIntoView({ behavior: playgroundScrollBehaves });
         setPlaygroundScrollBehaves("smooth");
@@ -210,6 +215,35 @@ export default function ChatMessage({
       },
     );
   };
+
+  const handleEvaluateAnswer = (evaluation: boolean | null) => {
+    updateMessageMutation(
+      {
+        message: {
+          ...chat,
+          files: convertFiles(chat.files),
+          sender_name: chat.sender_name ?? "AI",
+          text: chat.message.toString(),
+          sender: chat.isSend ? "User" : "Machine",
+          flow_id,
+          session_id: chat.session ?? "",
+          properties: {
+            ...chat.properties,
+            positive_feedback: evaluation,
+          },
+        },
+        refetch: true,
+      },
+      {
+        onError: () => {
+          setErrorData({
+            title: "Error updating messages.",
+          });
+        },
+      },
+    );
+  };
+
   const editedFlag = chat.edit ? (
     <div className="text-sm text-muted-foreground">(Edited)</div>
   ) : null;
@@ -441,8 +475,10 @@ export default function ChatMessage({
                   ) : (
                     <ForwardedIconComponent name={chat.properties.icon} />
                   )
-                ) : (
+                ) : !ENABLE_DATASTAX_LANGFLOW ? (
                   <ProfileIcon />
+                ) : (
+                  <CustomProfileIcon />
                 )}
               </div>
             )}
@@ -547,7 +583,7 @@ export default function ChatMessage({
                                     components={{
                                       p({ node, ...props }) {
                                         return (
-                                          <span className="inline-block w-fit max-w-full">
+                                          <span className="w-fit max-w-full">
                                             {props.children}
                                           </span>
                                         );
@@ -738,6 +774,9 @@ export default function ChatMessage({
                   onDelete={() => {}}
                   onEdit={() => setEditMessage(true)}
                   className="h-fit group-hover:visible"
+                  isBotMessage={!chat.isSend}
+                  onEvaluate={handleEvaluateAnswer}
+                  evaluation={chat.properties?.positive_feedback}
                 />
               </div>
             </div>
