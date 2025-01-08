@@ -742,6 +742,8 @@ export const BUNDLES_SIDEBAR_FOLDER_NAMES = [
   "Notion",
   "AssemblyAI",
   "assemblyai",
+  "LangWatch",
+  "langwatch",
 ];
 
 export const AUTHORIZED_DUPLICATE_REQUESTS = [
@@ -765,6 +767,11 @@ export const defaultShortcuts = [
     display_name: "Controls",
     name: "Advanced Settings",
     shortcut: "mod+shift+a",
+  },
+  {
+    display_name: "Search Components on Sidebar",
+    name: "Search Components Sidebar",
+    shortcut: "/",
   },
   {
     display_name: "Minimize",
