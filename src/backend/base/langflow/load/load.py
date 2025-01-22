@@ -57,9 +57,9 @@ async def aload_flow_from_json(
     await update_settings(cache=cache)
 
     if isinstance(flow, str | Path):
-        async with async_open(Path(flow).name, encoding="utf-8") as f:
+        async with async_open(flow, encoding="utf-8") as f:
             content = await f.read()
-            flow_graph = json.load(content)
+            flow_graph = json.loads(content)
     # If input is a dictionary, assume it's a JSON object
     elif isinstance(flow, dict):
         flow_graph = flow
@@ -170,6 +170,9 @@ async def arun_flow_from_json(
         cache=cache,
         disable_logs=disable_logs,
     )
+    # add@byron
+    graph.session_id = session_id
+
     result = await run_graph(
         graph=graph,
         session_id=session_id,
@@ -229,7 +232,7 @@ def run_flow_from_json(
         arun_flow_from_json(
             flow,
             input_value,
-            user_id = user_id,
+            user_id=user_id,
             session_id=session_id,
             tweaks=tweaks,
             input_type=input_type,

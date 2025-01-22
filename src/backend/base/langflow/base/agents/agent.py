@@ -172,8 +172,8 @@ class LCAgentComponent(Component):
             await delete_message(id_=msg_id)
             await self._send_message_event(e.agent_message, category="remove_message")
             raise
-        except Exception:
-            raise
+        except Exception as e:
+            raise e
 
         self.status = result
         return result

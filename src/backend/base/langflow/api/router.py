@@ -36,5 +36,4 @@ router.include_router(monitor_router)
 router.include_router(folders_router)
 router.include_router(starter_projects_router)
 
-if get_settings_service().settings.mcp_server_enabled:
-    router.include_router(mcp_router)
+router.include_router(mcp_router)

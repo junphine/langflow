@@ -66,6 +66,7 @@ def custom_prep_outputs(
     else:
         return {**inputs, **outputs}
 
+
 class VectorStoreChineseSourceQATool(BaseVectorStoreTool, BaseTool):
     """Tool for the VectorDBQAWithSources chain."""
 

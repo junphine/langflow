@@ -10,8 +10,8 @@ from langflow.services.settings.auth import AuthSettings
 from langflow.services.settings.base import Settings
 
 
-class SettingsService(Service):
-    name = "settings_service"
+class ManagerSettingsService(Service):
+    name = "manager_settings_service"
 
     def __init__(self, settings: Settings, auth_settings: AuthSettings):
         super().__init__()
@@ -19,7 +19,7 @@ class SettingsService(Service):
         self.auth_settings = auth_settings
 
     @classmethod
-    def load_settings_from_yaml(cls, file_path: str) -> SettingsService:
+    def load_settings_from_yaml(cls, file_path: str) -> ManagerSettingsService:
         # Check if a string is a valid path or a file name
         if "/" not in file_path:
             # Get current path

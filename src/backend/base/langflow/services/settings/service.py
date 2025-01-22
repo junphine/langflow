@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 
 import yaml
@@ -19,7 +20,21 @@ class SettingsService(Service):
         self.category = category
 
     @classmethod
-    def load_settings_from_yaml(cls, file_path: str) -> "SettingsService":
+    def initialize(cls) -> SettingsService:
+        # Check if a string is a valid path or a file name
+
+        settings = Settings()
+        if not settings.config_dir:
+            msg = "CONFIG_DIR must be set in settings"
+            raise ValueError(msg)
+
+        auth_settings = AuthSettings(
+            CONFIG_DIR=settings.config_dir,
+        )
+        return cls(settings, auth_settings)
+
+    @classmethod
+    def load_settings_from_yaml(cls, file_path: str) -> SettingsService:
         # Check if a string is a valid path or a file name
         if "/" not in file_path:
             # Get current path

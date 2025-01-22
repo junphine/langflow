@@ -19,7 +19,6 @@ class DremioSQLAgentComponent(LCAgentComponent):
 
     inputs = LCAgentComponent._base_inputs + [
         HandleInput(name="llm", display_name="Language Model", input_types=["LanguageModel"], required=True),
-        MessageTextInput(name="agent_description", display_name="Agent description"),
         HandleInput(name="db", display_name="SQLDatabase", input_types=["SQLDatabase"], required=True),
         HandleInput(
             name="extra_tools",
