@@ -179,10 +179,14 @@ def read_std_dataset(input_file):
         reader = csv.DictReader(f)
         # 遍历文件中的每一行
         for row in reader:
+            row['dataset_name_en'] = row['dataset_name_en'].lower()
+            row['data_name_en'] = remove_number_around(row['data_name_en']).lower()
             row['data_name_cn'] = remove_number_around(row['data_name_cn'])
             field_name = standaze_field_name(row['data_name_cn'])
             id = row['dataset_name_cn']+'.'+field_name
             std_dataset[id] = row
+            id_en = row['dataset_name_en']+'.'+row['data_name_en']
+            std_dataset[id_en] = row
     return std_dataset
 
 def read_std_tables(input_file):
@@ -192,6 +196,7 @@ def read_std_tables(input_file):
         reader = csv.DictReader(f)
         # 遍历文件中的每一行
         for row in reader:
+            row['dataset_name_en'] = row['dataset_name_en'].lower()
             id = row['dataset_name_cn']
             id = remove_number_around(id)
             row['dataset_name_cn'] = id

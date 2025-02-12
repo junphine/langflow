@@ -45,7 +45,6 @@ if False:
 
     logger.debug("MCP module loaded - debug logging enabled")
 
-enable_progress_notifications = False #get_settings_service().settings.mcp_server_enable_progress_notifications
 
 router = APIRouter(prefix="/mcp", tags=["mcp"])
 
@@ -56,6 +55,10 @@ current_user_ctx: ContextVar[User] = ContextVar("current_user_ctx")
 
 # Define constants
 MAX_RETRIES = 2
+
+
+def get_enable_progress_notifications() -> bool:
+    return get_settings_service().settings.mcp_server_enable_progress_notifications
 
 
 @server.list_prompts()
@@ -175,9 +178,10 @@ async def handle_list_tools():
 
 
 @server.call_tool()
-async def handle_call_tool(name: str, arguments: dict) -> list[types.TextContent]:
+async def handle_call_tool(
+    name: str, arguments: dict, *, enable_progress_notifications: bool = Depends(get_enable_progress_notifications)
+) -> list[types.TextContent]:
     """Handle tool execution requests."""
-    global enable_progress_notifications
     try:
         session = await anext(get_session())
         background_tasks = BackgroundTasks()
@@ -191,8 +195,7 @@ async def handle_call_tool(name: str, arguments: dict) -> list[types.TextContent
 
         # Process inputs
         processed_inputs = dict(arguments)
-        # add@byron
-        enable_progress_notifications = get_settings_service().settings.mcp_server_enable_progress_notifications
+
         # Initial progress notification
         if enable_progress_notifications and (progress_token := server.request_context.meta.progressToken):
             await server.request_context.session.send_progress_notification(
