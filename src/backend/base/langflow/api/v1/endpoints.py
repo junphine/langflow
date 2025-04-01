@@ -44,9 +44,10 @@ from langflow.services.database.models.flow import Flow
 from langflow.services.database.models.flow.model import FlowRead
 from langflow.services.database.models.flow.utils import get_all_webhook_components_in_flow
 from langflow.services.database.models.user.model import User, UserRead
-from langflow.services.deps import get_session_service, get_settings_service, get_task_service, get_telemetry_service
+from langflow.services.deps import get_session_service, get_settings_service, get_telemetry_service
 from langflow.services.settings.feature_flags import FEATURE_FLAGS
 from langflow.services.telemetry.schema import RunPayload
+from langflow.utils.compression import compress_response
 from langflow.utils.version import get_version_info
 
 if TYPE_CHECKING:
@@ -58,6 +59,10 @@ router = APIRouter(tags=["Base"])
 
 @router.get("/all", dependencies=[Depends(get_current_active_user)])
 async def get_all():
+    """Retrieve all component types with compression for better performance.
+
+    Returns a compressed response containing all available component types.
+    """
     from langflow.interface.components import get_and_cache_all_types_dict
     settings_service = get_settings_service()
     try:
@@ -591,14 +596,14 @@ async def experimental_run_flow(
 
 
 @router.post(
-    "/predict/{flow_id}",
+    "/predict/{_flow_id}",
     dependencies=[Depends(api_key_security)],
 )
 @router.post(
-    "/process/{flow_id}",
+    "/process/{_flow_id}",
     dependencies=[Depends(api_key_security)],
 )
-async def process() -> None:
+async def process(_flow_id) -> None:
     """Endpoint to process an input with a given flow_id."""
     # Raise a depreciation warning
     logger.warning(
@@ -765,8 +770,6 @@ async def custom_component_update(
 @router.get("/config", response_model=ConfigResponse)
 async def get_config():
     try:
-        from langflow.services.deps import get_settings_service
-
         settings_service: SettingsService = get_settings_service()
 
         return {

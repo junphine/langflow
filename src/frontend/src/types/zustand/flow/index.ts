@@ -95,6 +95,7 @@ export type FlowStoreType = {
   setIsBuilding: (isBuilding: boolean) => void;
   setPending: (isPending: boolean) => void;
   resetFlow: (flow: FlowType | undefined) => void;
+  resetFlowState: () => void;
   reactFlowInstance: ReactFlowInstance<AllNodeType, EdgeType> | null;
   setReactFlowInstance: (
     newState: ReactFlowInstance<AllNodeType, EdgeType>,
@@ -139,6 +140,8 @@ export type FlowStoreType = {
   getFilterEdge: any[];
   onConnect: (connection: Connection) => void;
   unselectAll: () => void;
+  playgroundPage: boolean;
+  setPlaygroundPage: (playgroundPage: boolean) => void;
   buildFlow: ({
     startNodeId,
     stopNodeId,
@@ -146,6 +149,7 @@ export type FlowStoreType = {
     files,
     silent,
     session,
+    stream,
   }: {
     startNodeId?: string;
     stopNodeId?: string;
@@ -153,6 +157,7 @@ export type FlowStoreType = {
     files?: string[];
     silent?: boolean;
     session?: string;
+    stream?: boolean;
   }) => Promise<void>;
   getFlow: () => { nodes: Node[]; edges: EdgeType[]; viewport: Viewport };
   updateVerticesBuild: (

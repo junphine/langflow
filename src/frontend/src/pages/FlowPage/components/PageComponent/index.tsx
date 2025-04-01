@@ -79,7 +79,13 @@ const edgeTypes = {
   default: DefaultEdge,
 };
 
-export default function Page({ view }: { view?: boolean }): JSX.Element {
+export default function Page({
+  view,
+  setIsLoading,
+}: {
+  view?: boolean;
+  setIsLoading: (isLoading: boolean) => void;
+}): JSX.Element {
   const uploadFlow = useUploadFlow();
   const autoSaveFlow = useAutoSaveFlow();
   const types = useTypesStore((state) => state.types);
@@ -89,7 +95,6 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
   const setPositionDictionary = useFlowStore(
     (state) => state.setPositionDictionary,
   );
-
   const reactFlowInstance = useFlowStore((state) => state.reactFlowInstance);
   const setReactFlowInstance = useFlowStore(
     (state) => state.setReactFlowInstance,
@@ -184,6 +189,10 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
     Object.keys(templates).length > 0 &&
     Object.keys(types).length > 0 &&
     !isFetching;
+
+  useEffect(() => {
+    setIsLoading(!showCanvas);
+  }, [showCanvas]);
 
   useEffect(() => {
     useFlowStore.setState({ autoSaveFlow });
@@ -563,9 +572,13 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
             onSelectionChange={onSelectionChange}
             deleteKeyCode={[]}
             fitView={isEmptyFlow.current ? false : true}
+            fitViewOptions={{
+              minZoom: 0.2,
+              maxZoom: 8,
+            }}
             className="theme-attribution"
-            minZoom={0.01}
-            maxZoom={8}
+            minZoom={0.2}
+            maxZoom={3}
             zoomOnScroll={!view}
             zoomOnPinch={!view}
             panOnDrag={!view}
@@ -612,7 +625,9 @@ export default function Page({ view }: { view?: boolean }): JSX.Element {
                 <span className="text-foreground">Components</span>
               </SidebarTrigger>
             </Panel>
-            {componentsToUpdate.length > 0 && <UpdateAllComponents />}
+            <div className={cn(componentsToUpdate.length === 0 && "hidden")}>
+              <UpdateAllComponents />
+            </div>
             <SelectionMenu
               lastSelection={lastSelection}
               isVisible={selectionMenuVisible}
