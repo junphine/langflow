@@ -50,7 +50,7 @@ from langflow.services.telemetry.schema import RunPayload
 from langflow.utils.version import get_version_info
 
 if TYPE_CHECKING:
-    from langflow.services.event_manager import EventManager
+    from langflow.events.event_manager import EventManager
     from langflow.services.settings.service import SettingsService
 
 router = APIRouter(tags=["Base"])
@@ -62,9 +62,7 @@ async def get_all():
     settings_service = get_settings_service()
     try:
         configed_type_dict = {}
-        all_types_dict = await get_and_cache_all_types_dict(
-            settings_service=settings_service
-        )
+        all_types_dict = await get_and_cache_all_types_dict(settings_service=settings_service)
         for key,category in all_types_dict.items():
             components = {}
             for componet_name,component in category.items():

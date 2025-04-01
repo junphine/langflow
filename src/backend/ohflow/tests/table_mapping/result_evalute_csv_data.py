@@ -23,7 +23,7 @@ ENDPOINT = "auto_mapping" # The endpoint name of the flow
 
 header = 'ods_dataset_cn,ods_data_cn,std_dataset_cn,std_data_cn,humans,humans_data_cn'.split(',')
 
-PATH = r'C:/TEAM/贵州医药监管平台/'
+PATH = r'C:/TEAM/湘潭项目仁医部分/'
 
 
 tp=1
@@ -39,12 +39,14 @@ with open(PATH+ENDPOINT+'_result.json','r',encoding='utf-8') as fd:
 # 遍历标化模型，生成匹配结果
 
 from ohflow.interface.agents.build_embedding_index import *
-from ohflow.interface.agents.std_tables_data import *
+from ohflow.interface.agents.std_tables_data_xiangtan import *
 # key:ods_table,value:list[dict(std_data_name,ods_data_name)]
 std_matched_dict = collections.defaultdict(list)
 std_matched_error_dict = collections.defaultdict(list)
 if std_result_dataset:
     for ods_table,row2 in std_result_dataset.items():
+        if isinstance(row2,str):
+            continue
         m_std_tables:list = row2['std_table']
         for field,m_fields in row2.items():
             if field=='std_table':
@@ -59,9 +61,9 @@ if std_result_dataset:
                         std_matched_dict[ods_table].append(item)
                         fn+=1
             i=0
-            for m_pos_field in m_fields:
+            for m_pos_field in m_fields[0:3]:
                 m_field = m_pos_field[1]
-                std_table,std_field = m_field.split('.')
+                std_table,std_field = m_field.split('.',1)
                 if i>0 and ('费' in std_field or '姓名' in std_field or '时间' in std_field or '地址' in std_field):
                     break
                 item = dict(ods_dataset_cn=ods_table,ods_data_cn=field,std_dataset_cn=std_table,std_data_cn=std_field,humans=0)

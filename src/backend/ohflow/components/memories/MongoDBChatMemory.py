@@ -2,6 +2,7 @@ from typing import Optional, cast
 
 from langchain_community.chat_message_histories import MongoDBChatMessageHistory
 from langflow.base.memory.model import LCChatMemoryComponent
+from langflow.field_typing.constants import Memory
 from langflow.inputs import MessageTextInput, StrInput, BoolInput
 from langflow.field_typing import BaseChatMessageHistory
 from langflow.schema import Data
@@ -44,7 +45,7 @@ class MongoDBChatMemory(LCChatMemoryComponent):
         ),
     ]
 
-    def build_message_history(self) -> BaseChatMessageHistory:
+    def build_message_history(self) -> Memory:
 
         memory = MongoDBChatMessageHistory(
             connection_string=self.connection_string,

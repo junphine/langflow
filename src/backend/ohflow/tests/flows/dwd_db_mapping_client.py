@@ -1,5 +1,5 @@
 import argparse
-import json
+import json,time
 from argparse import RawTextHelpFormatter
 import requests
 from typing import Optional
@@ -10,15 +10,18 @@ except ImportError:
     warnings.warn("Langflow provides a function to help you upload files to the flow. Please install langflow to use it.")
     upload_file = None
 
-BASE_API_URL = "http://localhost:3003"
+BASE_API_URL = "http://localhost:7860"
 FLOW_ID = "7c0341f3-a712-4092-a19c-e79c3d3a73eb"
-ENDPOINT = "auto_mapping" # The endpoint name of the flow
+ENDPOINT = "auto_mapping"
+
+#FLOW_ID = "3fd4fac4-5159-45bb-8a2f-de1f063a14c5"
+#ENDPOINT = "auto_mapping_kimi" # The endpoint name of the flow
 
 
 #FLOW_ID = "12ab7722-d553-4c34-8eb4-887d30d259a6"
 #ENDPOINT = "auto_mapping_small" # The endpoint name of the flow
 
-
+import ohflow.interface.agents.std_tables_data_xiangtan as meta_data
 # You can tweak the flow by adding a tweaks dictionary
 # e.g {"OpenAI-XXXXX": {"model_name": "gpt-4"}}
 TWEAKS = {
@@ -31,7 +34,10 @@ TWEAKS = {
     "ChatOutput-COnbb": {}
 }
 PATH = r'C:/TEAM/贵州医药监管平台/'
+PATH = r'C:/TEAM/湘潭项目仁医部分/'
+#PATH = r'C:/TEAM/青岛-七医新/'
 
+std_result_new_dataset = {}
 
 def run_flow(message: str,
              endpoint: str,
@@ -62,19 +68,7 @@ def run_flow(message: str,
     response = requests.post(api_url, json=payload, headers=headers)
     return response.json()
 
-def main(args,input_value):
-    try:
-        tweaks = json.loads(args.tweaks)
-    except json.JSONDecodeError:
-        raise ValueError("Invalid tweaks JSON string")
-
-    if args.upload_file:
-        if not upload_file:
-            raise ImportError("Langflow is not installed. Please install it to use the upload_file function.")
-        elif not args.components:
-            raise ValueError("You need to provide the components to upload the file to.")
-        tweaks = upload_file(file_path=args.upload_file, host=BASE_API_URL, flow_id=args.endpoint, components=[args.components], tweaks=tweaks)
-
+def main_run_flow(args,tweaks,input_value):
 
     response = run_flow(
         message=input_value,
@@ -91,6 +85,9 @@ def main(args,input_value):
         return message
     except Exception as e:
         print(e)
+        with open(PATH+ENDPOINT+'_result.json','w',encoding='utf-8') as fd:
+            json.dump(std_result_new_dataset,fd,indent=4,ensure_ascii=False)
+        time.sleep(60*60)
         return None
 
 if __name__ == "__main__":
@@ -107,19 +104,51 @@ Run it like: python <your file>.py "your message here" --endpoint "your_endpoint
     parser.add_argument("--components", type=str, help="Components to upload the file to", default=None)
     args = parser.parse_args()
 
+    try:
+        tweaks = json.loads(args.tweaks)
+    except json.JSONDecodeError:
+        raise ValueError("Invalid tweaks JSON string")
+
+    if args.upload_file:
+        if not upload_file:
+            raise ImportError("Langflow is not installed. Please install it to use the upload_file function.")
+        elif not args.components:
+            raise ValueError("You need to provide the components to upload the file to.")
+        tweaks = upload_file(file_path=args.upload_file, host=BASE_API_URL, flow_id=args.endpoint, components=[args.components], tweaks=tweaks)
+
+
     std_result_dataset = {}
-    std_result_new_dataset = {}
+
+    """
     with open(PATH + 'std_result.json','r',encoding='utf-8') as fd:
         std_result_dataset = json.load(fd)
+    """
+
+    std_result_dataset = meta_data.ods_tables
+
+    matched_table_dict = meta_data.matched_table_dict
 
     for ods_table,row2 in std_result_dataset.items():
-        m_std_tables:list = row2['std_table']
-        input_str = ods_table # +'->'+ ','.join(m_std_tables)
-        msg = main(args,input_str)
+        m_std_tables:list = []
+        for match_id in matched_table_dict.keys():
+            matched = match_id.split(':')
+            if ods_table==matched[1]:
+                m_std_tables.append(matched[0])
+        if m_std_tables:
+            input_str = ods_table +'->'+ ','.join(m_std_tables)
+        else:
+            input_str = ods_table
+
+        msg = main_run_flow(args,tweaks,input_str)
         if msg is not None:
             text = msg.get('text')
-            result = json.loads(text)
-            std_result_new_dataset[ods_table] = result
+            try:
+                result = json.loads(text)
+                std_result_new_dataset[ods_table] = result
+            except Exception as e:
+                print(e)
+                print(text)
+                std_result_new_dataset[ods_table] = text
 
     with open(PATH+ENDPOINT+'_result.json','w',encoding='utf-8') as fd:
         json.dump(std_result_new_dataset,fd,indent=4,ensure_ascii=False)

@@ -49,6 +49,7 @@ def build_ans(std_row, ods_row,matched_dict,matched_field_dict,matched_table_dic
         ans = '<option_2>'
     return ans
 
+
 def remove_brackets(text):
     # 使用正则表达式匹配大括号及其内部内容，并使用空字符串替换它们
     pattern = r'({.*?})'
@@ -146,29 +147,37 @@ def build_table_field_embedding(collection,dataset):
     print('Index written!')
 
 
-def read_ods_dataset(input_file):
+def read_ods_dataset(input_file,use_cn_name=True):
     ods_dataset = collections.OrderedDict()
     with open(input_file, 'r',encoding='utf-8') as f:
         # 创建csv阅读器
         reader = csv.DictReader(f)
         # 遍历文件中的每一行
         for row in reader:
+            if use_cn_name and (not row['data_name_cn'] or not row['dataset_name_cn']):
+                continue
             row['data_name_cn'] = remove_number_around(row['data_name_cn'])
-            id = row['dataset_name_cn']+'.'+row['data_name_cn']
+            if use_cn_name:
+                id = row['dataset_name_cn']+'.'+row['data_name_cn']
+            else:
+                id = row['dataset_name_en']+'.'+row['data_name_en']
             ods_dataset[id] = row
     return ods_dataset
 
-def read_ods_tables(input_file):
+def read_ods_tables(input_file,use_cn_name=True):
     ods_dataset = collections.OrderedDict()
     with open(input_file, 'r',encoding='utf-8') as f:
         # 创建csv阅读器
         reader = csv.DictReader(f)
         # 遍历文件中的每一行
         for row in reader:
-            id = row['dataset_name_cn']
-            id = remove_number_around(id)
-            row['dataset_name_cn'] = id
+            if use_cn_name and not row['dataset_name_cn']:
+                continue
+            row['dataset_name_cn'] = remove_number_around(row['dataset_name_cn'])
+            id = row['dataset_name_cn'] if use_cn_name else row['dataset_name_en']
+            row['fields'] = {}
             ods_dataset[id] = row
+
     return ods_dataset
 
 
@@ -200,6 +209,7 @@ def read_std_tables(input_file):
             id = row['dataset_name_cn']
             id = remove_number_around(id)
             row['dataset_name_cn'] = id
+            row['fields'] = {}
             std_dataset[id] = row
     return std_dataset
 

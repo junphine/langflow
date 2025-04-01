@@ -400,7 +400,7 @@ class IgniteDatabase(sql_database.SQLDatabase):
         """
         try:
             return self.run(command, fetch)
-        except SQLAlchemyError as e:
+        except Exception as e:
             """Format the error message"""
             return f"Error: {e}"
 

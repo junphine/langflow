@@ -19,8 +19,6 @@ print("当前执行文件的目录:", current_directory)
 
 load_dotenv('.env')
 
-import ohflow.interface.agents.std_tables_data as meta_data
-
 TWEAKS = {
     "Prompt-7b2Ep": {},
     "DeepseekLLM-Vessh": {},

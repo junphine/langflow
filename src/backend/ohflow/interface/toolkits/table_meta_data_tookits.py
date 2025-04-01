@@ -18,7 +18,7 @@ from langchain.chains.base import Chain
 from langchain_community.tools import BaseTool
 from langchain_community.tools.sql_database.tool import BaseSQLDatabaseTool
 from langchain_community.utilities.sql_database import SQLDatabase
-import ohflow.interface.agents.std_tables_data as meta_data
+import ohflow.interface.agents.std_tables_data_qingdao as meta_data
 from langflow.field_typing import LanguageModel
 
 class _InfoSQLDatabaseToolInput(BaseModel):
@@ -106,7 +106,7 @@ class ColumenStrOutputParser(BaseTransformOutputParser[str]):
         for std_table_name in std_tables:
             std_table = meta_data.std_tables[std_table_name]
             for column in std_table['fields'].keys():
-                pos = text.find("**"+column+"**")
+                pos = text.find("**"+column)
                 if pos>=0:
                     columns.append((pos,std_table_name+'.'+column))
 
@@ -115,7 +115,16 @@ class ColumenStrOutputParser(BaseTransformOutputParser[str]):
                 std_table = meta_data.std_tables[std_table_name]
                 for column_data in std_table['fields'].values():
                     column = column_data['data_name_en']
-                    pos = text.find("**"+column+"**")
+                    pos = text.find("**"+column)
+                    if pos>=0:
+                        columns.append((pos,std_table_name+'.'+column_data['data_name_cn']))
+
+        if len(columns)==0:
+            for std_table_name in std_tables:
+                std_table = meta_data.std_tables[std_table_name]
+                for column_data in std_table['fields'].values():
+                    column = column_data['data_name_cn']
+                    pos = text.find(column)
                     if pos>=0:
                         columns.append((pos,std_table_name+'.'+column_data['data_name_cn']))
         return columns
@@ -194,7 +203,7 @@ class CustomTableMappingChain(Chain):
         return self.output_parser.parse(output)
 
     def field_mapping(self, table_name: str, field_name: str,std_table:List[str]) -> List[str]:
-        if not meta_data.use_field_desc or len(std_table)<=2:
+        if not meta_data.use_field_desc and len(std_table)>0:
             prompt = meta_data.field_mapping_question(table_name,field_name,std_table)['prompt']
             output = self.llm.invoke(StringPromptValue(text=self.field_prompt_prefix+prompt)).content
             return self.output_parser.parseColumns(output,std_table)

@@ -70,10 +70,10 @@ class MessageStoreComponent(Component):
             stored_messages = await aget_messages(
                 session_id=message.session_id, sender_name=message.sender_name, sender=message.sender
             )
-        if not stored_messages:
-            msg = "No messages were stored. Please ensure that the session ID and sender are properly set."
-            raise ValueError(msg)
-        stored_message = stored_messages[0]
+            if not stored_messages:
+                msg = "No messages were stored. Please ensure that the session ID and sender are properly set."
+                raise ValueError(msg)
+            stored_message = stored_messages[0]
 
         self.status = stored_message
         return stored_message
