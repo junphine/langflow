@@ -2,7 +2,7 @@ import json
 import re
 import random
 import pymongo
-from ohflow.interface.agents.build_embedding_index import *
+from ohflow.tests.table_mapping.stds.build_embedding_index import *
 
 PATH = r'C:/TEAM/贵州医药监管平台/'
 

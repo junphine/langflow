@@ -12,7 +12,7 @@ except ImportError:
 
 BASE_API_URL = "http://localhost:7860"
 FLOW_ID = "7c0341f3-a712-4092-a19c-e79c3d3a73eb"
-ENDPOINT = "auto_mapping"
+ENDPOINT = "auto_mapping_ignite"
 
 #FLOW_ID = "3fd4fac4-5159-45bb-8a2f-de1f063a14c5"
 #ENDPOINT = "auto_mapping_kimi" # The endpoint name of the flow
@@ -21,7 +21,8 @@ ENDPOINT = "auto_mapping"
 #FLOW_ID = "12ab7722-d553-4c34-8eb4-887d30d259a6"
 #ENDPOINT = "auto_mapping_small" # The endpoint name of the flow
 
-import ohflow.interface.agents.std_tables_data_xiangtan as meta_data
+#import ohflow.tests.table_mapping.stds.std_tables_data_xiangtan as meta_data
+import ohflow.tests.table_mapping.stds.std_tables_data_qingdao as meta_data
 # You can tweak the flow by adding a tweaks dictionary
 # e.g {"OpenAI-XXXXX": {"model_name": "gpt-4"}}
 TWEAKS = {
@@ -35,7 +36,7 @@ TWEAKS = {
 }
 PATH = r'C:/TEAM/贵州医药监管平台/'
 PATH = r'C:/TEAM/湘潭项目仁医部分/'
-#PATH = r'C:/TEAM/青岛-七医新/'
+PATH = r'C:/TEAM/青岛-七医新/'
 
 std_result_new_dataset = {}
 
@@ -70,24 +71,29 @@ def run_flow(message: str,
 
 def main_run_flow(args,tweaks,input_value):
 
-    response = run_flow(
-        message=input_value,
-        endpoint=args.endpoint,
-        output_type=args.output_type,
-        input_type=args.input_type,
-        tweaks=tweaks,
-        api_key=args.api_key
-    )
+
     try:
+        response = run_flow(
+            message=input_value,
+            endpoint=args.endpoint,
+            output_type=args.output_type,
+            input_type=args.input_type,
+            tweaks=tweaks,
+            api_key=args.api_key
+        )
         outputs = response.get("outputs", [])[0].get("outputs", [])
         message = outputs[0].get("results", {}).get("message")
         print(json.dumps(message, indent=2))
+        time.sleep(60)
         return message
+
     except Exception as e:
         print(e)
         with open(PATH+ENDPOINT+'_result.json','w',encoding='utf-8') as fd:
             json.dump(std_result_new_dataset,fd,indent=4,ensure_ascii=False)
-        time.sleep(60*60)
+
+        if 'JSONDecodeError' not in str(e.__class__.__name__):
+            time.sleep(5*60)
         return None
 
 if __name__ == "__main__":
@@ -126,18 +132,8 @@ Run it like: python <your file>.py "your message here" --endpoint "your_endpoint
 
     std_result_dataset = meta_data.ods_tables
 
-    matched_table_dict = meta_data.matched_table_dict
-
     for ods_table,row2 in std_result_dataset.items():
-        m_std_tables:list = []
-        for match_id in matched_table_dict.keys():
-            matched = match_id.split(':')
-            if ods_table==matched[1]:
-                m_std_tables.append(matched[0])
-        if m_std_tables:
-            input_str = ods_table +'->'+ ','.join(m_std_tables)
-        else:
-            input_str = ods_table
+        input_str = ods_table.upper()
 
         msg = main_run_flow(args,tweaks,input_str)
         if msg is not None:

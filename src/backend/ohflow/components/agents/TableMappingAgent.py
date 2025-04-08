@@ -2,6 +2,8 @@ from langchain.agents import AgentExecutor, AgentType
 from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from langchain_community.agent_toolkits.sql.base import create_sql_agent
 from langchain_community.utilities import SQLDatabase
+from langchain_core.prompts import PromptTemplate
+
 from langflow.template import Output
 from langflow.base.agents.agent import LCAgentComponent
 from langflow.inputs import MessageTextInput, HandleInput, MultilineInput, FileInput, DropdownInput
@@ -21,7 +23,8 @@ class TableMappingAgentComponent(LCAgentComponent):
 
     inputs = LCAgentComponent._base_inputs + [
         HandleInput(name="llm", display_name="Language Model", input_types=["LanguageModel"], required=True),
-        HandleInput(name="db", display_name="SQLDatabase", input_types=["SQLDatabase"], required=True),
+        HandleInput(name="source_db", display_name="Source SQLDatabase", input_types=["SQLDatabase"], required=True),
+        HandleInput(name="target_db", display_name="Target SQLDatabase", input_types=["SQLDatabase"], required=True),
         HandleInput(
             name="extra_tools",
             display_name="Extra Tools",
@@ -32,21 +35,38 @@ class TableMappingAgentComponent(LCAgentComponent):
         MultilineInput(
             name="prefix",
             display_name="prefix",
-            info="Prompt prefix string. Must contain variables top_k and dialect",
+            info="Prompt prefix string. Must contain variables top_k and dialect,Used for table mapping",
+        ),
+        MultilineInput(
+            name="prompt",
+            display_name="prompt",
+            info="Prompt string. Must contain variables table_info and table_names",
+        ),
+        MultilineInput(
+            name="suffix",
+            display_name="suffix",
+            info="Prompt suffix string. Used for field mapping",
         ),
         DropdownInput(
             name="agent_type",
             display_name="Agent type",
-            options=["table_mapping", "field_mapping", "table_and_fields_mapping", "zero-shot-react-description", "openai-functions"],
+            options=["table_mapping", "field_mapping", "table_and_fields_mapping"],
             value="table_and_fields_mapping",
             advanced=True,
         ),
         FileInput(
-            name="std_tables_info_file",
-            display_name="std tables info jsonl file",
-            file_types=["json", "yaml", "jsonl"],
+            name="source_tables_info_file",
+            display_name="source tables info file",
+            file_types=["json", "csv", "tsv"],
             required=False,
-            info="包含标准库的表列表，必须包含表名和中文名，字段名，字段中文名",
+            info="包含来源库的表列表，必须包含表名TABLE_NAME,COLUMN_NAME,COLUMN_COMMENT",
+        ),
+        FileInput(
+            name="target_tables_info_file",
+            display_name="target tables info file",
+            file_types=["json", "csv", "tsv"],
+            required=False,
+            info="包含标准库的表列表，必须包含表名TABLE_NAME",
         ),
     ]
 
@@ -57,23 +77,27 @@ class TableMappingAgentComponent(LCAgentComponent):
     ]
 
     def build_agent(self, agent_type: str = '') -> AgentExecutor:
-        agent_description = self.agent_description # table mapping prompt
+
         agent_args = self.get_agent_kwargs()
         agent_args["max_iterations"] = agent_args["agent_executor_kwargs"]["max_iterations"]
         agent_args["agent_type"] = agent_type or self.agent_type
 
-        if self.agent_type.endswith('mapping'):
-            toolkit = DremioMetaDataToolkit(db=self.db, meta_data_file=self.std_tables_info_file)
-        else:
-            toolkit = DremioSQLDatabaseToolkit(db=self.db, llm=self.llm)
+        source_toolkit = DremioMetaDataToolkit(db=self.source_db, meta_data_file=self.source_tables_info_file)
+
+        target_toolkit = DremioMetaDataToolkit(db=self.target_db, meta_data_file=self.target_tables_info_file)
 
         del agent_args["agent_executor_kwargs"]["max_iterations"]
+        prompt = None
+        if self.prompt:
+            prompt = PromptTemplate.from_template(self.prompt)
         output_parser = CustomReActSingleInputOutputParser()
         return create_table_mapping_agent(llm=self.llm,
-                                toolkit=toolkit,
+                                source_toolkit=source_toolkit,
+                                target_toolkit=target_toolkit,
                                 extra_tools=self.extra_tools or [],
                                 prefix=self.prefix,
-                                agent_description = agent_description,
+                                prompt = prompt,
+                                suffix = self.suffix,
                                 output_parser=output_parser,
                                 **agent_args)
 

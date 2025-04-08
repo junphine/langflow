@@ -15,7 +15,7 @@ sys.argv=['ipykernel_launcher.py',
           '--memory-limit','30'
           ]
 
-from ohflow.interface.agents.build_embedding_index import *
+from ohflow.tests.table_mapping.stds.build_embedding_index import *
 import text_generation
 
 args = text_generation.parse_args()

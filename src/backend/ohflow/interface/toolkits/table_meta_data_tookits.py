@@ -1,5 +1,7 @@
 """Toolkit for interacting with an SQL database."""
-import json
+import csv
+import json,re
+from pathlib import Path
 from typing import List
 from typing import Any, Dict, Optional, Sequence, Type, Union
 
@@ -18,204 +20,54 @@ from langchain.chains.base import Chain
 from langchain_community.tools import BaseTool
 from langchain_community.tools.sql_database.tool import BaseSQLDatabaseTool
 from langchain_community.utilities.sql_database import SQLDatabase
-import ohflow.interface.agents.std_tables_data_qingdao as meta_data
-from langflow.field_typing import LanguageModel
+
 
 class _InfoSQLDatabaseToolInput(BaseModel):
-    table_name: str = Field(...,description=(
-            "The ods table name for which to return the std table name. "
+    table_names: str = Field(
+        ...,
+        description=(
+            "A comma-separated list of the table names for which to return the schema. "
+            "Example input: 'table1, table2, table3'"
         ),
     )
 
-class _FieldListSQLDataBaseToolInput(BaseModel):
-    table_name: str = Field(...,description=(
-                "The ods source table name for which to mapping his fields. "
-            ),
-        )
-    field_name: str = Field(..., description="The table filed name for which to return the std field name.")
-    std_table_name: str = Field(...,description=(
-                "The target table name for which to return the field of this table. "
-            ),
-        )
 
-class MappingSQLDatabaseTableTool(BaseSQLDatabaseTool, BaseTool):  # type: ignore[override, override]
-    """Tool for getting std tables names."""
-
-    name: str = "db_mapping_table"
-    description: str = "Input is an ods table name, output is a std table name in the std database."
-    args_schema: Type[BaseModel] = _InfoSQLDatabaseToolInput
-
-    def _run(
-            self,
-            table_name: str,
-            run_manager: Optional[CallbackManagerForToolRun] = None,
-    ) -> str:
-        """Get a comma-separated list of table names."""
-        return meta_data.table_mapping_question(table_name)['prompt']
-
-
-class MappingSQLDatabaseFieldTool(BaseSQLDatabaseTool, BaseTool):  # type: ignore[override, override]
+class InfoSQLDatabaseTool(BaseSQLDatabaseTool, BaseTool):  # type: ignore[override, override]
     """Tool for getting metadata about a SQL database."""
-    name: str = "db_mapping_field"
-    description: str = "Input is an ods table name and one of his field, output is a table name in the std database."
+
+    name: str = "sql_db_schema"
+    description: str = "Get the schema and sample rows for the specified SQL tables."
     args_schema: Type[BaseModel] = _InfoSQLDatabaseToolInput
 
     def _run(
             self,
-            table_name: str,
-            field_name: str,
-            std_table_name: str,
+            table_names: str,
             run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
         """Get the schema for tables in a comma-separated list."""
-        return meta_data.field_mapping_question(table_name,field_name,std_table_name)['prompt']
+        return self.db.get_table_info_no_throw(
+            [t.strip() for t in table_names.split(",")]
+        )
 
 
-class ColumenStrOutputParser(BaseTransformOutputParser[str]):
-    """OutputParser that parses LLMResult into the top likely string."""
-
-    @classmethod
-    def is_lc_serializable(cls) -> bool:
-        """Return whether this class is serializable."""
-        return True
-
-    @classmethod
-    def get_lc_namespace(cls) -> List[str]:
-        """Get the namespace of the langchain object."""
-        return ["langchain", "schema", "output_parser"]
-
-    @property
-    def _type(self) -> str:
-        """Return the output parser type for serialization."""
-        return "default"
-
-    def parse(self, text: str) -> List[str]:
-        """Returns the input text with no changes."""
-        tables = []
-        for table in meta_data.std_tables.keys():
-            if table in text:
-                tables.append(table)
-        return tables
-
-    def parseColumns(self, text: str, std_tables: list) -> List[str]:
-        """Returns the input text with no changes."""
-        columns = []
-        if text[0]=='无' or text[-1]=='无':
-            return []
-
-        for std_table_name in std_tables:
-            std_table = meta_data.std_tables[std_table_name]
-            for column in std_table['fields'].keys():
-                pos = text.find("**"+column)
-                if pos>=0:
-                    columns.append((pos,std_table_name+'.'+column))
-
-        if len(columns)==0:
-            for std_table_name in std_tables:
-                std_table = meta_data.std_tables[std_table_name]
-                for column_data in std_table['fields'].values():
-                    column = column_data['data_name_en']
-                    pos = text.find("**"+column)
-                    if pos>=0:
-                        columns.append((pos,std_table_name+'.'+column_data['data_name_cn']))
-
-        if len(columns)==0:
-            for std_table_name in std_tables:
-                std_table = meta_data.std_tables[std_table_name]
-                for column_data in std_table['fields'].values():
-                    column = column_data['data_name_cn']
-                    pos = text.find(column)
-                    if pos>=0:
-                        columns.append((pos,std_table_name+'.'+column_data['data_name_cn']))
-        return columns
+class _ListSQLDatabaseToolInput(BaseModel):
+    tool_input: str = Field("", description="An empty string")
 
 
-class CustomTableMappingChain(Chain):
-    """Chain for getting the schema of a SQL database."""
-    llm: BaseLanguageModel = Field(default=None)
-    output_parser: ColumenStrOutputParser = Field(
-        default_factory=lambda: ColumenStrOutputParser()
-    )
-    table_prompt_prefix: str = Field(
-        default="库表映射任务，根据所给的标准库的表列表信息，找到最能将用户输入表映射上的表，可以多选，找不到则回答无",
-        description="A prompt template to use for the table mapping prefix.",
-    )
-    field_prompt_prefix: str = Field(
-        default="",
-        description="A prompt template to use for the field mapping prefix.",
-    )
-    @property
-    def input_keys(self):
-        return ["input"]
+class ListSQLDatabaseTool(BaseSQLDatabaseTool, BaseTool):  # type: ignore[override, override]
+    """Tool for getting tables names."""
 
-    @property
-    def output_keys(self):
-        return ["output_data","output"]
+    name: str = "sql_db_list_tables"
+    description: str = "Input is an empty string, output is list of table names and its comment in the database."
+    args_schema: Type[BaseModel] = _ListSQLDatabaseToolInput
 
-    def _call(self, inputs:Dict, run_manager: Optional[CallbackManagerForChainRun] = None):
-        # 只输入表名,表名.字段名, 表名->标化表名
-        inputChatPromptValue = inputs["input"]
-        if isinstance(inputChatPromptValue, ChatPromptValue):
-            inputChatPromptValue = inputChatPromptValue.to_messages()[0].content
-        input = inputChatPromptValue.strip().split('.')
-        output = dict()
-        if(1==len(input)):
-            tables = input[0].split('->')
-            if(len(tables)==1):
-                table = input[0]
-                std_table = self.table_mapping(table)
-            else:
-                table,std_table = tables
-                std_table = std_table.strip().split(',')
-            output['std_table'] = std_table
-            fields = self.get_ods_table_fields(table)
-            for field in fields:
-                output[field['data_name_cn']] = self.field_mapping(table,field,std_table)
-
-            # 字段映射
-        if(2==len(input)):
-            table = input[0]
-            field = input[1]
-            std_table = self.table_mapping(table)
-            std_field = self.field_mapping(table,field,std_table)
-            output['std_table'] = std_table
-            output[field] = std_field
-
-        if(3==len(input)):
-            schema = input[0]
-            table = input[0]+'.'+input[1]
-            field = input[2]
-            std_table = self.table_mapping(table)
-            std_field = self.field_mapping(table,field,std_table)
-            output['std_table'] = std_table
-            output[field] = std_field
-
-        return {"output_data": output, "output": json.dumps(output, indent=4, ensure_ascii=False)}
-
-    def get_ods_table_fields(self, table_name: str) -> List[Dict]:
-        ods_table = meta_data.ods_tables.get(table_name,None)
-        if ods_table is None:
-            return []
-        return ods_table['fields'].values()
-    def table_mapping(self, table_name: str) -> List[str]:
-        prompt = meta_data.table_mapping_question(table_name)['prompt']
-        output = self.llm.invoke(StringPromptValue(text=self.table_prompt_prefix+prompt)).content
-        return self.output_parser.parse(output)
-
-    def field_mapping(self, table_name: str, field_name: str,std_table:List[str]) -> List[str]:
-        if not meta_data.use_field_desc and len(std_table)>0:
-            prompt = meta_data.field_mapping_question(table_name,field_name,std_table)['prompt']
-            output = self.llm.invoke(StringPromptValue(text=self.field_prompt_prefix+prompt)).content
-            return self.output_parser.parseColumns(output,std_table)
-        else:
-            colmus = []
-            for std_tab in std_table:
-                prompt = meta_data.field_mapping_question(table_name,field_name,std_tab)['prompt']
-                output = self.llm.invoke(StringPromptValue(text=prompt)).content
-                cols = self.output_parser.parseColumns(output,std_table)
-                colmus+=cols
-            return colmus
-
+    def _run(
+            self,
+            tool_input: str = "",
+            run_manager: Optional[CallbackManagerForToolRun] = None,
+    ) -> str:
+        """Get a comma-separated list of table names."""
+        return ", ".join(self.db.get_usable_table_names())
 
 
 class DremioMetaDataToolkit(BaseToolkit):
@@ -228,6 +80,8 @@ class DremioMetaDataToolkit(BaseToolkit):
 
     db: SQLDatabase = Field(exclude=True)
 
+    meta_data_file: Optional[str] = Field(None, description="路径字段")
+
     @property
     def dialect(self) -> str:
         """Return string representation of SQL dialect to use."""
@@ -238,23 +92,94 @@ class DremioMetaDataToolkit(BaseToolkit):
 
         arbitrary_types_allowed = True
 
+    def resolve_path(self,path: str) -> str:
+        """Resolves the path to an absolute path."""
+        if not path:
+            return path
+        path_object = Path(path)
+
+        if path_object.parts and path_object.parts[0] == "~":
+            path_object = path_object.expanduser()
+        elif path_object.is_relative_to("."):
+            path_object = path_object.resolve()
+        return str(path_object)
+
+    def table_meta_data(self):
+        if hasattr(self,'_table_meta_data'):
+            return self._table_meta_data
+        if self.meta_data_file is not None and self.meta_data_file:
+            resolved_path = self.resolve_path(self.meta_data_file)
+            extension = Path(resolved_path).suffix[1:].lower()
+
+            if extension=='tsv':
+                csv_args={
+                    'delimiter': '\t',
+                    'quotechar': '"'
+                }
+            else:
+                csv_args={
+                    'delimiter': ',',
+                    'quotechar': '"'
+                }
+
+            # Create a CSV reader object
+            csv_reader = csv.DictReader(resolved_path,**csv_args)
+
+            # Convert each row to a Data object
+            result = {}
+            for row in csv_reader:
+                table_name = row['TABLE_NAME'].upper()
+                if table_name not in result:
+                    result[table_name] = dict(fields={})
+                tab_info = result[table_name]
+                if 'COLUMN_NAME' in row:
+                    col_name = row['COLUMN_NAME'].upper()
+                    tab_info['fields'][col_name] = row
+                else:
+                    tab_info['info'] = row
+
+            self._table_meta_data = result
+            return result
+        else:
+            self._table_meta_data = {}
+            return self._table_meta_data
+
+    def get_table_comment(self,table:str) -> dict:
+        tbl_info = self.table_meta_data().get(table.upper())
+        if tbl_info and 'info' in tbl_info:
+            return tbl_info.get('info',{}).get('TABLE_COMMENT')
+        elif tbl_info and 'fields' in tbl_info:
+            for field in tbl_info.get('fields',{}).values():
+                return field.get('TABLE_COMMENT')
+        else:
+            return None
+
     def get_tools(self) -> List[BaseTool]:
         """Get the tools in the toolkit."""
 
-        db_mapping_table = MappingSQLDatabaseTableTool(
-            db=self.db
-        )
+        list_sql_database_tool = ListSQLDatabaseTool(db=self.db)
 
-        db_mapping_field = MappingSQLDatabaseFieldTool(
-            db=self.db
+        info_sql_database_tool_description = (
+            "Input to this tool is a comma-separated list of tables, output is the "
+            "schema and sample rows for those tables. "
+            "Be sure that the tables actually exist by calling "
+            f"{list_sql_database_tool.name} first! "
+            "Example Input: table1, table2, table3"
+        )
+        info_sql_database_tool = InfoSQLDatabaseTool(
+            db=self.db, description=info_sql_database_tool_description
         )
 
         return [
-            db_mapping_table,
-            db_mapping_field,
+            list_sql_database_tool,
+            info_sql_database_tool,
         ]
 
     def get_context(self) -> dict:
         """Return db context that you may want in agent prompt."""
         return self.db.get_context()
+
+
+
+
 

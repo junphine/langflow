@@ -5,7 +5,7 @@ import random
 import math
 import collections
 import pandas as pd
-from ohflow.interface.agents.build_embedding_index import *
+from ohflow.tests.table_mapping.stds.build_embedding_index import *
 
 PATH = r'C:/TEAM/青岛-七医新/'
 # 字段是否使用注释
@@ -60,6 +60,7 @@ for sheet_name, datas in all_sheets_data.items():
         if not isinstance(row['data_name_cn'],str) or not isinstance(row['data_name_en'],str):
             continue
         row['full_name_cn'] = row['dataset_name_cn']+'.'+row['data_name_cn']
+        row['data_type'] = data.get('类型')
         id = row['full_name_cn']
         field_name = standaze_field_name(row['data_name_cn'])
         std_dataset[id] = row
@@ -101,7 +102,7 @@ for table_name,table in std_tables.items():
 
 std_keys = list(std_dataset.keys())
 
-ods_tables = read_ods_tables(PATH+'七医新HIS表列表.csv')
+ods_tables = read_ods_tables(PATH+'七医新HIS表列表.csv',use_cn_name=True)
 ods_en_tables = read_ods_tables(PATH+'七医新HIS表列表.csv',use_cn_name=False)
 ods_dataset = read_ods_dataset(PATH+'七医新HIS表结构.csv')
 
@@ -225,18 +226,14 @@ def _sce(cn,table):
     return cn
 
 #所有匹配的字段： std+ods:1
-matched_dict = {} # std_table.field+ods_table.field:1
-matched_table_dict = {} # std_table+ods_table:1
-matched_field_dict = {} # std_field+ods_field:1
-#计算召回率，ods字段在标准库表找到结果则为字段名
-matched_ods_field_table_dict = {} # ods_table.field+std_table:1
-dataset = []
-fields_dataset = []
+
+#计算召回率，目标字段在标准库表找到结果则为字段名
+matched_target_field_dict = {} # target_table.field->(source_table,source_column)
 
 c = 0
-mappinf_file = PATH+'ai_mapping_ods_predict_result.csv'
+mappinf_file = PATH+'sql_parsed_result.csv'
 if os.path.exists(mappinf_file):
-    with open(PATH+'ai_mapping_ods_predict_result.csv','r',encoding='utf-8') as fd:
+    with open(mappinf_file,'r',encoding='utf-8') as fd:
         reader = csv.DictReader(fd)
         for row in reader:
 
@@ -252,109 +249,32 @@ if os.path.exists(mappinf_file):
                 continue
 
 
-            columns = row['source_column'].split(',')
-            columns_cn = row['source_column_cn'].split(',')
-
+            columns = row['source_column'].upper()
             tables = row['source_table'].upper()
-            tables = tables.split(',')
 
-            if len(tables)==1 and len(columns)>1:
-                tables = tables*len(columns)
-
-            for col,col_cn,table in zip(columns,columns_cn,tables):
-                row['data_name_en'] = col.strip().strip('?')
-                row['data_name_cn'] = col_cn.strip().strip('?')
-                row['dataset_name_en'] = table = table.strip()
-                if row['dataset_name_en'] not in ods_en_tables:
-                    print("not found ods table "+row['dataset_name_en'])
-                    continue
-                source_id = ot(table)+'.'+oc(row['data_name_en'],table) # ods
-                std_labels = []
-                if dwd_link.lower() in std_dataset:
-                    std_labels.append(dwd_link)
-                    c+=1
-                else:
-                    print("not found std table.column "+dwd_link)
-
-                for dwd_link in std_labels:
-                    dwd_link_cn = st(row['target_table'])+'.'+sc(row['target_column'],row['target_table'])
-                    dwd_link = standaze_field_name(dwd_link)
-                    if dwd_link in std_dataset:
-                        row_std = std_dataset[dwd_link]
-                        table_match_id = st(row_std['dataset_name_en'])+':'+ot(row['dataset_name_en'])
-                        if table_match_id in matched_table_dict:
-                            matched_table_dict[table_match_id]+=1
-                        else:
-                            matched_table_dict[table_match_id]=1
-                            if len(std_labels)>0:
-                                ods_table = ods_en_tables[row['dataset_name_en']]
-                                data = table_mapping_question(ods_table)
-                                data["anser"] = row_std['dataset_name_cn']
-                                dataset.append(data)
-                        std_field_name = standaze_field_name(sc(row_std['data_name_en'],row_std['dataset_name_en']))
-                        field_match_id = std_field_name+':'+oc(row['data_name_en'],row['dataset_name_en'])
-                        if field_match_id in matched_field_dict:
-                            matched_field_dict[field_match_id]+=1
-                        else:
-                            matched_field_dict[field_match_id]=1
+            matched_target_field_dict[dwd_link] = (tables,columns)
 
 
-                        if dwd_link_cn+':'+source_id in matched_dict:
-                            matched_dict[dwd_link_cn+':'+source_id]+=1
-                        else:
-                            matched_dict[dwd_link_cn+':'+source_id]=1
-                            #正例多生成几份
-                            ods_table = ods_en_tables[row['dataset_name_en']]
-                            data = field_mapping_question(ods_table,row,row_std['dataset_name_cn'])
-                            data["anser"] = std_field_name
-                            fields_dataset.append(data)
-
-                        ods_table = ods_en_tables[row['dataset_name_en']]
-                        ods_table['data_name_cn_from_sql'] = row['data_name_cn']
-
-                        matched_ods_field_table_dict[source_id+':'+st(row_std['dataset_name_en'])] = std_field_name
-                        matched_ods_field_table_dict[source_id] = std_field_name
-                    else:
-                        print(dwd_link)
-                        continue
 
 
-lends = len(dataset)
-
-all_dataset = dataset + fields_dataset
 
 
 if __name__=='__main__':
     # 正例
+    header = 'dataset_name_en,dataset_name_cn,dataset_desc,data_name_cn,data_name_en,data_definition,id,full_name_cn,data_type'.split(',')
     print(f'max_len=${max_len}')
-    random.shuffle(all_dataset)
-    train_dataset = all_dataset[0:int(lends*0.8)]
-    dev_dataset = all_dataset[int(lends*0.8):]
+    with open(PATH+'std_qingdao_dataset.csv','w',encoding='utf-8',newline='') as fout:
+        writer = csv.DictWriter(fout,header)
+        writer.writeheader()
+        for row in std_dataset.values():
+            row['id'] = row['dataset_name_en']+'.'+row['data_name_en']
+            writer.writerow(row)
 
-    with open(PATH+'4/tables_train.jsonl','w',encoding='utf-8') as fout:
-        for data in dataset:
-            json.dump(data,fout,ensure_ascii=False)
-            fout.write("\n")
-
-    with open(PATH+'4/train.jsonl','w',encoding='utf-8') as fout:
-        for data in train_dataset:
-            json.dump(data,fout,ensure_ascii=False)
-            fout.write("\n")
-
-    with open(PATH+'4/dev.jsonl','w',encoding='utf-8') as fout:
-        for data in dev_dataset:
-            json.dump(data,fout,ensure_ascii=False)
-            fout.write("\n")
-
-    with open(PATH+'4/test.jsonl','w',encoding='utf-8') as fout:
-        for data in dev_dataset:
-            json.dump(data,fout,ensure_ascii=False)
-            fout.write("\n")
-
-    all_dataset = dataset+fields_dataset+dataset
-    random.shuffle(all_dataset)
-    with open(PATH+'4/all.jsonl','w',encoding='utf-8') as fout:
-        for data in all_dataset:
-            json.dump(data,fout,ensure_ascii=False)
-            fout.write("\n")
+    header = 'dataset_name_en,dataset_name_cn,data_name_cn,data_name_en,id,字段数据类型'.split(',')
+    with open(PATH+'ods_qingdao_dataset.csv','w',encoding='utf-8',newline='') as fout:
+        writer = csv.DictWriter(fout,header,extrasaction='ignore')
+        writer.writeheader()
+        for id,row in ods_dataset.items():
+            row['id'] = row['dataset_name_en']+'.'+row['data_name_en']
+            writer.writerow(row)
 

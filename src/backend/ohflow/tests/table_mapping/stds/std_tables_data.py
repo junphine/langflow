@@ -4,7 +4,7 @@ import random
 import re
 import collections
 
-from ohflow.interface.agents.build_embedding_index import *
+from .build_embedding_index import *
 
 PATH = r'C:/TEAM/贵州医药监管平台/'
 # 字段是否使用注释

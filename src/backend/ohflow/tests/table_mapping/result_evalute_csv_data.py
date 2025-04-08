@@ -37,9 +37,8 @@ with open(PATH+ENDPOINT+'_result.json','r',encoding='utf-8') as fd:
     std_result_dataset = json.load(fd)
 
 # 遍历标化模型，生成匹配结果
+from ohflow.tests.table_mapping.stds.build_embedding_index import *
 
-from ohflow.interface.agents.build_embedding_index import *
-from ohflow.interface.agents.std_tables_data_xiangtan import *
 # key:ods_table,value:list[dict(std_data_name,ods_data_name)]
 std_matched_dict = collections.defaultdict(list)
 std_matched_error_dict = collections.defaultdict(list)

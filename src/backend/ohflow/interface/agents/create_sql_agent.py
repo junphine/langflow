@@ -27,13 +27,18 @@ from langchain_community.agent_toolkits.sql.prompt import (
     SQL_PREFIX,
     SQL_SUFFIX,
 )
+
 from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
-from langchain_community.tools.sql_database.tool import (
+from ohflow.interface.toolkits.sqltookits import DremioSQLDatabaseToolkit
+
+from ohflow.interface.toolkits.ignite_database.tool import (
     InfoSQLDatabaseTool,
     ListSQLDatabaseTool,
+    QuerySQLCheckerTool,
+    QuerySQLDataBaseTool,
 )
 
-from ohflow.interface.toolkits.sqltookits import DremioSQLDatabaseToolkit
+
 
 if TYPE_CHECKING:
     from langchain.agents.agent import AgentExecutor

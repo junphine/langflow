@@ -197,6 +197,19 @@ class IgniteDatabase(sql_database.SQLDatabase):
                 tables.append(name)
         return sorted(tables)
 
+    def get_usable_table_dict(self) -> dict[str, Table]:
+        """Get names of tables available."""
+        tables = {}
+        for table in self._metadata.sorted_tables:
+            if self._include_tables:
+                if table.name not in self._include_tables:
+                    continue
+            elif self._ignore_tables:
+                if table.name in self._ignore_tables:
+                    continue
+            tables[table.name] = table
+        return tables
+
 
     def get_table_names(self) -> Iterable[str]:
         """Get names of tables available."""

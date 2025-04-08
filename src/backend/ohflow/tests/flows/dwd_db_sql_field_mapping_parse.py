@@ -11,7 +11,8 @@ asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 from langflow.load import run_flow_from_json
 from pathlib import Path
 from dotenv import load_dotenv
-from ohflow.interface.agents.build_embedding_index import *
+from ohflow.tests.table_mapping.stds.build_embedding_index import *
+
 # 获取当前执行文件的绝对路径
 current_file_path = Path(__file__).resolve()
 

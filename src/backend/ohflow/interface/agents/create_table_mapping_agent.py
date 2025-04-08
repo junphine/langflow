@@ -29,13 +29,15 @@ from langchain_community.agent_toolkits.sql.prompt import (
     SQL_SUFFIX,
 )
 from langchain_community.agent_toolkits.sql.toolkit import SQLDatabaseToolkit
-from langchain_community.tools.sql_database.tool import (
+
+from ohflow.interface.chains.table_mapping_chain import CustomTableMappingChain
+from ohflow.interface.toolkits.ignite_database.tool import (
     InfoSQLDatabaseTool,
     ListSQLDatabaseTool,
 )
 from langchain_core.runnables import RunnablePassthrough
 from ohflow.interface.toolkits.sqltookits import DremioSQLDatabaseToolkit
-from ohflow.interface.toolkits.table_meta_data_tookits import CustomTableMappingChain
+from ohflow.interface.toolkits.table_meta_data_tookits import DremioMetaDataToolkit
 
 if TYPE_CHECKING:
     from langchain.agents.agent import AgentExecutor, BaseSingleActionAgent
@@ -49,16 +51,15 @@ if TYPE_CHECKING:
 
 def create_table_mapping_agent(
         llm: BaseLanguageModel,
-        toolkit: Optional[SQLDatabaseToolkit|DremioSQLDatabaseToolkit] = None,
+        source_toolkit: Optional[DremioMetaDataToolkit] = None,
+        target_toolkit: Optional[DremioMetaDataToolkit] = None,
         agent_type: Optional[
             Union[AgentType, Literal["openai-tools", "tool-calling"]]
         ] = None,
         callback_manager: Optional[BaseCallbackManager] = None,
-        agent_description: Optional[str] = None,
         prefix: Optional[str] = None,
         suffix: Optional[str] = None,
         format_instructions: Optional[str] = None,
-        input_variables: Optional[List[str]] = None,
         top_k: int = 3,
         max_iterations: Optional[int] = 15,
         max_execution_time: Optional[float] = None,
@@ -67,7 +68,6 @@ def create_table_mapping_agent(
         agent_executor_kwargs: Optional[Dict[str, Any]] = None,
         extra_tools: Sequence[BaseTool] = (),
         *,
-        db: Optional[SQLDatabase] = None,
         prompt: Optional[BasePromptTemplate] = None,
         output_parser=None,
         **kwargs: Any,
@@ -90,8 +90,7 @@ def create_table_mapping_agent(
         suffix: Prompt suffix string. Default depends on agent type.
         format_instructions: Formatting instructions to pass to
             ZeroShotAgent.create_prompt() when 'agent_type' is
-            "zero-shot-react-description". Otherwise ignored.
-        input_variables: DEPRECATED.
+            "zero-shot-react-description". Otherwise ignored.        
         top_k: Number of rows to query for by default.
         max_iterations: Passed to AgentExecutor init.
         max_execution_time: Passed to AgentExecutor init.
@@ -133,23 +132,18 @@ def create_table_mapping_agent(
         RunnableAgent,
         RunnableMultiActionAgent,
     )
-    from langchain.agents.agent_types import AgentType
-
-    if toolkit is None and db is None:
+    if source_toolkit is None:
         raise ValueError(
-            "Must provide exactly one of 'toolkit' or 'db'. Received neither."
+            "Must provide exactly one of 'source_toolkit' or 'source_db'. Received neither."
         )
-    if toolkit and db:
+    if target_toolkit is None:
         raise ValueError(
-            "Must provide exactly one of 'toolkit' or 'db'. Received both."
+            "Must provide exactly one of 'target_toolkit' or 'target_db'. Received neither."
         )
-
-    toolkit = toolkit or SQLDatabaseToolkit(llm=llm, db=db)  # type: ignore[arg-type]
-    agent_type = agent_type or AgentType.ZERO_SHOT_REACT_DESCRIPTION
+    toolkit = target_toolkit
     tools = toolkit.get_tools() + list(extra_tools)
     if prefix is None or not prefix:
-        agent_type = "table_and_fields_mapping"
-        prefix = '\n从所给标准库的表中选出与业务表"{input_table}"的字段{input_str}可以映射对应的字段，只需返回字段中文名，允许多选，若无匹配字段，则回答无'
+        prefix = '\n从所给标准库的表中选出与业务表的字段可以映射的字段，只需返回字段中文名，允许多选，若无匹配字段，则回答无'
 
     if prompt is None:
         prefix = prefix.format(dialect=toolkit.dialect, top_k=top_k)
@@ -171,45 +165,7 @@ def create_table_mapping_agent(
                     tool for tool in tools if not isinstance(tool, ListSQLDatabaseTool)
                 ]
 
-    if agent_type == AgentType.ZERO_SHOT_REACT_DESCRIPTION:
-        if prompt is None:
-            from langchain.agents.mrkl import prompt as react_prompt
-
-            format_instructions = (
-                    format_instructions or react_prompt.FORMAT_INSTRUCTIONS
-            )
-            template = "\n\n".join(
-                [
-                    prefix,
-                    "{tools}",
-                    format_instructions,
-                    suffix or SQL_SUFFIX,
-                    ]
-            )
-            prompt = PromptTemplate.from_template(template)
-        agent = RunnableAgent(
-            runnable=create_react_agent(llm, tools, prompt, output_parser=output_parser),
-            input_keys_arg=["input"],
-            return_keys_arg=["output"],
-            **kwargs,
-        )
-
-    elif agent_type == AgentType.OPENAI_FUNCTIONS:
-        if prompt is None:
-            messages: List = [
-                SystemMessage(content=cast(str, prefix)),
-                HumanMessagePromptTemplate.from_template("{input}"),
-                AIMessage(content=suffix or SQL_FUNCTIONS_SUFFIX),
-                MessagesPlaceholder(variable_name="agent_scratchpad"),
-            ]
-            prompt = ChatPromptTemplate.from_messages(messages)
-        agent = RunnableAgent(
-            runnable=create_openai_functions_agent(llm, tools, prompt),  # type: ignore
-            input_keys_arg=["input"],
-            return_keys_arg=["output"],
-            **kwargs,
-        )
-    elif agent_type in ("table_mapping", "field_mapping"):
+    if agent_type in ("table_mapping", "field_mapping"):
         if prompt is None:
             messages = [
                 SystemMessage(content=cast(str, prefix)),
@@ -230,8 +186,11 @@ def create_table_mapping_agent(
         )
     elif agent_type in ("table_and_fields_mapping", ""):
 
-        mappingChain = CustomTableMappingChain(llm=llm,table_prompt_prefix=str(agent_description),field_prompt_prefix=prefix)  # type: ignore
-
+        mappingChain = CustomTableMappingChain(llm=llm,
+                                               source_toolkit=source_toolkit,
+                                               target_toolkit=target_toolkit,
+                                               table_prompt_prefix=prefix,
+                                               field_prompt_prefix=suffix)  # type: ignore
         return mappingChain
 
     else:

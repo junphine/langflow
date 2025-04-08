@@ -4,8 +4,7 @@ import re
 import random
 import os
 import collections
-
-from ohflow.interface.agents.build_embedding_index import *
+from ohflow.tests.table_mapping.stds.build_embedding_index import *
 
 PATH = r'C:/TEAM/湘潭项目仁医部分/'
 # 字段是否使用注释
@@ -54,6 +53,30 @@ for table_name,table in std_tables.items():
 
 std_keys = list(std_dataset.keys())
 
+table_list="""
+TABLE_NAME
+ZY_ZYJS
+ZY_BRRY
+GY_KSDM
+YB_ZYJSXX
+MS_MZXX
+YS_MZ_JZLS
+YB_MZJSXX
+WITH_MS_SFMX
+MS_SJFP
+MS_GHMX
+GY_SFXM
+MS_SFMX
+GY_YGDM
+MS_YYGH
+BA_BRSY
+ZY_FYMX_JS
+GY_YLML
+YK_YPCD
+ZY_FYMX
+YK_YPML
+GY_YLML
+""".split('\n')
 ods_tables = {}
 ods_en_tables = {}
 ods_dataset = {}
@@ -72,7 +95,9 @@ def read_txt_ods_dataset(input_file):
                     table_cn = parts[-1]
                     ods_tables[table_cn] = dict(dataset_name_cn=table_cn,dataset_name_en=table)
                     ods_en_tables[table] = dict(dataset_name_cn=table_cn,dataset_name_en=table)
+                    row = ods_tables[table_cn]
                 else:
+                    row = copy.copy(row)
                     row['dataset_name_cn'] = table_cn
                     row['data_name_en'] = remove_number_around(parts[0])
                     row['data_name_cn'] = remove_number_around(parts[1])
@@ -119,10 +144,10 @@ def read_csv_ods_dataset(input_file):
     return ods_dataset
 
 
-#read_txt_ods_dataset(PATH+'input_shiwu.csv')
-ods_tables = read_ods_tables(PATH+'ods-table-list.csv')
-ods_dataset = read_ods_dataset(PATH+'ods-columns-list.csv')
-
+ods_dataset= read_txt_ods_dataset(PATH+'input_shiwu.csv')
+#ods_tables = read_ods_tables(PATH+'ods-table-list.csv')
+#ods_dataset = read_ods_dataset(PATH+'ods-columns-list.csv')
+"""
 for row in ods_dataset.values():
     table_name = row['dataset_name_cn']
     field_name = row['data_name_cn']
@@ -132,7 +157,7 @@ for row in ods_dataset.values():
     if len(fields)==0:
         ods_tables[table_name]['fields'] = fields
     fields[field_name] = row
-
+"""
 
 max_len = 0
 
@@ -334,38 +359,27 @@ if os.path.exists(mappinf_file):
 
 if __name__=='__main__':
 
-    lends = len(dataset)
-    all_dataset = dataset + fields_dataset
     # 正例
     print(f'max_len=${max_len}')
-    random.shuffle(all_dataset)
-    train_dataset = all_dataset[0:int(lends*0.8)]
-    dev_dataset = all_dataset[int(lends*0.8):]
 
-    with open(PATH+'4/tables_train.jsonl','w',encoding='utf-8') as fout:
-        for data in dataset:
-            json.dump(data,fout,ensure_ascii=False)
-            fout.write("\n")
+    header = 'dataset_name_en,dataset_name_cn,data_name_cn,data_name_en,id,数据类型,长度,填报要求,data_definition,值域'.split(',')
+    print(f'max_len=${max_len}')
+    with open(PATH+'std_dataset.csv','w',encoding='utf-8',newline='') as fout:
+        writer = csv.DictWriter(fout,header)
+        writer.writeheader()
+        for row in std_dataset.values():
+            row['id'] = row['dataset_name_en']+'.'+row['data_name_en']
+            writer.writerow(row)
 
-    with open(PATH+'4/train.jsonl','w',encoding='utf-8') as fout:
-        for data in train_dataset:
-            json.dump(data,fout,ensure_ascii=False)
-            fout.write("\n")
+    header = 'dataset_name_en,dataset_name_cn,data_name_cn,data_name_en,id'.split(',')
+    with open(PATH+'ods_dataset.csv','w',encoding='utf-8',newline='') as fout:
+        writer = csv.DictWriter(fout,header,extrasaction='ignore')
+        writer.writeheader()
+        for id,row in ods_dataset.items():
+            if row['dataset_name_en'] in table_list:
+                row['id'] = row['dataset_name_en']+'.'+row['data_name_en']
+                writer.writerow(row)
 
-    with open(PATH+'4/dev.jsonl','w',encoding='utf-8') as fout:
-        for data in dev_dataset:
-            json.dump(data,fout,ensure_ascii=False)
-            fout.write("\n")
 
-    with open(PATH+'4/test.jsonl','w',encoding='utf-8') as fout:
-        for data in dev_dataset:
-            json.dump(data,fout,ensure_ascii=False)
-            fout.write("\n")
 
-    all_dataset = dataset+fields_dataset+dataset
-    random.shuffle(all_dataset)
-    with open(PATH+'4/all.jsonl','w',encoding='utf-8') as fout:
-        for data in all_dataset:
-            json.dump(data,fout,ensure_ascii=False)
-            fout.write("\n")
 

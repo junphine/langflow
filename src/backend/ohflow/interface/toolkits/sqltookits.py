@@ -4,11 +4,11 @@ from typing import List
 
 from langchain_core.output_parsers.transform import BaseTransformOutputParser
 from langchain_core.language_models import BaseLanguageModel
-from pydantic.v1 import Field
-from langchain_core.tools import BaseToolkit
 
+from langchain_core.tools import BaseToolkit
+from pydantic import BaseModel, Field, SkipValidation
 from langchain_community.tools import BaseTool
-from langchain_community.tools.sql_database.tool import (
+from .ignite_database.tool import (
     InfoSQLDatabaseTool,
     ListSQLDatabaseTool,
     QuerySQLCheckerTool,
