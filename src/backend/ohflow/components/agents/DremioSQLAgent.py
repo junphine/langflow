@@ -57,21 +57,30 @@ class DremioSQLAgentComponent(LCAgentComponent):
     async def message_response(self) -> Message:
         """Run the agent and return the response."""
         agent = self.build_agent()
-        result = await self.run_agent(agent=agent)
-
+        result: Message = await self.run_agent(agent=agent)
+        print('DremioSQLAgent:message_response')
+        print(type(result))
         if isinstance(result, list):
-            result = "\n".join([result_dict["text"] for result_dict in result])
-        message = Message(text=result, sender=MESSAGE_SENDER_AI)
-        sql = getattr(self.db,'last_sql_query')
-        if sql is None:
-            message.sql = sql
+            output = "\n".join([result_dict["text"] for result_dict in result])
+        elif isinstance(result, dict):
+            output = result["text"]
+        elif isinstance(result, str):
+            output = result
+        else: # is Message
+            output = str(result.text)
+        message = Message(text=output, sender=MESSAGE_SENDER_AI)
+        has_sql = hasattr(self.db,'last_sql_query')
+        if has_sql:
+            message.sql = self.db.last_sql_query
         self.status = message
         return message
 
     def query_sql_response(self) -> Message:
         """Run the agent and return the response."""
-        sql = getattr(self.db,'last_sql_query')
-        if sql is None:
+        has_sql = hasattr(self.db,'last_sql_query')
+        if has_sql:
+            sql = self.db.last_sql_query
+        else:
             sql = ""
         message = Message(text=sql, sender=MESSAGE_SENDER_AI)
         self.status = message

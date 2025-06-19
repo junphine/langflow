@@ -1,17 +1,18 @@
-import asyncio
+
 import collections
 import json,csv
 import time
+import asyncio
 from asyncio import WindowsSelectorEventLoopPolicy
-
+asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 from langchain_core.prompt_values import StringPromptValue
 from langchain_openai import ChatOpenAI
 
-asyncio.set_event_loop_policy(WindowsSelectorEventLoopPolicy())
+
 from langflow.load import run_flow_from_json
 from pathlib import Path
 from dotenv import load_dotenv
-from ohflow.interface.agents.build_embedding_index import *
+
 # 获取当前执行文件的绝对路径
 current_file_path = Path(__file__).resolve()
 

@@ -96,7 +96,7 @@ TWEAKS = {
     }
 }
 
-result = run_flow_from_json(flow=current_directory / "_Database全民健康数据智能检索 .json",
+result = run_flow_from_json(flow=current_directory / "_Database全民健康数据智能检索.json",
                             input_value="患者号为\"008\"的主治医生和所患疾病是什么？",
                             user_id="b531f147-4c73-4913-bbd2-71abacdfe311",
                             session_id="", # provide a session id if you want to use session state

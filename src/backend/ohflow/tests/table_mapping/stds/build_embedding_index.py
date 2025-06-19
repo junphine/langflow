@@ -181,7 +181,7 @@ def read_ods_tables(input_file,use_cn_name=True):
     return ods_dataset
 
 
-def read_std_dataset(input_file):
+def read_std_dataset(input_file,use_cn_name=True):
     std_dataset = collections.OrderedDict()
     with open(input_file, 'r',encoding='utf-8') as f:
         # 创建csv阅读器
@@ -192,10 +192,12 @@ def read_std_dataset(input_file):
             row['data_name_en'] = remove_number_around(row['data_name_en']).lower()
             row['data_name_cn'] = remove_number_around(row['data_name_cn'])
             field_name = standaze_field_name(row['data_name_cn'])
-            id = row['dataset_name_cn']+'.'+field_name
-            std_dataset[id] = row
-            id_en = row['dataset_name_en']+'.'+row['data_name_en']
-            std_dataset[id_en] = row
+            if use_cn_name:
+                id = row['dataset_name_cn']+'.'+field_name
+                std_dataset[id] = row
+            else:
+                id_en = row['dataset_name_en']+'.'+row['data_name_en']
+                std_dataset[id_en] = row
     return std_dataset
 
 def read_std_tables(input_file):

@@ -62,7 +62,7 @@ class ColumenStrOutputParser(BaseTransformOutputParser[str]):
         columns = [col.strip() for col in columns if col.strip()]
         text = text[r.span()[1]:]
         # 表格的行数据
-        rows = re.findall(r'\n\|(.+?) \|\n', text)
+        rows = re.findall(r'\n\|(.+)\|', text)
 
         # 解析每一行数据
         for row in rows:
@@ -104,7 +104,7 @@ class CustomTableMappingChain(Chain):
     @property
     def meta_data(self)->MetaDataMappingPrompt:
         if not hasattr(self,'_meta_data'):
-            self._meta_data = MetaDataMappingPrompt(self.source_toolkit,self.target_toolkit,True)
+            self._meta_data = MetaDataMappingPrompt(self.source_toolkit,self.target_toolkit,False)
         return self._meta_data
 
     @property

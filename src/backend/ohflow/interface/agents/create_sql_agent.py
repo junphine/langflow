@@ -71,7 +71,7 @@ def create_dremio_sql_agent(
         *,
         db: Optional[SQLDatabase] = None,
         prompt: Optional[BasePromptTemplate] = None,
-        output_parser=None,
+        output_parser = None,
         **kwargs: Any,
 ) -> AgentExecutor:
     """Construct a SQL agent from an LLM and toolkit or database.
@@ -167,6 +167,11 @@ def create_dremio_sql_agent(
                 ]
             if "table_names" in prompt.input_variables:
                 prompt = prompt.partial(table_names=db_context["table_names"])
+                tools = [
+                    tool for tool in tools if not isinstance(tool, ListSQLDatabaseTool)
+                ]
+            if 'table_names_with_comments' in prompt.input_variables:
+                prompt = prompt.partial(table_names_with_comments=db_context["table_names_with_comments"])
                 tools = [
                     tool for tool in tools if not isinstance(tool, ListSQLDatabaseTool)
                 ]

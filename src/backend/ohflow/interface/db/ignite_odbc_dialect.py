@@ -25,7 +25,6 @@ _type_map = {
     'byte[]': types.LargeBinary,
     'date': types.DATE,
     'qdate': types.DATE,
-    'float': types.FLOAT,
     'decimal': types.DECIMAL,
     'biginteger': types.DECIMAL,
     'bigdecimal': types.DECIMAL,
@@ -220,6 +219,10 @@ class IgniteIdentifierPreparer(compiler.IdentifierPreparer):
                 self._strings[table.name] = self.quote_identifier(name)
                 table.comment_as_name = True
             self.rev_column_string[table.name] = {}
+        else:
+            self.rev_column_string[table.name] = {}
+            if table.comment:
+                self.rev_table_string[table.name] = table.comment
 
         if name is None:
             name = table.name
@@ -248,6 +251,8 @@ class IgniteIdentifierPreparer(compiler.IdentifierPreparer):
                 self.rev_column_string[column.table.name][name] = column.name
                 self._strings[column.name] = self.quote_identifier(name)
                 column.comment_as_name = True
+        else:
+            self.rev_column_string[column.table.name][column.name] = column.comment
 
         return super().format_column(column, use_table, name, table_name, use_schema, anon_map)
 
@@ -263,9 +268,12 @@ class IgniteIdentifierPreparer(compiler.IdentifierPreparer):
     def uncomment_identifiers(self, sql):
         """Unpack 'schema.table.column'-like strings into components."""
         used_tables = []
+
         sql = sql.replace('\\"','"')
         sql2 = sql
         for comment,table in self.rev_table_string.items():
+            if not comment:
+                continue
             sql2 = sql.replace(f'"{comment}"',table)
             if sql2!=sql:
                 used_tables.append(table)
@@ -273,6 +281,17 @@ class IgniteIdentifierPreparer(compiler.IdentifierPreparer):
         for table in used_tables:
             for comment,column in self.rev_column_string[table].items():
                 sql2 = sql2.replace(f'"{comment}"',column)
+
+        for comment,table in self.rev_table_string.items():
+            if not comment:
+                continue
+            sql2 = sql.replace(f'{comment}',table)
+            if sql2!=sql:
+                used_tables.append(table)
+                sql = sql2
+        for table in used_tables:
+            for comment,column in self.rev_column_string[table].items():
+                sql2 = sql2.replace(f'{comment}',column)
         return sql2
 
 
@@ -445,9 +464,9 @@ class BaseIgniteDialect(default.DefaultDialect):
     def get_table_names(self, connection, schema, **kw):
         sql = 'SELECT TABLE_NAME,TABLE_SCHEMA FROM INFORMATION_SCHEMA."TABLES"'
         if schema is not None and schema != "":
-            sql += " WHERE TABLE_SCHEMA = '" + schema + "'"
+            sql += " WHERE LEFT(TABLE_NAME, 2)!='__' and TABLE_SCHEMA = '" + schema + "'"
         else:
-            sql += " WHERE TABLE_SCHEMA NOT IN ('INFORMATION_SCHEMA','SYS')"
+            sql += " WHERE LEFT(TABLE_NAME, 2)!='__' and TABLE_SCHEMA NOT IN ('INFORMATION_SCHEMA','SYS')"
         result = connection.execute(text(sql))
         if schema == '':
             table_names = [r[1]+'.'+r[0] for r in result]
@@ -476,11 +495,11 @@ class BaseIgniteDialect(default.DefaultDialect):
     def get_table_options(self, connection, table_name, schema=None, **kw):
         return ReflectionDefaults.table_options()
 
+    @reflection.cache
     def get_schema_names(self, connection, schema=None, **kw):
         result = connection.execute(text("SHOW SCHEMAS"))
         schema_names = [r[0] for r in result]
         return schema_names
-
 
     @reflection.cache
     def has_table(self, connection, table_name, schema=None, **kw):
@@ -489,9 +508,9 @@ class BaseIgniteDialect(default.DefaultDialect):
             if len(parts)==2:
                 schema,table_name = parts
         sql = 'SELECT COUNT(*) FROM INFORMATION_SCHEMA."TABLES"'
-        sql += " WHERE TABLE_NAME = '" + str(table_name) + "'"
+        sql += " WHERE TABLE_NAME = '" + str(table_name).upper() + "'"
         if schema is not None and schema != "":
-            sql += " AND TABLE_SCHEMA = '" + str(schema) + "'"
+            sql += " AND TABLE_SCHEMA = '" + str(schema).upper() + "'"
         result = connection.execute(text(sql))
         countRows = [r[0] for r in result]
         return countRows[0] > 0

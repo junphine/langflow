@@ -2,14 +2,14 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, Iterable, List, Optional, Sequence
+from typing import Any, Iterable, List, Optional, Sequence, Dict
 
 import sqlalchemy
 from sqlalchemy import MetaData, Table, create_engine, inspect, select, text
 from sqlalchemy.engine import Engine
 from sqlalchemy.exc import ProgrammingError, SQLAlchemyError
 from sqlalchemy.schema import CreateTable
-from langchain import sql_database
+from langchain_community.utilities import SQLDatabase
 from ohflow.interface.db import *
 from ohflow.interface.db.ignite_odbc_dialect import can_comment_identifier,comment_as_name
 
@@ -36,7 +36,7 @@ def truncate_word(content: Any, *, length: int, suffix: str = "...") -> str:
     return content[: length - len(suffix)].rsplit(" ", 1)[0] + suffix
 
 
-class IgniteDatabase(sql_database.SQLDatabase):
+class IgniteDatabase(SQLDatabase):
     """SQLAlchemy wrapper around ignite database."""
 
     def __init__(
@@ -174,8 +174,23 @@ class IgniteDatabase(sql_database.SQLDatabase):
     @property
     def dialect(self) -> str:
         """Return string representation of dialect to use."""
-        #return self._engine.dialect.name
-        return 'hive'
+        return self._engine.dialect.name
+
+    def get_context(self) -> Dict[str, Any]:
+        """Return db context that you may want in agent prompt."""
+        table_names = list(self.get_usable_table_names())
+        table_info = self.get_table_info_no_throw()
+        if self._comment_as_identifier:
+            return {"table_info": table_info, "table_names": ", ".join(table_names)}
+
+        output = '\n| table name | table comment |\n'
+        tables = self.get_usable_table_dict()
+        for name,table in tables.items():
+            if table.comment:
+                output+=f'| "{name}" | "{table.comment}" |\n'
+            else:
+                output+=f'| "{name}" | |\n'
+        return {"table_info": table_info, "table_names": ", ".join(table_names), "table_names_with_comments": output}
 
     def get_usable_table_names(self,quotes=True) -> Iterable[str]:
         """Get names of tables available."""
@@ -198,7 +213,7 @@ class IgniteDatabase(sql_database.SQLDatabase):
         return sorted(tables)
 
     def get_usable_table_dict(self) -> dict[str, Table]:
-        """Get names of tables available."""
+        """Get name->table of tables available."""
         tables = {}
         for table in self._metadata.sorted_tables:
             if self._include_tables:
@@ -209,7 +224,6 @@ class IgniteDatabase(sql_database.SQLDatabase):
                     continue
             tables[table.name] = table
         return tables
-
 
     def get_table_names(self) -> Iterable[str]:
         """Get names of tables available."""
@@ -237,7 +251,7 @@ class IgniteDatabase(sql_database.SQLDatabase):
         if table_names is not None:
             real_table_names = []
             for table_name in table_names:
-                table_name = table_name.strip('"')
+                table_name = table_name.strip('"').strip('\'')
                 exist_table =  table_name in all_table_names
                 if not exist_table:
                     raise ValueError(f"table_names {table_name} not found in database")
@@ -341,13 +355,23 @@ class IgniteDatabase(sql_database.SQLDatabase):
         """
 
         command0 = command
-        if command.endswith('\""'):
+        if command.endswith('""'):
             command = command[:-1]
+            command = command.lstrip('"')
         if self._comment_as_identifier:
             command = self._engine.dialect.identifier_preparer.uncomment_identifiers(command)
-        command = command.strip('"')
-
-        self.last_sql_query = command
+            print('[debug]')
+            print(command0)
+            print(command)
+            print('[/debug]')
+            self.last_sql_query = command
+        else:
+            command_zh = self._engine.dialect.identifier_preparer.uncomment_identifiers(command)
+            print('[debug]')
+            print(command0)
+            print(command_zh)
+            print('[/debug]')
+            self.last_sql_query = command_zh
 
         with self._engine.begin() as connection:
             if self._schema is not None:

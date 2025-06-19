@@ -122,21 +122,23 @@ class DremioMetaDataToolkit(BaseToolkit):
                     'quotechar': '"'
                 }
 
-            # Create a CSV reader object
-            csv_reader = csv.DictReader(resolved_path,**csv_args)
-
-            # Convert each row to a Data object
             result = {}
-            for row in csv_reader:
-                table_name = row['TABLE_NAME'].upper()
-                if table_name not in result:
-                    result[table_name] = dict(fields={})
-                tab_info = result[table_name]
-                if 'COLUMN_NAME' in row:
-                    col_name = row['COLUMN_NAME'].upper()
-                    tab_info['fields'][col_name] = row
-                else:
-                    tab_info['info'] = row
+            with open(resolved_path, 'r',encoding='utf-8') as f:
+                # Create a CSV reader object
+                csv_reader = csv.DictReader(f,**csv_args)
+
+                # Convert each row to a Data object
+
+                for row in csv_reader:
+                    table_name = row['TABLE_NAME'].upper()
+                    if table_name not in result:
+                        result[table_name] = dict(fields={})
+                    tab_info = result[table_name]
+                    if 'COLUMN_NAME' in row:
+                        col_name = row['COLUMN_NAME'].upper()
+                        tab_info['fields'][col_name] = row
+                    else:
+                        tab_info['info'] = row
 
             self._table_meta_data = result
             return result

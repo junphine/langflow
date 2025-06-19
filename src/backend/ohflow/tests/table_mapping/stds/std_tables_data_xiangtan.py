@@ -54,7 +54,6 @@ for table_name,table in std_tables.items():
 std_keys = list(std_dataset.keys())
 
 table_list="""
-TABLE_NAME
 ZY_ZYJS
 ZY_BRRY
 GY_KSDM
@@ -262,17 +261,16 @@ def _sce(cn,table):
     return cn
 
 # 全是英文字段
-#所有匹配的字段： std+ods:1
-matched_dict = {} # std_table.field+ods_table.field:1
-matched_table_dict = {} # std_table+ods_table:1
-matched_field_dict = {} # std_field+ods_field:1
-#计算召回率，ods字段在标准库表找到结果则为字段名
-matched_ods_field_table_dict = {} # ods_table.field+std_table:1
 
 dataset = []
 fields_dataset = []
 c = 0
-mappinf_file = PATH+'sql_parsed_result_no.csv'
+mappinf_file = PATH+'视图解析出来的映射关系.csv'
+
+#计算召回率，目标字段在标准库表找到结果则为字段名
+matched_dict={}
+matched_target_field_dict = {} # target_table.field->(source_table,source_column)
+
 if os.path.exists(mappinf_file):
     with open(mappinf_file,'r',encoding='utf-8') as fd:
         reader = csv.DictReader(fd)
@@ -289,72 +287,11 @@ if os.path.exists(mappinf_file):
             if row['source_table']=='' or row['source_table']=='-':
                 continue
 
-
-            columns = row['source_column'].split(',')
-            columns_cn = row['source_column_cn'].split(',')
-
+            columns = row['source_column'].upper()
             tables = row['source_table'].upper()
-            tables = tables.split(',')
 
-            if len(tables)==1 and len(columns)>1:
-                tables = tables*len(columns)
+            matched_target_field_dict[dwd_link] = (tables,columns)
 
-            for col,col_cn,table in zip(columns,columns_cn,tables):
-                row['data_name_en'] = col.strip().strip('?')
-                row['data_name_cn'] = col_cn.strip().strip('?')
-                row['dataset_name_en'] = table = table.strip()
-                if row['dataset_name_en'] not in ods_en_tables:
-                    print("not found ods table "+row['dataset_name_en'])
-                    continue
-                source_id = ot(table)+'.'+oc(row['data_name_en'],table) # ods
-                std_labels = []
-                if dwd_link.lower() in std_dataset:
-                    std_labels.append(dwd_link)
-                    c+=1
-                else:
-                    print("not found std table.column "+dwd_link)
-
-                for dwd_link in std_labels:
-                    dwd_link_cn = st(row['target_table'])+'.'+sc(row['target_column'],row['target_table'])
-                    dwd_link = standaze_field_name(dwd_link)
-                    if dwd_link in std_dataset:
-                        row_std = std_dataset[dwd_link]
-                        table_match_id = st(row_std['dataset_name_en'])+':'+ot(row['dataset_name_en'])
-                        if table_match_id in matched_table_dict:
-                            matched_table_dict[table_match_id]+=1
-                        else:
-                            matched_table_dict[table_match_id]=1
-                            if len(std_labels)>0:
-                                ods_table = ods_en_tables[row['dataset_name_en']]
-                                data = table_mapping_question(ods_table)
-                                data["anser"] = row_std['dataset_name_cn']
-                                dataset.append(data)
-                        std_field_name = standaze_field_name(sc(row_std['data_name_en'],row_std['dataset_name_en']))
-                        field_match_id = std_field_name+':'+oc(row['data_name_en'],row['dataset_name_en'])
-                        if field_match_id in matched_field_dict:
-                            matched_field_dict[field_match_id]+=1
-                        else:
-                            matched_field_dict[field_match_id]=1
-
-
-                        if dwd_link_cn+':'+source_id in matched_dict:
-                            matched_dict[dwd_link_cn+':'+source_id]+=1
-                        else:
-                            matched_dict[dwd_link_cn+':'+source_id]=1
-                            #正例多生成几份
-                            ods_table = ods_en_tables[row['dataset_name_en']]
-                            data = field_mapping_question(ods_table,row,row_std['dataset_name_cn'])
-                            data["anser"] = std_field_name
-                            fields_dataset.append(data)
-
-                        ods_table = ods_en_tables[row['dataset_name_en']]
-                        ods_table['data_name_cn_from_sql'] = row['data_name_cn']
-
-                        matched_ods_field_table_dict[source_id+':'+st(row_std['dataset_name_en'])] = std_field_name
-                        matched_ods_field_table_dict[source_id] = std_field_name
-                    else:
-                        print(dwd_link)
-                        continue
 
 
 if __name__=='__main__':

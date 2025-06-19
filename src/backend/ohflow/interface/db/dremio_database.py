@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import warnings
-from typing import Any, Iterable, List, Optional, Sequence
+from typing import Any, Iterable, List, Optional, Sequence, Dict
 
 import sqlalchemy
 from sqlalchemy import MetaData, Table, create_engine, inspect, select, text
@@ -11,7 +11,7 @@ from sqlalchemy.exc import ProgrammingError, SQLAlchemyError
 from sqlalchemy.schema import CreateTable
 
 from ohflow.api.utils import dict_to_object
-from langchain import sql_database
+from langchain_community.utilities import SQLDatabase
 from sqlalchemy_dremio.flight import DremioDialect_flight
 
 
@@ -38,7 +38,7 @@ def truncate_word(content: Any, *, length: int, suffix: str = "...") -> str:
     return content[: length - len(suffix)].rsplit(" ", 1)[0] + suffix
 
 
-class DremioDatabase(sql_database.SQLDatabase):
+class DremioDatabase(SQLDatabase):
     """SQLAlchemy wrapper around a dremio database."""
 
     def __init__(
@@ -196,6 +196,32 @@ class DremioDatabase(sql_database.SQLDatabase):
         return self._engine.dialect.name
         #return 'dremio+flight'
 
+    def get_context(self) -> Dict[str, Any]:
+        """Return db context that you may want in agent prompt."""
+        table_names = list(self.get_usable_table_names())
+        table_info = self.get_table_info_no_throw()
+        output = '\n| table name | table comment |\n'
+        tables = self.get_usable_table_dict()
+        for name,table in tables.items():
+            if table.comment:
+                output+=f'| "{name}" | "{table.comment}" |\n'
+            else:
+                output+=f'| "{name}" | |\n'
+        return {"table_info": table_info, "table_names": ", ".join(table_names),"table_names_with_comments": output}
+
+    def get_usable_table_dict(self) -> dict[str, Table]:
+        """Get name->table of tables available."""
+        tables = {}
+        for table in self._metadata.sorted_tables:
+            if self._include_tables:
+                if table.name not in self._include_tables:
+                    continue
+            elif self._ignore_tables:
+                if table.name in self._ignore_tables:
+                    continue
+            tables[table.name] = table
+        return tables
+
     def get_usable_table_names(self) -> Iterable[str]:
         """Get names of tables available."""
         if self._include_tables:
@@ -246,7 +272,6 @@ class DremioDatabase(sql_database.SQLDatabase):
         else:
             tables.append(', '.join(all_table_names))
             tables.append('The table and columns definitions are below:')
-
 
         for table in meta_tables:
             if self._custom_table_info and table.name in self._custom_table_info:

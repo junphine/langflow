@@ -117,7 +117,10 @@ class ListSQLDatabaseTool(BaseSQLDatabaseTool, BaseTool):  # type: ignore[overri
         run_manager: Optional[CallbackManagerForToolRun] = None,
     ) -> str:
         """Get a comma-separated list of table names."""
-        return ", ".join(self.db.get_usable_table_names())
+        db_context = self.db.get_context()
+        if 'table_names_with_comments' in db_context:
+            return db_context['table_names_with_comments']
+        return db_context['table_names']
 
 
 class _QuerySQLCheckerToolInput(BaseModel):
