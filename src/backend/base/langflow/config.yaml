@@ -244,4 +244,7 @@ models:
     qianfan_sk: "0GGiysLIliu4p7WOYdm35C2hBB5jKLE2"
   DeepseekChatEndpoint:
     openai_api_key: "sk-558a1f1b9957484eb52de0ddc2f9524a"
+  KimiChatEndpoint:
+    openai_api_key: "sk-NVXvbSjQB1i2o7BHNEgUAYe8oKtAf1o4F2yI7OwQ6IRBJMqP"
+    
 
